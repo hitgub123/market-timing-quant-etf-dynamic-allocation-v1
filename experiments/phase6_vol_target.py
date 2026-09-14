@@ -262,7 +262,8 @@ def _write_phase6_report(
         "the L-th index and requires L+1 adjusted-close observations; the current close t participates in "
         "volatility_t. NaN volatility produces a zero decision. `raw_weight_t = target_vol / realized_vol_t`, "
         "then the decision is clipped to [0, 1]. With the existing ordering, a zero-volatility ratio is clipped "
-        "to 1.0 (full risky weight), while infinities that remain are converted to zero; no NaN, infinity, "
+        "to 1.0 (full risky weight); extremely small positive volatility behaves the same through clipping, "
+        "while infinities that remain are converted to zero; no NaN, infinity, "
         "leverage, or short exposure enters the "
         "portfolio. Remaining wealth is CASH with exactly 0% return.",
         "",

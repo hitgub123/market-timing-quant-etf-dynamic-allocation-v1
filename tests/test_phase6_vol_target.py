@@ -267,6 +267,14 @@ def test_phase6_zero_volatility_and_insufficient_history_are_deterministic_cash(
     assert volatility_target_decision(short, 20, 0.10).eq(0.0).all()
 
 
+def test_phase6_extremely_small_positive_volatility_clips_to_one_without_infinity():
+    index = pd.bdate_range("2022-01-03", periods=25)
+    close = pd.Series(100.0 * np.cumprod(np.r_[1.0, np.tile([1.0 + 1e-12, 1.0 - 1e-12], 12)[:24]]), index=index)
+    decision = volatility_target_decision(close, 20, 0.10)
+    assert decision.iloc[-1] == pytest.approx(1.0)
+    assert np.isfinite(decision).all()
+
+
 @pytest.mark.parametrize("window", [20, 60])
 @pytest.mark.parametrize("frequency", ["weekly", "monthly"])
 def test_phase6_parameterized_call_path_preserves_close_to_next_open_no_lookahead(window: int, frequency: str):
