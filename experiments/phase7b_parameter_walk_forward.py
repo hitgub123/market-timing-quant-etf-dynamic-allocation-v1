@@ -227,8 +227,9 @@ def _selection_old_vs_new(old: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
         "selected_training_Calmar": "selected_training_Calmar",
         "selected_training_turnover": "training_turnover",
     }
-    old_part = old[key + list(fields)].rename(columns={value: f"old_{name}" for name, value in fields.items()})
-    new_part = new[key + list(fields)].rename(columns={value: f"new_{name}" for name, value in fields.items()})
+    source_fields = list(fields.values())
+    old_part = old[key + source_fields].rename(columns={value: f"old_{name}" for name, value in fields.items()})
+    new_part = new[key + source_fields].rename(columns={value: f"new_{name}" for name, value in fields.items()})
     merged = old_part.merge(new_part, on=key, how="outer", validate="one_to_one", sort=False)
     if len(merged) != len(new) or len(merged) != 112:
         raise AssertionError(f"expected 112 selection comparisons, got {len(merged)}")
