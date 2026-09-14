@@ -176,9 +176,8 @@ def _segment_metrics(
     ))
     result.update(_holding_stats(_episodes_attributed_to_fold(ledger, start, end)))
     fold_realized_tax_paid = float(segment["tax_paid"].sum()) if "tax_paid" in segment else 0.0
-    cumulative_realized_tax_paid = float(
-        ledger.loc[ledger.index <= end, "tax_paid"].sum()
-    ) if "tax_paid" in ledger else 0.0
+    cumulative_tax_path = ledger.loc[ledger.index <= end, "tax_paid"].cumsum()
+    cumulative_realized_tax_paid = float(cumulative_tax_path.iloc[-1]) if len(cumulative_tax_path) else 0.0
     result.update({
         "strategy": strategy,
         "tax_mode": mode,
