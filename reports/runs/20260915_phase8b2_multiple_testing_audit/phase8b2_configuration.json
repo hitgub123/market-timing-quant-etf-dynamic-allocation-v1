@@ -1,0 +1,149 @@
+{
+  "data_snooping": {
+    "benchmark": {
+      "frequency": "none",
+      "strategy_id": "QQQ_BUY_HOLD",
+      "tax_mode": "benchmark"
+    },
+    "block_lengths": [
+      5,
+      10,
+      20,
+      40,
+      60
+    ],
+    "bootstrap_chunk_size": 250,
+    "bootstrap_replications": 10000,
+    "candidate_set": [
+      "FIXED_MA200_QQQ_TO_QLD__weekly",
+      "FIXED_MA200_QQQ_TO_QLD__monthly",
+      "FIXED_MA200_QQQ_TO_QLD__bimonthly",
+      "FIXED_MA200_QQQ_TO_QLD__quarterly",
+      "PHASE7A_FIXED_FOUR_STATE__weekly",
+      "PHASE7A_FIXED_FOUR_STATE__monthly",
+      "PHASE7A_FIXED_FOUR_STATE__bimonthly",
+      "PHASE7A_FIXED_FOUR_STATE__quarterly",
+      "PHASE7B_MODEL_A_SELECTED__weekly",
+      "PHASE7B_MODEL_A_SELECTED__monthly",
+      "PHASE7B_MODEL_A_SELECTED__bimonthly",
+      "PHASE7B_MODEL_A_SELECTED__quarterly",
+      "PHASE7B_MODEL_B_SELECTED__weekly",
+      "PHASE7B_MODEL_B_SELECTED__monthly",
+      "PHASE7B_MODEL_B_SELECTED__bimonthly",
+      "PHASE7B_MODEL_B_SELECTED__quarterly"
+    ],
+    "candidate_set_fingerprint": "15f9d5f7ada2d69238188063dfa400cdfe20f43e34af15aec39b623313d34dd7",
+    "candidate_set_frozen_before_results": true,
+    "index_sha256_by_block_length": {
+      "10": "4c6d72c8940ea37ac387680f516ff7206c91388578637bc0ba2257f23d0a1f2d",
+      "20": "0698377cc1696d1283e4d05298b72341d2d812c2b1c20bb2edabdcbfa014105c",
+      "40": "c016c551c60a1c48ec61d23bf4d46d2d8216116f12c7fa2b4fd2ab01d53ac3cf",
+      "5": "3a684376251ecf139f500334c6c514081ef8796c2f67a8a8ca743a08ef37461a",
+      "60": "c0eba28de9cdc1e31330854c6436666ff1386ebb99398510337ac83160deb483"
+    },
+    "loss_differential": "candidate daily return - QQQ benchmark daily return; higher return is better",
+    "method": "Politis-Romano stationary bootstrap",
+    "null": "recenter every differential by its observed mean and apply common stationary-bootstrap indices",
+    "primary_block_length": 20,
+    "random_seed": 8301,
+    "recentered": true,
+    "selection_performed": false,
+    "statistic": "max over all 16 candidates of annualized mean differential",
+    "test": "White Reality Check",
+    "truncation": "none",
+    "why_white_reality_check_only": "White Reality Check directly answers the frozen max-statistic question across the complete candidate family; a second SPA implementation would duplicate an unplanned test rather than add a new pre-specified decision."
+  },
+  "deflated_sharpe_ratio": {
+    "correlation_adjustment": "participation ratio of the 17-path return correlation eigenvalues; sensitivity only",
+    "dsr": "Phi((observed_SR - expected_max_SR)/sigma_SR)",
+    "estimated_effective_path_trials": 2.5203440927310954,
+    "expected_maximum": "sigma_SR*((1-gamma)*Phi^-1(1-1/N)+gamma*Phi^-1(1-1/(N*e)))",
+    "moment_convention": "population central third/fourth moments of the accepted daily OOS vector; sample daily volatility uses ddof=1",
+    "path_count": 17,
+    "paths": "QQQ reference plus every Fixed MA200, Phase 7A, Model A, and Model B pre-tax OOS path at all four frequencies",
+    "primary_trial_count_method": "raw frozen count is used as N for expected maximum; no hidden path filtering",
+    "published_reference": "Bailey and Lopez de Prado expected-maximum Sharpe approximation",
+    "selection_performed": false,
+    "sharpe_standard_error": "sqrt((1 - S*skew + ((excess_kurtosis + 2)/4)*S^2)/(T-1))",
+    "trial_count_bases": [
+      "strict_selection_trials",
+      "conservative_research_trials"
+    ]
+  },
+  "expected_sessions": 3436,
+  "frequency_selection_performed": false,
+  "interpretation_hierarchy": [
+    "descriptive pairwise economic/path evidence",
+    "confirmatory 20-test adjusted mean-return evidence",
+    "research-program snooping evidence from the frozen inventory and White Reality Check",
+    "complexity evidence remains descriptive"
+  ],
+  "model_selection_performed": false,
+  "multiple_testing": {
+    "adjustments": [
+      "Bonferroni",
+      "Holm step-down",
+      "Benjamini-Hochberg q"
+    ],
+    "formulas": {
+      "Benjamini-Hochberg": "sort p; q_i=min_{j>=i}(m/j*p_(j)), cap at 1",
+      "Bonferroni": "min(1, m*p_i)",
+      "Holm": "sort p; adjusted_i=max(previous,(m-rank+1)*p_i), cap at 1"
+    },
+    "posthoc_filtering": false,
+    "primary_expected_block_length": 20,
+    "primary_family_count": 20,
+    "primary_metric": "annualized_mean_return_difference",
+    "primary_raw_p_values_retained": true,
+    "secondary_comparison_family_sensitivity_count": 4,
+    "selection_performed": false,
+    "source": "20260914_phase8b1_null_test_remediation_candidate/stationary_bootstrap_results.csv"
+  },
+  "oos_end": "2026-08-31",
+  "oos_start": "2013-01-02",
+  "phase": "8B-2",
+  "phase8a_source_run_id": "20260914_phase8a_oos_evidence_consolidation_final",
+  "phase8b1_source_run_id": "20260914_phase8b1_null_test_remediation_candidate",
+  "prior_phase_artifacts_rewritten": false,
+  "research_trial_inventory": {
+    "artifact": "research_trial_inventory.csv",
+    "canonical_source_grid_row_counts": {
+      "phase1_metrics_after_tax": 996,
+      "phase1_metrics_pre_tax": 996,
+      "phase2_metrics_after_tax": 12,
+      "phase2_metrics_pre_tax": 12,
+      "phase3_surface": 120,
+      "phase4_surface": 48,
+      "phase5_surface": 48,
+      "phase6_surface": 480,
+      "phase7a_results": 16,
+      "phase7b_training_candidates": 2800
+    },
+    "conservative_definition": "all enumerated Phase 1\u20137 economic units, including both Phase 7A period views, with no post-hoc filtering",
+    "conservative_research_trials": 4164,
+    "conservative_result_rows_including_tax_modes": 5528,
+    "economic_trial_basis": "one evaluated strategy/parameter/frequency or candidate/frequency/fold return hypothesis; tax-mode rows are accounting views, not independent return hypotheses",
+    "strict_selection_definition": "only Phase 7B Model A and Model B candidate/frequency/fold evaluations that could directly affect selected OOS parameters",
+    "strict_selection_trials": 2800,
+    "tax_mode_result_rows_including_views": 5528
+  },
+  "selection_performed": false,
+  "software_versions": {
+    "numpy": "2.5.0",
+    "pandas": "3.0.3",
+    "python": "3.14.4"
+  },
+  "source_hashes": {
+    "phase8a/aligned_daily_returns.csv": "0e7b790318cfbe0618305e8dbe9fa301911677667385e8d303ee665c3d1e3ee4",
+    "phase8a/canonical_source_manifest.csv": "3ad085ad440090221f4794f456d18ef2cea433a035a288658c50a12ebbabf6dd",
+    "phase8a/oos_champion_table.csv": "718ca799db65ea03ae625e400634f5246195e58a8b8fc9ec6416852d7a8a53af",
+    "phase8b1/after_tax_descriptive_comparisons.csv": "59af7ddb1e879be122b894fbaac3dd151817923275f6728992443f41c1f7fc55",
+    "phase8b1/bootstrap_configuration.json": "2befcea6f833cb83c2cf59389e91212f214fd5e51cba5923909758b3655e5bba",
+    "phase8b1/hac_mean_return_results.csv": "c5e65dcf8d7871caf1ae690c48b494b905c8044038c59e18036be57f133cf8b1",
+    "phase8b1/pairwise_observed_metrics.csv": "bc8bdc6830797267b8046bd61a9ce826748498c9bddf5a085a31b590840e367b",
+    "phase8b1/phase8b1_audit_diff.md": "873cd0fd82b25903734cd01f98f6fc22e4556dc9e1afd4b051bf5a59ae193a86",
+    "phase8b1/phase8b1_report.md": "a6aa496fc4435efdc82b4deb7e0d6df7e4ee4ca39b8d9a210d9c2d1d98e179ad",
+    "phase8b1/stationary_bootstrap_results.csv": "7ddb2eaea36fa3ac714669a2f6b69c057b94d43cecbcbb99058714d69f97165b"
+  },
+  "winner_designation": false
+}
