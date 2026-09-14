@@ -61,6 +61,7 @@ def test_phase8b1_artifact_completeness_and_source_metadata():
     config = json.loads((RUN / "bootstrap_configuration.json").read_text(encoding="utf-8"))
     assert config["phase8a_source_run_id"] == "20260914_phase8a_oos_evidence_consolidation_final"
     assert config["phase8a_aligned_daily_returns_sha256"] == EXPECTED_PHASE8A_DAILY_RETURNS_SHA256
+    assert config["phase8a_champion_table_sha256"] == "718ca799db65ea03ae625e400634f5246195e58a8b8fc9ec6416852d7a8a53af"
     assert config["phase"] == "8B-1"
 
 
