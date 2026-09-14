@@ -83,3 +83,12 @@ This log records what was implemented, why it was needed, and the validation per
 - Replaced the unsupported outlier-review claim in `audit_asset()` and connected the generated TQQQ audit rows to the immutable manifest's actual cross-snapshot evidence.
 - Expanded deterministic regression coverage. The complete suite passed: 61 tests.
 - Regenerated the canonical Phase 0 artifacts in `reports/runs/20260914_phase0_audit_final`. Normalized old/new hashes for all retained equity, trade, and position rows match exactly; ending value, CAGR, MaxDD, and Calmar have zero numerical delta.
+
+## 2026-09-14 — External Phase 1 static-allocation audit
+
+- Regenerated all 498 frozen allocations per frequency and both tax modes: 168 pair rows plus 330 triple rows per frequency, 996 rows per tax mode, 1,992 combined rows.
+- Preserved the first-session monthly/quarterly rebalance convention and added deterministic weekend/holiday schedule tests, hand-calculated 50/50 rebalancing tests, cash-allocation tests, and Phase 0 endpoint invariants.
+- Replaced order-sensitive Pareto marking with strict dominance. Duplicate economic allocations receive consistent strategy-level flags, with a stable full-universe `economic_allocation_id` retained for audit.
+- Added after-tax realized-wealth, cumulative realized-tax, and non-mutating terminal-liquidation diagnostics to every after-tax candidate. The diagnostic does not add terminal trades or alter the ledger, turnover, or holding episodes.
+- Added report sections for the common sample, grid counts, representative pre-tax/after-tax/terminal frontiers, benchmark endpoints, and independently recomputed turnover examples.
+- Full suite result: 68 tests passed. Final Phase 1 artifacts are in `reports/runs/20260914_phase1_audit_final_v2`; the detailed diff and final conclusion are in `phase1_audit_diff.md`.

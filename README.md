@@ -19,6 +19,9 @@ Canonical audited Phase 7A run:
 Canonical audited Phase 0 run:
 `reports/runs/20260914_phase0_audit_final`.
 
+Canonical audited Phase 1 run:
+`reports/runs/20260914_phase1_audit_final_v2`.
+
 ```bash
 python3 experiments/phase0_buy_hold.py
 python3 experiments/phase1_static_frontier.py
