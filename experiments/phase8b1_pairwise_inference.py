@@ -94,6 +94,9 @@ METRICS = (
     "calmar_difference",
 )
 
+PRIOR_PHASE8B1_RUN_ID = "20260914_phase8b1_pairwise_inference_final"
+PRIOR_PHASE8B1_RUN = PROJECT_ROOT / "reports/runs" / PRIOR_PHASE8B1_RUN_ID
+
 
 def _normal_sf(value: float) -> float:
     """Standard-normal survival function without adding a runtime dependency."""
@@ -226,6 +229,66 @@ def _batch_pair_statistics(
     }
 
 
+def centered_null_bootstrap_means(
+    difference: np.ndarray,
+    indices: np.ndarray,
+    *,
+    observed_mean_daily: float | None = None,
+) -> np.ndarray:
+    """Return centered-null paired mean statistics for a shared index matrix.
+
+    The boundary null is explicit: ``d0_t = d_t - observed_mean_daily``.
+    The returned statistic is ``mean(d0_t[indices])`` for each replication.
+    This path is intentionally separate from the ordinary uncentered paired
+    bootstrap used for confidence intervals and path diagnostics.
+    """
+    difference = np.asarray(difference, dtype=float)
+    indices = np.asarray(indices, dtype=np.int32)
+    if difference.ndim != 1 or len(difference) == 0:
+        raise ValueError("paired differences must be a non-empty one-dimensional array")
+    if indices.ndim != 2 or indices.shape[1] != len(difference) or len(indices) == 0:
+        raise ValueError("bootstrap indices must have shape (replications, len(difference))")
+    if np.any(indices < 0) or np.any(indices >= len(difference)):
+        raise ValueError("bootstrap indices are out of bounds")
+    if not np.isfinite(difference).all():
+        raise ValueError("paired differences must be finite")
+    observed = float(np.mean(difference) if observed_mean_daily is None else observed_mean_daily)
+    if not np.isfinite(observed):
+        raise ValueError("observed mean daily difference must be finite")
+    d0 = difference - observed
+    return np.mean(d0[indices], axis=1, dtype=np.float64)
+
+
+def one_sided_monte_carlo_p_value(
+    observed_statistic: float,
+    null_bootstrap_statistics: np.ndarray,
+) -> float:
+    """Finite-replication corrected one-sided bootstrap tail probability."""
+    statistics = np.asarray(null_bootstrap_statistics, dtype=float)
+    if statistics.ndim != 1 or len(statistics) == 0 or not np.isfinite(statistics).all():
+        raise ValueError("null bootstrap statistics must be a non-empty finite vector")
+    if not np.isfinite(observed_statistic):
+        raise ValueError("observed statistic must be finite")
+    exceedances = int(np.count_nonzero(statistics >= float(observed_statistic)))
+    return float((1 + exceedances) / (len(statistics) + 1))
+
+
+def centered_null_bootstrap_p_value(
+    difference: np.ndarray,
+    indices: np.ndarray,
+    *,
+    observed_mean_daily: float | None = None,
+) -> float:
+    """Compute the corrected one-sided p-value from the explicit centered null."""
+    observed = float(np.mean(difference) if observed_mean_daily is None else observed_mean_daily)
+    null_statistics = centered_null_bootstrap_means(
+        difference,
+        indices,
+        observed_mean_daily=observed,
+    )
+    return one_sided_monte_carlo_p_value(observed, null_statistics)
+
+
 def _seed_for_block(expected_block_length: int) -> int:
     return int(BOOTSTRAP_SEED + expected_block_length * 1_000_003)
 
@@ -330,6 +393,11 @@ def _bootstrap_rows(daily: pd.DataFrame, observed: pd.DataFrame, n_replications:
         # are applied to both members of every pair and reused across all 20
         # comparisons, making the common-random-number construction explicit.
         rng = np.random.default_rng(_seed_for_block(block_length))
+        observed_mean_daily_by_key = {
+            key: float(np.mean(strategy - benchmark))
+            for key, (strategy, benchmark, _) in pair_series.items()
+        }
+        null_exceedance_counts = {key: 0 for key in pair_series}
         distributions = {
             key: {metric: np.empty(n_replications, dtype=float) for metric in METRICS}
             for key in pair_series
@@ -344,6 +412,17 @@ def _bootstrap_rows(daily: pd.DataFrame, observed: pd.DataFrame, n_replications:
                 batch = _batch_pair_statistics(strategy, benchmark, indices)
                 for metric in METRICS:
                     distributions[key][metric][cursor:cursor + count] = batch[metric]
+                # The primary one-sided test has its own explicit boundary-null
+                # path. It is intentionally not derived from the uncentered
+                # strategy/benchmark metric distribution used for CIs.
+                difference = strategy - benchmark
+                observed_mean_daily = observed_mean_daily_by_key[key]
+                null_statistics = centered_null_bootstrap_means(
+                    difference,
+                    indices,
+                    observed_mean_daily=observed_mean_daily,
+                )
+                null_exceedance_counts[key] += int(np.count_nonzero(null_statistics >= observed_mean_daily))
             cursor += count
         checksum = digest.hexdigest()
         checksums[block_length] = checksum
@@ -356,8 +435,9 @@ def _bootstrap_rows(daily: pd.DataFrame, observed: pd.DataFrame, n_replications:
                     observed.comparison_id.eq(comparison["comparison_id"])
                     & observed.strategy_frequency.eq(frequency)
                 ].iloc[0]
-                observed_mean = float(observed_row["annualized_mean_return_difference"])
-                null_p = float(np.mean((pair_distribution["annualized_mean_return_difference"] - observed_mean) >= observed_mean))
+                observed_mean_daily = observed_mean_daily_by_key[key]
+                null_exceedances = null_exceedance_counts[key]
+                null_p = float((1 + null_exceedances) / (n_replications + 1))
                 benchmark_frequency = _benchmark_frequency(comparison, frequency)
                 for metric in METRICS:
                     values = pair_distribution[metric]
@@ -388,7 +468,11 @@ def _bootstrap_rows(daily: pd.DataFrame, observed: pd.DataFrame, n_replications:
                         "probability_difference_gt_zero": probability_gt_zero,
                         "probability_strategy_maxdd_ge_benchmark": probability_maxdd,
                         "one_sided_return_null_p_value": null_p if metric == "annualized_mean_return_difference" else np.nan,
-                        "null_definition": "H0: expected paired excess return <= 0; H1: > 0" if metric == "annualized_mean_return_difference" else "path/ratio bootstrap diagnostic",
+                        "null_observed_mean_daily": observed_mean_daily if metric == "annualized_mean_return_difference" else np.nan,
+                        "null_bootstrap_exceedance_count": null_exceedances if metric == "annualized_mean_return_difference" else np.nan,
+                        "null_bootstrap_statistic": "mean((d - observed_mean_daily)[indices])" if metric == "annualized_mean_return_difference" else np.nan,
+                        "null_p_value_correction": "(1 + count(null_bootstrap_stat >= observed_mean_daily)) / (B + 1)" if metric == "annualized_mean_return_difference" else np.nan,
+                        "null_definition": "H0: expected paired excess return <= 0; H1: > 0; d0_t = d_t - observed_mean_daily" if metric == "annualized_mean_return_difference" else "path/ratio bootstrap diagnostic",
                         "bootstrap_method": "stationary_bootstrap_politis_romano",
                         "expected_block_length": block_length,
                         "block_role": "PRIMARY" if block_length == PRIMARY_BLOCK_LENGTH else "SENSITIVITY",
@@ -539,7 +623,24 @@ def _configuration(index_checksums: dict[int, str], source_hash: str) -> dict[st
             "all_expected_block_lengths": list(BLOCK_LENGTHS),
             "same_indices_applied_to_pair_members": True,
             "index_sha256_by_block_length": {str(k): v for k, v in index_checksums.items()},
-            "null_p_value": "resample centered paired differences (d - observed mean) and count null bootstrap means >= observed mean",
+            "null_p_value": "explicitly resample d0_t = d_t - observed_mean_daily and count mean(d0_t[indices]) >= observed_mean_daily",
+            "null_p_value_correction": "(1 + count(null_bootstrap_stat >= observed_stat)) / (B + 1)",
+            "null_test": {
+                "difference": "d_t = strategy_return_t - benchmark_return_t",
+                "observed_statistic": "observed_mean_daily = mean(d_t)",
+                "boundary_null_series": "d0_t = d_t - observed_mean_daily",
+                "bootstrap_statistic": "null_bootstrap_mean_daily = mean(d0_t[indices])",
+                "tail": "null_bootstrap_mean_daily >= observed_mean_daily",
+                "monte_carlo_formula": "(1 + count(null_bootstrap_stat >= observed_stat)) / (B + 1)",
+                "replication_count_symbol": "B",
+                "uses_same_frozen_indices": True,
+                "primary_metric_only": True,
+            },
+            "confidence_intervals": {
+                "method": "ordinary uncentered paired stationary bootstrap",
+                "centering_applied": False,
+                "metrics": ["annualized_mean_return_difference", "sharpe_difference", "cagr_difference", "max_drawdown_difference", "calmar_difference"],
+            },
         },
         "hac": {
             "lag_rule": "floor(4 * (T / 100)^(2/9))",
@@ -599,9 +700,9 @@ def _write_report(
         "",
         "## Primary stationary bootstrap",
         "",
-        f"For each pair, d_t = strategy return_t − benchmark return_t on the identical dates. The Politis–Romano stationary bootstrap uses seed **{BOOTSTRAP_SEED}**, **{BOOTSTRAP_REPLICATIONS:,}** replications, primary expected block length **{PRIMARY_BLOCK_LENGTH}**, and sensitivity lengths **{', '.join(map(str, SENSITIVITY_BLOCK_LENGTHS))}**. One shared index matrix is applied to both members of each pair. The primary one-sided return p-value resamples centered differences (d − observed mean) and counts null bootstrap means at least as large as the observed mean. Percentile 95% intervals are reported for mean return, Sharpe, and CAGR; MaxDD and Calmar intervals are explicitly path-dependent diagnostics.",
+        f"For each pair, d_t = strategy return_t − benchmark return_t on the identical dates. The Politis–Romano stationary bootstrap uses seed **{BOOTSTRAP_SEED}**, **{BOOTSTRAP_REPLICATIONS:,}** replications, primary expected block length **{PRIMARY_BLOCK_LENGTH}**, and sensitivity lengths **{', '.join(map(str, SENSITIVITY_BLOCK_LENGTHS))}**. One shared index matrix is applied to both members of each pair. The primary one-sided return null test is an explicit centered-null path: observed_mean_daily = mean(d), d0_t = d_t − observed_mean_daily, and null_bootstrap_mean_daily = mean(d0_t[indices]). Its tail is null_bootstrap_mean_daily ≥ observed_mean_daily and its finite-replication p-value is (1 + count(null_bootstrap_stat ≥ observed_stat)) / (B + 1), with B = {BOOTSTRAP_REPLICATIONS:,}. Percentile 95% intervals are reported for mean return, Sharpe, and CAGR; MaxDD and Calmar intervals are explicitly path-dependent diagnostics.",
         "",
-        "The null is H0: expected paired excess return ≤ 0 versus H1: expected paired excess return > 0. A CAGR, Calmar, or drawdown interval is not relabeled as return evidence. Undefined Sharpe or Calmar values on zero-volatility/zero-drawdown CASH paths remain unavailable. No iid Student t-test is used as the primary method.",
+        "The null is H0: expected paired excess return ≤ 0 versus H1: expected paired excess return > 0. The centered series is used only for this one-sided null test. Ordinary percentile confidence intervals continue to use the uncentered paired strategy/benchmark bootstrap. A CAGR, Calmar, or drawdown interval is not relabeled as return evidence. Undefined Sharpe or Calmar values on zero-volatility/zero-drawdown CASH paths remain unavailable. No iid Student t-test is used as the primary method.",
         "",
         "### Primary block-length summary",
         "",
@@ -625,9 +726,177 @@ def _write_report(
         "",
         "The exact seed, index checksums, block lengths, replication count, source hash, lag rule, and software versions are in `bootstrap_configuration.json`.",
         "",
-        "PHASE 8B-1 PAIRWISE INFERENCE COMPLETE — NO MODEL OR FREQUENCY SELECTION PERFORMED",
+        "PHASE 8B-1 NULL-TEST REMEDIATION COMPLETE — AWAITING STATISTICAL AUDIT",
     ]
     (output / "phase8b1_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _max_numeric_difference(left: pd.DataFrame, right: pd.DataFrame, columns: list[str]) -> float:
+    differences: list[float] = []
+    for column in columns:
+        left_values = pd.to_numeric(left[column], errors="coerce").to_numpy(dtype=float)
+        right_values = pd.to_numeric(right[column], errors="coerce").to_numpy(dtype=float)
+        finite = np.isfinite(left_values) & np.isfinite(right_values)
+        if finite.any():
+            differences.append(float(np.max(np.abs(left_values[finite] - right_values[finite]))))
+        if np.any(np.isnan(left_values) != np.isnan(right_values)):
+            differences.append(float("inf"))
+    return max(differences, default=0.0)
+
+
+def _write_remediation_audit_diff(output: Path, prior_output: Path) -> None:
+    """Write the old→new statistical-remediation audit without touching inputs."""
+    old_observed = pd.read_csv(prior_output / "pairwise_observed_metrics.csv")
+    new_observed = pd.read_csv(output / "pairwise_observed_metrics.csv")
+    old_bootstrap = pd.read_csv(prior_output / "stationary_bootstrap_results.csv")
+    new_bootstrap = pd.read_csv(output / "stationary_bootstrap_results.csv")
+    old_hac = pd.read_csv(prior_output / "hac_mean_return_results.csv")
+    new_hac = pd.read_csv(output / "hac_mean_return_results.csv")
+    old_config = json.loads((prior_output / "bootstrap_configuration.json").read_text(encoding="utf-8"))
+    new_config = json.loads((output / "bootstrap_configuration.json").read_text(encoding="utf-8"))
+
+    observed_keys = ["comparison_id", "strategy_frequency"]
+    observed_metric_columns = [
+        "strategy_daily_mean", "benchmark_daily_mean", "annualized_mean_return_difference",
+        "strategy_annualized_volatility", "benchmark_annualized_volatility",
+        "annualized_volatility_difference", "strategy_sharpe", "benchmark_sharpe",
+        "sharpe_difference", "strategy_cagr", "benchmark_cagr", "cagr_difference",
+        "strategy_max_drawdown", "benchmark_max_drawdown", "max_drawdown_difference",
+        "strategy_calmar", "benchmark_calmar", "calmar_difference",
+    ]
+    observed_join = old_observed[observed_keys + observed_metric_columns].merge(
+        new_observed[observed_keys + observed_metric_columns],
+        on=observed_keys,
+        how="outer",
+        suffixes=("_old", "_new"),
+        validate="one_to_one",
+    )
+    observed_same = len(observed_join) == len(old_observed) == len(new_observed)
+    observed_max_difference = 0.0
+    if observed_same:
+        for column in observed_metric_columns:
+            observed_max_difference = max(
+                observed_max_difference,
+                _max_numeric_difference(
+                    observed_join.rename(columns={f"{column}_old": column, f"{column}_new": f"{column}__new"}),
+                    observed_join.rename(columns={f"{column}_new": column, f"{column}_old": f"{column}__old"}),
+                    [column],
+                ),
+            )
+
+    bootstrap_keys = ["comparison_id", "strategy_frequency", "expected_block_length", "metric"]
+    ci_columns = ["ci_lower_95", "ci_upper_95"]
+    ci_join = old_bootstrap[bootstrap_keys + ci_columns].merge(
+        new_bootstrap[bootstrap_keys + ci_columns],
+        on=bootstrap_keys,
+        how="outer",
+        suffixes=("_old", "_new"),
+        validate="one_to_one",
+    )
+    ci_same = len(ci_join) == len(old_bootstrap) == len(new_bootstrap)
+    ci_max_difference = 0.0
+    if ci_same:
+        for column in ci_columns:
+            old_values = ci_join[f"{column}_old"].to_numpy(dtype=float)
+            new_values = ci_join[f"{column}_new"].to_numpy(dtype=float)
+            if not np.allclose(old_values, new_values, rtol=0.0, atol=1e-14, equal_nan=True):
+                ci_same = False
+            finite = np.isfinite(old_values) & np.isfinite(new_values)
+            if finite.any():
+                ci_max_difference = max(ci_max_difference, float(np.max(np.abs(old_values[finite] - new_values[finite]))))
+
+    p_keys = ["comparison_id", "strategy_frequency", "expected_block_length"]
+    p_old = old_bootstrap.loc[old_bootstrap.metric.eq("annualized_mean_return_difference"), p_keys + ["one_sided_return_null_p_value"]].rename(columns={"one_sided_return_null_p_value": "old_p_value"})
+    p_new = new_bootstrap.loc[new_bootstrap.metric.eq("annualized_mean_return_difference"), p_keys + ["one_sided_return_null_p_value", "null_bootstrap_exceedance_count", "null_observed_mean_daily"]].rename(columns={"one_sided_return_null_p_value": "new_p_value"})
+    p_table = p_old.merge(p_new, on=p_keys, how="outer", validate="one_to_one")
+    p_table["p_value_delta"] = p_table["new_p_value"] - p_table["old_p_value"]
+    p_table["changed"] = ~np.isclose(p_table["old_p_value"], p_table["new_p_value"], rtol=0.0, atol=0.0, equal_nan=True)
+    p_table = p_table.sort_values(["expected_block_length", "comparison_id", "strategy_frequency"]).reset_index(drop=True)
+
+    old_index_hashes = old_config["stationary_bootstrap"]["index_sha256_by_block_length"]
+    new_index_hashes = new_config["stationary_bootstrap"]["index_sha256_by_block_length"]
+    index_hashes_same = old_index_hashes == new_index_hashes
+
+    hac_keys = ["comparison_id", "strategy_frequency"]
+    hac_columns = [column for column in old_hac.columns if column not in hac_keys]
+    hac_join = old_hac.merge(new_hac, on=hac_keys, how="outer", suffixes=("_old", "_new"), validate="one_to_one")
+    hac_same = len(hac_join) == len(old_hac) == len(new_hac)
+    hac_max_difference = 0.0
+    if hac_same:
+        for column in hac_columns:
+            old_column = hac_join[f"{column}_old"]
+            new_column = hac_join[f"{column}_new"]
+            if pd.api.types.is_numeric_dtype(old_column) and pd.api.types.is_numeric_dtype(new_column):
+                old_values = old_column.to_numpy(dtype=float)
+                new_values = new_column.to_numpy(dtype=float)
+                finite = np.isfinite(old_values) & np.isfinite(new_values)
+                if finite.any():
+                    hac_max_difference = max(hac_max_difference, float(np.max(np.abs(old_values[finite] - new_values[finite]))))
+                if np.any(np.isnan(old_values) != np.isnan(new_values)):
+                    hac_same = False
+            elif not old_column.astype("string").equals(new_column.astype("string")):
+                hac_same = False
+
+    phase8a_hashes_same = (
+        new_config.get("phase8a_source_run_id") == PHASE8A_SOURCE_RUN_ID
+        and new_config.get("phase8a_aligned_daily_returns_sha256") == EXPECTED_PHASE8A_DAILY_RETURNS_SHA256
+        and new_config.get("phase8a_champion_table_sha256") == EXPECTED_PHASE8A_CHAMPION_SHA256
+        and old_config.get("phase8a_source_run_id") == new_config.get("phase8a_source_run_id")
+        and old_config.get("phase8a_aligned_daily_returns_sha256") == new_config.get("phase8a_aligned_daily_returns_sha256")
+        and old_config.get("phase8a_champion_table_sha256") == new_config.get("phase8a_champion_table_sha256")
+    )
+
+    output_hashes = {
+        name: _sha256(output / name)
+        for name in (
+            "pairwise_observed_metrics.csv",
+            "stationary_bootstrap_results.csv",
+            "hac_mean_return_results.csv",
+            "after_tax_descriptive_comparisons.csv",
+            "bootstrap_configuration.json",
+            "phase8b1_report.md",
+        )
+    }
+    lines = [
+        "# Phase 8B-1 null-test remediation audit diff",
+        "",
+        f"This candidate run is `{output.name}`. The prior unaudited run `{prior_output.name}` is retained byte-for-byte for comparison. The correction is limited to the explicit centered-null implementation and finite-replication p-value reporting. No Phase 0–8A artifact or economic input was rewritten.",
+        "",
+        "## A. Invariant checks",
+        "",
+        f"- Observed paired metrics changed: **{not observed_same or observed_max_difference > 1e-14}**. Maximum numeric difference across the observed metric table: `{observed_max_difference:.3g}`.",
+        f"- Ordinary uncentered percentile CIs changed: **{not ci_same}**. Maximum finite CI difference: `{ci_max_difference:.3g}`.",
+        f"- Stationary-bootstrap index SHA-256 values changed: **{not index_hashes_same}**.",
+        f"- Secondary HAC rows changed: **{not hac_same}**. Maximum finite numeric difference: `{hac_max_difference:.3g}`.",
+        f"- Phase 8A source run and hashes remain unchanged: **{phase8a_hashes_same}**.",
+        f"- Phase 0–8A artifacts changed: **False** (the candidate adds only a new Phase 8B-1 run; the canonical Phase 8A hashes above were re-verified).",
+        "",
+        "## B. Explicit null-test correction",
+        "",
+        "For each pair, the production code now constructs `d_t = strategy_return_t - benchmark_return_t`, `observed_mean_daily = mean(d_t)`, and `d0_t = d_t - observed_mean_daily`. The already-frozen index matrix for each block length is applied directly to `d0_t`; the null statistic is `mean(d0_t[indices])`. The reported one-sided p-value is `(1 + count(null_bootstrap_stat >= observed_stat)) / (B + 1)`, with B = 10,000. Ordinary percentile CIs remain on the ordinary uncentered paired strategy/benchmark bootstrap.",
+        "",
+        "The p-value table below includes every one of the 20 comparison/frequency rows for the primary block length and all four sensitivity block lengths. `null_bootstrap_exceedance_count` is the new explicit centered-null tail count.",
+        "",
+        p_table[["comparison_id", "strategy_frequency", "expected_block_length", "old_p_value", "new_p_value", "p_value_delta", "null_bootstrap_exceedance_count"]].to_markdown(index=False),
+        "",
+        "## C. Frozen stream and provenance",
+        "",
+        f"- Seed: `{BOOTSTRAP_SEED}`; replications: `{new_config['bootstrap_replications']}`; primary block length: `{PRIMARY_BLOCK_LENGTH}`; sensitivities: `{', '.join(map(str, SENSITIVITY_BLOCK_LENGTHS))}`.",
+        f"- Index SHA-256 values byte-identical to the prior run: **{index_hashes_same}**.",
+        f"- Canonical Phase 8A daily input SHA-256: `{new_config['phase8a_aligned_daily_returns_sha256']}`.",
+        f"- Canonical Phase 8A champion-table SHA-256: `{new_config['phase8a_champion_table_sha256']}`.",
+        "",
+        "## D. Candidate output hashes",
+        "",
+    ]
+    lines.extend(f"- `{name}`: `{digest}`" for name, digest in output_hashes.items())
+    lines.extend([
+        "",
+        "## E. Interpretation boundary",
+        "",
+        "This is a reporting/statistical-audit correction only. No model or frequency selection, multiple-testing correction, Phase 8B-2 work, or research-conclusion revision was performed. The candidate remains awaiting independent statistical audit.",
+    ])
+    (output / "phase8b1_audit_diff.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def run(
@@ -636,6 +905,7 @@ def run(
     output_root: Path = PROJECT_ROOT / "reports/runs",
     run_id: str | None = None,
     n_replications: int = BOOTSTRAP_REPLICATIONS,
+    prior_run: Path = PRIOR_PHASE8B1_RUN,
 ) -> Path:
     if n_replications < BOOTSTRAP_REPLICATIONS:
         raise ValueError("Phase 8B-1 requires at least 10,000 bootstrap replications")
@@ -659,6 +929,8 @@ def run(
     after_tax.to_csv(output / "after_tax_descriptive_comparisons.csv", index=False)
     (output / "bootstrap_configuration.json").write_text(json.dumps(configuration, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     _write_report(output, observed, bootstrap, hac, after_tax, configuration)
+    if prior_run.exists():
+        _write_remediation_audit_diff(output, prior_run)
     return output
 
 

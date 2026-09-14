@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import re
 
 import numpy as np
 import pandas as pd
@@ -24,6 +25,8 @@ from experiments.phase8b1_pairwise_inference import (
     SENSITIVITY_BLOCK_LENGTHS,
     _batch_pair_statistics,
     _bootstrap_pair,
+    centered_null_bootstrap_means,
+    centered_null_bootstrap_p_value,
     _load_inputs,
     _observed_rows,
     _seed_for_block,
@@ -33,7 +36,8 @@ from experiments.phase8b1_pairwise_inference import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN = ROOT / "reports/runs/20260914_phase8b1_pairwise_inference_final"
+RUN = ROOT / "reports/runs/20260914_phase8b1_null_test_remediation_candidate"
+PRIOR_RUN = ROOT / "reports/runs/20260914_phase8b1_pairwise_inference_final"
 PHASE8A = ROOT / "reports/runs/20260914_phase8a_oos_evidence_consolidation_final"
 
 
@@ -55,6 +59,7 @@ def test_phase8b1_artifact_completeness_and_source_metadata():
         "after_tax_descriptive_comparisons.csv",
         "bootstrap_configuration.json",
         "phase8b1_report.md",
+        "phase8b1_audit_diff.md",
     )
     for name in required:
         assert (RUN / name).is_file(), name
@@ -63,6 +68,12 @@ def test_phase8b1_artifact_completeness_and_source_metadata():
     assert config["phase8a_aligned_daily_returns_sha256"] == EXPECTED_PHASE8A_DAILY_RETURNS_SHA256
     assert config["phase8a_champion_table_sha256"] == "718ca799db65ea03ae625e400634f5246195e58a8b8fc9ec6416852d7a8a53af"
     assert config["phase"] == "8B-1"
+    null_test = config["stationary_bootstrap"]["null_test"]
+    assert null_test["boundary_null_series"] == "d0_t = d_t - observed_mean_daily"
+    assert null_test["bootstrap_statistic"] == "null_bootstrap_mean_daily = mean(d0_t[indices])"
+    assert null_test["tail"] == "null_bootstrap_mean_daily >= observed_mean_daily"
+    assert config["stationary_bootstrap"]["null_p_value_correction"] == "(1 + count(null_bootstrap_stat >= observed_stat)) / (B + 1)"
+    assert config["stationary_bootstrap"]["confidence_intervals"]["centering_applied"] is False
 
 
 def test_exact_phase8a_source_hash_is_consumed_and_prior_artifact_is_unchanged():
@@ -128,6 +139,68 @@ def test_stationary_bootstrap_is_deterministic_under_frozen_seed():
         np.testing.assert_array_equal(first[metric], second[metric])
 
 
+def test_centered_null_matches_independent_autocorrelated_recomputation():
+    """The production p-value must use the explicitly centered d0 series."""
+    shocks = np.array([0.002, -0.001, 0.003, -0.002, 0.001, 0.004, -0.003, 0.002, -0.001, 0.003], dtype=float)
+    difference = np.empty_like(shocks)
+    difference[0] = 0.004
+    for i in range(1, len(shocks)):
+        difference[i] = 0.65 * difference[i - 1] + shocks[i]
+    indices = stationary_bootstrap_indices(
+        len(difference), 257, 4, np.random.default_rng(_seed_for_block(4))
+    )
+    observed_mean_daily = float(np.mean(difference))
+    d0 = difference - observed_mean_daily
+    expected_null_statistics = np.mean(d0[indices], axis=1)
+    expected_p = (1 + int(np.count_nonzero(expected_null_statistics >= observed_mean_daily))) / (len(indices) + 1)
+    np.testing.assert_allclose(
+        centered_null_bootstrap_means(difference, indices),
+        expected_null_statistics,
+        rtol=0.0,
+        atol=1e-15,
+    )
+    assert centered_null_bootstrap_p_value(difference, indices) == expected_p
+
+
+def test_centered_null_positive_mean_is_small_and_zero_mean_is_not_mechanically_significant():
+    indices = stationary_bootstrap_indices(64, 10_000, 5, np.random.default_rng(_seed_for_block(5)))
+    positive = np.full(64, 0.002, dtype=float)
+    positive += np.sin(np.arange(64, dtype=float)) * 0.00005
+    positive_p = centered_null_bootstrap_p_value(positive, indices)
+    assert positive.mean() > 0.0 and positive_p < 0.01
+
+    zero_mean = np.tile(np.array([0.001, 0.001, -0.001, -0.001], dtype=float), 16)
+    zero_p = centered_null_bootstrap_p_value(zero_mean, indices)
+    assert abs(zero_mean.mean()) < 1e-15
+    assert zero_p > 0.01
+
+
+def test_centered_null_monte_carlo_correction_has_no_zero_p_values():
+    difference = np.linspace(-0.01, 0.02, 37, dtype=float)
+    replications = 101
+    indices = stationary_bootstrap_indices(37, replications, 7, np.random.default_rng(9182))
+    p_value = centered_null_bootstrap_p_value(difference, indices)
+    assert 1.0 / (replications + 1) <= p_value <= 1.0
+    assert p_value != 0.0
+
+
+def test_centered_null_is_invariant_to_chunking_with_the_same_index_stream():
+    difference = np.array([0.003, -0.001, 0.002, 0.004, -0.002, 0.001, 0.0, 0.002], dtype=float)
+    indices = stationary_bootstrap_indices(8, 103, 3, np.random.default_rng(1122))
+    observed_mean_daily = float(np.mean(difference))
+    full_p = centered_null_bootstrap_p_value(difference, indices)
+    exceedances = 0
+    for start in range(0, len(indices), 11):
+        null_statistics = centered_null_bootstrap_means(
+            difference,
+            indices[start:start + 11],
+            observed_mean_daily=observed_mean_daily,
+        )
+        exceedances += int(np.count_nonzero(null_statistics >= observed_mean_daily))
+    chunked_p = (1 + exceedances) / (len(indices) + 1)
+    assert chunked_p == full_p
+
+
 def test_primary_and_sensitivity_block_lengths_are_frozen():
     config = json.loads((RUN / "bootstrap_configuration.json").read_text(encoding="utf-8"))
     assert PRIMARY_BLOCK_LENGTH == 20
@@ -174,7 +247,50 @@ def test_bootstrap_probability_and_interval_fields_are_present():
         assert results.loc[results.metric.eq(metric), "probability_difference_gt_zero"].notna().any()
     maxdd = results.loc[results.metric.eq("max_drawdown_difference")]
     assert maxdd.probability_strategy_maxdd_ge_benchmark.notna().all()
-    assert results.loc[results.metric.eq("annualized_mean_return_difference"), "one_sided_return_null_p_value"].notna().all()
+    mean_rows = results.loc[results.metric.eq("annualized_mean_return_difference")]
+    assert mean_rows.one_sided_return_null_p_value.notna().all()
+    assert mean_rows.null_observed_mean_daily.notna().all()
+    assert mean_rows.null_bootstrap_exceedance_count.notna().all()
+    assert mean_rows.null_p_value_correction.eq("(1 + count(null_bootstrap_stat >= observed_mean_daily)) / (B + 1)").all()
+    assert (mean_rows.one_sided_return_null_p_value >= 1.0 / (mean_rows.bootstrap_replications + 1)).all()
+    assert (mean_rows.one_sided_return_null_p_value <= 1.0).all()
+    assert (mean_rows.one_sided_return_null_p_value > 0.0).all()
+    assert (mean_rows.null_bootstrap_exceedance_count >= 0).all()
+    assert (mean_rows.null_bootstrap_exceedance_count <= mean_rows.bootstrap_replications).all()
+
+
+def test_remediation_preserves_observed_metrics_and_ordinary_percentile_cis():
+    old_observed = pd.read_csv(PRIOR_RUN / "pairwise_observed_metrics.csv")
+    new_observed = _read("pairwise_observed_metrics.csv")
+    keys = ["comparison_id", "strategy_frequency"]
+    old_observed = old_observed.sort_values(keys).reset_index(drop=True)
+    new_observed = new_observed.sort_values(keys).reset_index(drop=True)
+    pd.testing.assert_frame_equal(old_observed, new_observed, check_exact=False, rtol=0.0, atol=1e-14)
+
+    old_bootstrap = pd.read_csv(PRIOR_RUN / "stationary_bootstrap_results.csv")
+    new_bootstrap = _read("stationary_bootstrap_results.csv")
+    ci_keys = ["comparison_id", "strategy_frequency", "expected_block_length", "metric"]
+    old_ci = old_bootstrap.set_index(ci_keys)[["ci_lower_95", "ci_upper_95"]].sort_index()
+    new_ci = new_bootstrap.set_index(ci_keys)[["ci_lower_95", "ci_upper_95"]].sort_index()
+    pd.testing.assert_frame_equal(old_ci, new_ci, check_exact=False, rtol=0.0, atol=1e-14)
+
+
+def test_remediation_keeps_frozen_index_hashes_and_hac_rows_unchanged():
+    old_config = json.loads((PRIOR_RUN / "bootstrap_configuration.json").read_text(encoding="utf-8"))
+    new_config = json.loads((RUN / "bootstrap_configuration.json").read_text(encoding="utf-8"))
+    assert old_config["stationary_bootstrap"]["index_sha256_by_block_length"] == new_config["stationary_bootstrap"]["index_sha256_by_block_length"]
+    old_hac = pd.read_csv(PRIOR_RUN / "hac_mean_return_results.csv").sort_values(["comparison_id", "strategy_frequency"]).reset_index(drop=True)
+    new_hac = _read("hac_mean_return_results.csv").sort_values(["comparison_id", "strategy_frequency"]).reset_index(drop=True)
+    pd.testing.assert_frame_equal(old_hac, new_hac, check_exact=False, rtol=0.0, atol=1e-14)
+
+
+def test_remediation_audit_diff_covers_primary_and_sensitivity_p_values():
+    diff = (RUN / "phase8b1_audit_diff.md").read_text(encoding="utf-8")
+    assert "Explicit null-test correction" in diff
+    assert "ordinary uncentered paired strategy/benchmark bootstrap" in diff
+    for block_length in BLOCK_LENGTHS:
+        assert re.search(rf"\|\s+{block_length}\s+\|", diff)
+    assert "changed: **False**" in diff
 
 
 def test_hac_lag_rule_is_deterministic_and_all_rows_use_lag_eight():
@@ -228,7 +344,7 @@ def test_no_parameter_or_frequency_selection_occurs():
 
 def test_report_ends_with_required_phase8b1_status():
     report = (RUN / "phase8b1_report.md").read_text(encoding="utf-8").rstrip()
-    assert report.endswith("PHASE 8B-1 PAIRWISE INFERENCE COMPLETE — NO MODEL OR FREQUENCY SELECTION PERFORMED")
+    assert report.endswith("PHASE 8B-1 NULL-TEST REMEDIATION COMPLETE — AWAITING STATISTICAL AUDIT")
 
 
 def test_frozen_seed_for_each_block_length_is_deterministic_and_distinct():
