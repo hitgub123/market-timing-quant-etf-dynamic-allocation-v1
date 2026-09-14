@@ -459,7 +459,7 @@ def _write_report(output: Path, metrics: pd.DataFrame, relative: pd.DataFrame, c
         "",
         "The table copies canonical metric rows and preserves close decision → next eligible open execution, 5 bps slippage, zero commission, zero CASH return, continuous ledgers, simplified Japanese capital-gains tax at 20.315%, contemporaneous-open pretrade-equity turnover, initial deployment exclusion, report-only terminal liquidation, and completed risky-position holding episodes. No metric definition is changed here.",
         "",
-        "`realized_tax_paid` is taken from the matching after-tax source row (zero for the tax-neutral benchmark rows). `after_tax_CAGR_tax_paid_to_date`, terminal wealth, and terminal CAGR are copied from the source after-tax diagnostic row and repeated on the matching pre-tax row for apples-to-apples display.",
+        "`realized_tax_paid` preserves each source row's tax-mode-specific `tax_paid` value (zero on pre-tax and tax-neutral benchmark rows). `after_tax_CAGR_tax_paid_to_date`, terminal wealth, and terminal CAGR are copied from the source after-tax diagnostic row and repeated on the matching pre-tax row for apples-to-apples display.",
         "",
         "## Consolidated OOS rows",
         "",
