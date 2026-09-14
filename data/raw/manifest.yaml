@@ -1,0 +1,24 @@
+snapshot_policy: immutable_copies
+copied_at_utc: "2026-09-13"
+sources:
+  SPY:
+    original_snapshot: market-timing-quant/data/raw/yfinance_20260911T094709Z/SPY_raw.parquet
+    sha256: 6a73a96bf408a041bc7e77df51117ae5a0965769c407c6699f52b0fd489b28d8
+  QQQ:
+    original_snapshot: market-timing-quant/data/raw/yfinance_20260911T094709Z/QQQ_raw.parquet
+    sha256: fe5aa0db7c8a717e00cd7726d04ba1d2faff627e9f6e48c0952a5e2f235052c6
+  SSO:
+    original_snapshot: market-timing-quant/data/raw/leveraged_yfinance_20260911T142039Z/SSO_raw.parquet
+    sha256: b0636de318b2d72d4cf774d6af2e11b2bc47904150891a06a39d29355e6e2b5d
+  QLD:
+    original_snapshot: market-timing-quant/data/raw/leveraged_yfinance_20260911T142039Z/QLD_raw.parquet
+    sha256: 2499976b07ea6711b33befad63bd8e177ab85f0c820662330f9a4ad257532a9f
+  TQQQ:
+    original_snapshot: market-timing-quant/data/raw/leveraged_yfinance_20260911T142039Z/TQQQ_raw.parquet
+    sha256: 4b0b5c7500d7510bb2e61607e86130d635a3d05339cf7cde10ab7174551ccf76
+    cross_snapshot_review:
+      comparison_snapshot: market-timing-quant/data/raw/tactical_assets_yfinance_20260913T054454Z/TQQQ_raw.parquet
+      overlapping_rows: 4163
+      raw_ohlcv_dividend_split_fields_exact: true
+      adjusted_close_max_absolute_difference: 0.0000152587890625
+      outlier_disposition: retained

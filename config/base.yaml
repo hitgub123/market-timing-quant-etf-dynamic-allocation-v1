@@ -1,0 +1,49 @@
+base_currency: USD
+initial_capital: 100000
+
+assets:
+  benchmark:
+    - SPY
+    - QQQ
+  leveraged:
+    - SSO
+    - QLD
+    - TQQQ
+  risk_off:
+    - CASH
+
+excluded:
+  - SPMO
+  - semiconductor_etfs
+
+cash:
+  annual_return: 0.0
+
+portfolio:
+  long_only: true
+  external_margin: false
+  max_total_weight: 1.0
+  tqqq_max_weight: 0.20
+
+execution:
+  signal_time: close
+  fill_time: next_open
+  slippage_bps: 5
+  commission_bps: 0
+
+tax:
+  capital_gains_rate: 0.20315
+  cost_basis: average
+  payment_timing: immediate
+
+backtest:
+  live_start: "2006-06-21"
+  tqqq_common_start: "2010-02-11"
+  synthetic_start: "2000-01-03"
+
+rebalance:
+  primary:
+    - weekly
+    - monthly
+    - quarterly
+
