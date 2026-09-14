@@ -252,6 +252,26 @@ def test_terminal_liquidation_diagnostics_are_report_only_and_non_mutating():
     assert (after.after_tax_ending_value_terminal_liquidation > 0).all()
     assert (after.number_of_trades >= 0).all()
     assert (after.annual_turnover >= 0).all()
+    phase7a = pd.concat([pd.read_csv(PHASE7A / "metrics_pre_tax.csv"), pd.read_csv(PHASE7A / "metrics_after_tax.csv")], ignore_index=True)
+    phase7b = pd.read_csv(PHASE7B / "phase7b_stitched_oos_results.csv")
+    fixed = pd.read_csv(FIXED / "oos_results.csv")
+    for _, row in after.iterrows():
+        if row.strategy_id == "FIXED_MA200_QQQ_TO_QLD":
+            ref = _source_rows(fixed, row.strategy_id, row.frequency, row.tax_mode).iloc[0]
+        elif row.strategy_id == "PHASE7A_FIXED_FOUR_STATE":
+            ref = _source_rows(phase7a, row.strategy_id, row.frequency, row.tax_mode).iloc[0]
+        else:
+            ref = _source_rows(phase7b, row.strategy_id, row.frequency, row.tax_mode).iloc[0]
+        for output_column, source_column in (
+            ("source_terminal_liquidation_wealth", "terminal_liquidation_wealth"),
+            ("source_terminal_liquidation_tax", "terminal_liquidation_tax"),
+            ("source_terminal_liquidation_cost", "terminal_liquidation_cost"),
+            ("source_terminal_unrealized_gain_after_cost", "terminal_unrealized_gain_after_cost"),
+            ("after_tax_CAGR_tax_paid_to_date", "after_tax_cagr_tax_paid_to_date"),
+            ("after_tax_ending_value_terminal_liquidation", "after_tax_terminal_liquidation"),
+            ("after_tax_CAGR_terminal_liquidation", "after_tax_cagr_terminal_liquidation"),
+        ):
+            _assert_numeric_equal(pd.Series([row[output_column]]), pd.Series([ref[source_column]]))
 
 
 def test_no_parameter_selection_or_winner_is_performed_in_phase8a():
@@ -291,3 +311,12 @@ def test_source_artifact_hashes_remain_unchanged_and_manifest_matches():
 def test_report_ends_with_required_phase8a_status():
     report = (RUN / "phase8a_report.md").read_text(encoding="utf-8").rstrip()
     assert report.endswith("PHASE 8A EVIDENCE CONSOLIDATION COMPLETE — NO NEW STRATEGY OR PARAMETER SELECTION PERFORMED")
+
+
+def test_immutable_raw_snapshot_hashes_match_manifest():
+    import yaml
+
+    manifest = yaml.safe_load((ROOT / "data/raw/manifest.yaml").read_text(encoding="utf-8"))
+    for asset, info in manifest["sources"].items():
+        digest = hashlib.sha256((ROOT / "data/raw" / f"{asset}.parquet").read_bytes()).hexdigest()
+        assert digest == info["sha256"]
