@@ -274,6 +274,50 @@ def test_tax_semantics_and_terminal_fields_are_present_in_after_tax_rows():
     assert after[fields].notna().all().all()
 
 
+def test_fold_tax_diagnostics_distinguish_fold_tax_from_cumulative_tax():
+    fold = pd.read_csv(CANONICAL_RUN / "oos_fold_metrics.csv")
+    stitched = pd.read_csv(CANONICAL_RUN / "oos_results.csv")
+    tax_ledger = pd.read_csv(CANONICAL_RUN / "tax_ledger.csv")
+    tax_ledger["date"] = pd.to_datetime(tax_ledger["date"])
+    assert {"fold_realized_tax_paid", "cumulative_realized_tax_paid"} <= set(fold.columns)
+
+    for strategy in stitched.strategy.unique():
+        for mode in ("pre_tax", "after_tax"):
+            rows = fold[(fold.strategy == strategy) & (fold.tax_mode == mode)].sort_values("test_year")
+            assert len(rows) == 14
+            if mode == "pre_tax":
+                assert rows.fold_realized_tax_paid.eq(0.0).all()
+                assert rows.cumulative_realized_tax_paid.eq(0.0).all()
+                continue
+            actual = tax_ledger[
+                (tax_ledger.strategy == strategy) & (tax_ledger.tax_mode == mode)
+            ]
+            per_year = actual.groupby(actual.date.dt.year).tax_paid.sum()
+            expected_fold = rows.test_year.map(per_year).fillna(0.0).to_numpy(dtype=float)
+            np.testing.assert_allclose(
+                rows.fold_realized_tax_paid.to_numpy(dtype=float), expected_fold,
+                rtol=0, atol=NUMERIC_ATOL,
+            )
+            cumulative = rows.fold_realized_tax_paid.cumsum().to_numpy(dtype=float)
+            np.testing.assert_allclose(
+                rows.cumulative_realized_tax_paid.to_numpy(dtype=float), cumulative,
+                rtol=0, atol=NUMERIC_ATOL,
+            )
+            assert rows.cumulative_realized_tax_paid.is_monotonic_increasing
+            stitched_row = stitched[
+                (stitched.strategy == strategy) & (stitched.tax_mode == mode)
+            ].iloc[0]
+            assert rows.fold_realized_tax_paid.sum() == pytest.approx(
+                stitched_row.tax_paid, rel=0, abs=NUMERIC_ATOL,
+            )
+            assert rows.cumulative_realized_tax_paid.iloc[-1] == pytest.approx(
+                stitched_row.cumulative_realized_tax_paid, rel=0, abs=NUMERIC_ATOL,
+            )
+            assert rows.cumulative_realized_tax_paid.iloc[-1] == pytest.approx(
+                stitched_row.tax_paid, rel=0, abs=NUMERIC_ATOL,
+            )
+
+
 def test_warmup_and_calendar_alignment_are_explicit():
     prices = {asset: pd.read_parquet(ROOT / "data/processed" / f"{asset}.parquet") for asset in ("SPY", "QQQ", "SSO", "QLD")}
     folds = pd.read_csv(CANONICAL_RUN / "walk_forward_folds.csv")
@@ -320,6 +364,7 @@ def test_artifact_completeness_counts_and_required_columns():
         "cumulative_realized_tax_paid", "tax_semantics",
     }
     assert required_metric_fields <= set(combined.columns)
+    assert {"fold_realized_tax_paid", "cumulative_realized_tax_paid"} <= set(fold.columns)
 
 
 def test_source_metric_tables_match_stitched_rows_and_all_columns_survive():

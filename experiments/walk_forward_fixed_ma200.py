@@ -175,13 +175,17 @@ def _segment_metrics(
         initial_deployment_date,
     ))
     result.update(_holding_stats(_episodes_attributed_to_fold(ledger, start, end)))
+    fold_realized_tax_paid = float(segment["tax_paid"].sum()) if "tax_paid" in segment else 0.0
+    cumulative_realized_tax_paid = float(
+        ledger.loc[ledger.index <= end, "tax_paid"].sum()
+    ) if "tax_paid" in ledger else 0.0
     result.update({
         "strategy": strategy,
         "tax_mode": mode,
         "test_year": year,
         "result_type": "diagnostic_fold",
-        "cumulative_realized_tax_paid": float(segment["tax_paid"].sum())
-        if "tax_paid" in segment else 0.0,
+        "fold_realized_tax_paid": fold_realized_tax_paid,
+        "cumulative_realized_tax_paid": cumulative_realized_tax_paid,
         "tax_semantics": TAX_SEMANTICS_AFTER if mode == "after_tax" else TAX_SEMANTICS_PRE,
     })
     return result
