@@ -74,14 +74,14 @@ def _warmup_rows(
             lookback=window,
         )
         for asset in ("SPY", "QQQ"):
-            frame = prices[asset].loc[signal_index]
-            through_start = frame.loc[:start]
+            source_frame = prices[asset]
+            through_start = source_frame.loc[:start]
             lookback = through_start.tail(window + 1)
             rows.append({
                 "signal_asset": asset,
                 "momentum_window": window,
-                "signal_rows_full": int(len(frame)),
-                "pre_start_warmup_rows": int((frame.index < start).sum()),
+                "signal_rows_full": int(len(source_frame)),
+                "pre_start_warmup_rows": int((source_frame.index < start).sum()),
                 "required_lookback_sessions": window,
                 "required_observations": window + 1,
                 "lookback_observations_at_evaluation_start": int(len(lookback)),
@@ -147,9 +147,10 @@ def _tie_audit_rows(prices: dict[str, pd.DataFrame]) -> list[dict[str, object]]:
                 "momentum_window": window,
                 "frequency": frequency,
                 "rebalance_decisions": int(scheduled.sum()),
-                "exact_positive_tie_count": int(used_tie.sum()),
-                "exact_positive_tie_close_count": int((positive_tie & scheduled).sum()),
-                "tie_close_dates": ", ".join(close_dates) if close_dates else "none",
+                "exact_positive_tie_count": int(positive_tie.sum()),
+                "exact_positive_tie_used_at_rebalance": int(used_tie.sum()),
+                "tie_close_dates": ", ".join(str(value.date()) for value in signal_index[positive_tie]) if positive_tie.any() else "none",
+                "scheduled_tie_close_dates": ", ".join(close_dates) if close_dates else "none",
                 "tie_execution_dates": ", ".join(execution_dates) if execution_dates else "none",
             })
     return rows
@@ -335,13 +336,13 @@ def _write_phase5_report(
         lines.append(f"| {label} | {condition} | {selected} |")
     lines += [
         "",
-        "| L | Frequency | Rebalance decisions | Exact positive ties used at rebalance | Tie close count | Tie close dates | Tie execution dates |",
+        "| L | Frequency | Rebalance decisions | Exact positive ties in full signal history | Ties used at rebalance | Tie close dates | Tie execution dates |",
         "|---:|---|---:|---:|---:|---|---|",
     ]
     for row in ties:
         lines.append(
             f"| {row['momentum_window']} | {row['frequency']} | {row['rebalance_decisions']} | "
-            f"{row['exact_positive_tie_count']} | {row['exact_positive_tie_close_count']} | "
+            f"{row['exact_positive_tie_count']} | {row['exact_positive_tie_used_at_rebalance']} | "
             f"{row['tie_close_dates']} | {row['tie_execution_dates']} |",
         )
 

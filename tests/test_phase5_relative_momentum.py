@@ -227,7 +227,7 @@ def test_phase5_historical_positive_tie_scan_is_zero_for_every_grid_cell():
     ties = _tie_audit_rows(prices)
     assert len(ties) == len(MOMENTUM_WINDOWS) * len(FREQUENCIES)
     assert {row["exact_positive_tie_count"] for row in ties} == {0}
-    assert {row["exact_positive_tie_close_count"] for row in ties} == {0}
+    assert {row["exact_positive_tie_used_at_rebalance"] for row in ties} == {0}
     assert {row["tie_close_dates"] for row in ties} == {"none"}
     assert {row["tie_execution_dates"] for row in ties} == {"none"}
 
@@ -339,13 +339,19 @@ def test_phase5_rotation_execution_has_two_legs_correct_cost_basis_and_immediate
     assert positions.loc[positions.date.eq(index[1]) & positions.asset.eq("QQQ"), "shares"].iloc[0] > 0.0
 
 
-def test_phase5_rotation_turnover_includes_both_legs_and_excludes_initial_deployment():
+@pytest.mark.parametrize(
+    "asset_a,asset_b",
+    [("SPY", "QQQ"), ("QQQ", "SPY"), ("SSO", "QLD"), ("QLD", "SSO")],
+)
+def test_phase5_rotation_turnover_includes_both_legs_and_excludes_initial_deployment(
+    asset_a: str, asset_b: str,
+):
     index = pd.date_range("2024-01-02", periods=3, freq="B")
     prices = _prices(
         index,
-        {"SPY": [100.0, 120.0, 120.0], "QQQ": [80.0, 80.0, 80.0]},
+        {asset_a: [100.0, 120.0, 120.0], asset_b: [80.0, 80.0, 80.0]},
     )
-    targets = pd.DataFrame({"SPY": [1.0, 0.0, 0.0], "QQQ": [0.0, 1.0, 1.0]}, index=index)
+    targets = pd.DataFrame({asset_a: [1.0, 0.0, 0.0], asset_b: [0.0, 1.0, 1.0]}, index=index)
     ledger, _, trades, _ = rotation_backtest(
         prices, targets, initial_capital=1_000.0, commission_bps=0.0, slippage_bps=5.0, tax_rate=None,
     )
@@ -411,6 +417,7 @@ def test_phase5_window_specific_warmup_and_common_calendar_alignment():
     }
     for row in warmups:
         assert row["pre_start_warmup_rows"] > 0
+        assert row["signal_rows_full"] == (8461 if row["signal_asset"] == "SPY" else 6919)
         assert row["required_observations"] == row["momentum_window"] + 1
         assert row["lookback_observations_at_evaluation_start"] == row["momentum_window"] + 1
         assert row["first_valid_momentum_date"] < str(start.date())
