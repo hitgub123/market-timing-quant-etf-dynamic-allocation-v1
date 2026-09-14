@@ -32,6 +32,8 @@ The old CSVs predate the metrics audit. The selected rows below use the monthly 
 
 For the after-tax versions of the same seven rows, ending value, CAGR, MaxDD, Calmar, and realized `tax_paid` are unchanged numerically. The 50/50 realized tax totals are `$252,030.05` monthly, `$217,358.06` quarterly, and `$45,508.84` for QQQ/CASH monthly; the 100% endpoints have zero realized tax.
 
+After-tax annual turnover changes are also metric-definition corrections: 100% endpoints `0.049494 → 0.000000`, 50/50 SPY/QLD monthly `2.220155 → 0.349327`, 50/50 SPY/QLD quarterly `1.524631 → 0.211084`, and 50/50 QQQ/CASH monthly `0.315697 → 0.138729`. The after-tax denominator is the contemporaneous after-tax ledger equity, while the included trade set remains the same.
+
 The old after-tax table had no terminal-liquidation fields. New diagnostic values are:
 
 | Strategy | Wealth after realized tax paid to date | Terminal wealth | Terminal CAGR | Terminal tax | Terminal cost | Unrealized gain after cost |
@@ -61,7 +63,7 @@ The complete old/new `equity_curve.csv` byte hash is identical:
 
 `46c70bf5897bbb1bdb7d8190d9018210aee9d37f1d1dbeecadec2ef5c483d5f9`
 
-Normalized strategy-row hashes are also identical for trades (`420bca204d4eed89d50efdaa75e16953931e328ed5cb776ecdedf51d5f945259`), positions (`044ca44dd7d9db1e21553b69500365873768bf3f80bb6a7d4680870a7330a176`), and the tax ledger (`5ce8ff42c5a6a9e2d2990be1a1a7a2beb44593c012751679a5f1a4c1526193a1`). Drawdown numeric values are identical; the CSV header was normalized from the stale `index` label to `date`.
+Byte hashes are also identical for trades (`420bca204d4eed89d50efdaa75e16953931e328ed5cb776ecdedf51d5f945259`), positions (`044ca44dd7d9db1e21553b69500365873768bf3f80bb6a7d4680870a7330a176`), and the tax ledger (`5ce8ff42c5a6a9e2d2990be1a1a7a2beb44593c012751679a5f1a4c1526193a1`). Drawdown numeric values are identical; the CSV header was normalized from the stale `index` label to `date`.
 
 Thus daily equity curves, ending values, CAGR, MaxDD, and Calmar are unchanged. Turnover and holding-period fields changed only because stale artifacts were regenerated under the current audited definitions. New terminal fields are non-mutating diagnostics.
 
