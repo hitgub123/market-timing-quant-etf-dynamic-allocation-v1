@@ -199,6 +199,7 @@ def _write_phase2_report(
     warmups: list[dict[str, object]],
     alignments: list[dict[str, object]],
     turnover_audits: list[dict[str, object]],
+    first_executions: dict[str, str | None],
     *,
     start: pd.Timestamp,
     end: pd.Timestamp,
@@ -256,6 +257,23 @@ def _write_phase2_report(
             f"{row['signal_calendar_rows']} | {row['held_calendar_rows']} | "
             f"{row['common_evaluation_rows']} | {row['missing_targets_after_reindex']} |",
         )
+
+    lines += [
+        "",
+        "## First execution dates",
+        "",
+        "The first execution date below is the first actual BUY or SELL in the pre-tax strategy ledger; "
+        "there is no trade or equity before the common evaluation start.",
+        "",
+        "| Rule | Frequency | First evaluation date | First strategy execution date |",
+        "|---|---|---|---|",
+    ]
+    for rule in STRATEGIES:
+        for frequency in FREQUENCIES:
+            strategy = f"{rule}_{frequency}"
+            lines.append(
+                f"| {rule} | {frequency} | {start.date()} | {first_executions.get(strategy) or 'N/A'} |",
+            )
 
     lines += [
         "",
@@ -350,6 +368,7 @@ def run(config_path: Path, output_root: Path, run_id: str | None = None) -> Path
     warmups = _warmup_rows(prices, start, end)
     alignments = _alignment_rows(prices, start, end)
     turnover_audits: list[dict[str, object]] = []
+    first_executions: dict[str, str | None] = {}
 
     for name, (signal_asset, held_asset) in STRATEGIES.items():
         signal_prices = prices[signal_asset]["adjusted_close"]
@@ -406,6 +425,10 @@ def run(config_path: Path, output_root: Path, run_id: str | None = None) -> Path
                 positions.append(position.assign(strategy=strategy, tax_mode=mode))
                 if len(trade):
                     trades.append(trade.assign(strategy=strategy, tax_mode=mode))
+                    if mode == "pre_tax":
+                        first_executions[strategy] = str(pd.to_datetime(trade["date"]).min().date())
+                elif mode == "pre_tax":
+                    first_executions[strategy] = None
                 if len(tax):
                     taxes.append(tax.assign(strategy=strategy, tax_mode=mode))
                 if mode == "pre_tax" and (name, frequency) in TURNOVER_AUDIT_KEYS:
@@ -460,6 +483,7 @@ def run(config_path: Path, output_root: Path, run_id: str | None = None) -> Path
         warmups,
         alignments,
         turnover_audits,
+        first_executions,
         start=start,
         end=end,
         execution_rate=execution_rate,
