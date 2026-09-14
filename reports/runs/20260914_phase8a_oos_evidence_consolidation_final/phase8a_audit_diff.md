@@ -2,8 +2,8 @@
 
 ## A. Test result
 
-- Dedicated Phase 8A tests: **11 passed** (`pytest -q tests/test_phase8a_evidence_consolidation.py`).
-- Full repository result: **247 passed** (`pytest -q`).
+- Dedicated Phase 8A tests: **12 passed** (`pytest -q tests/test_phase8a_evidence_consolidation.py`).
+- Full repository result: **248 passed** (`pytest -q`).
 
 ## B. Consolidation scope and exact counts
 
