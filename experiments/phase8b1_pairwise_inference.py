@@ -11,13 +11,13 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+from math import erfc, sqrt
 from pathlib import Path
 import platform
 import sys
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -93,6 +93,11 @@ METRICS = (
     "max_drawdown_difference",
     "calmar_difference",
 )
+
+
+def _normal_sf(value: float) -> float:
+    """Standard-normal survival function without adding a runtime dependency."""
+    return float(0.5 * erfc(value / sqrt(2.0)))
 
 
 def _sha256(path: Path) -> str:
@@ -415,7 +420,7 @@ def _hac_mean_return_rows(daily: pd.DataFrame) -> pd.DataFrame:
             long_run_variance = max(0.0, long_run_variance)
             standard_error_daily = float(np.sqrt(long_run_variance / n_obs))
             t_stat = float(mean_daily / standard_error_daily) if standard_error_daily > 0 else (np.inf if mean_daily > 0 else 0.0)
-            p_value = float(stats.norm.sf(t_stat)) if np.isfinite(t_stat) else (0.0 if t_stat > 0 else 1.0)
+            p_value = _normal_sf(t_stat) if np.isfinite(t_stat) else (0.0 if t_stat > 0 else 1.0)
             rows.append({
                 "comparison_id": comparison["comparison_id"],
                 "comparison_label": comparison["comparison_label"],
@@ -647,7 +652,6 @@ def run(
         "python": platform.python_version(),
         "numpy": np.__version__,
         "pandas": pd.__version__,
-        "scipy": stats.__version__ if hasattr(stats, "__version__") else __import__("scipy").__version__,
     }
     observed.to_csv(output / "pairwise_observed_metrics.csv", index=False)
     bootstrap.to_csv(output / "stationary_bootstrap_results.csv", index=False)
