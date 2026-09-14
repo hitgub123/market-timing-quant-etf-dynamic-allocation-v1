@@ -92,3 +92,10 @@ This log records what was implemented, why it was needed, and the validation per
 - Added after-tax realized-wealth, cumulative realized-tax, and non-mutating terminal-liquidation diagnostics to every after-tax candidate. The diagnostic does not add terminal trades or alter the ledger, turnover, or holding episodes.
 - Added report sections for the common sample, grid counts, representative pre-tax/after-tax/terminal frontiers, benchmark endpoints, and independently recomputed turnover examples.
 - Full suite result: 68 tests passed. Final Phase 1 artifacts are in `reports/runs/20260914_phase1_audit_final_v2`; the detailed diff and final conclusion are in `phase1_audit_diff.md`.
+
+## 2026-09-14 — Phase 7B canonical turnover remediation
+
+- Reused the audited Phase 2 contemporaneous-open `pretrade_equity` reconstruction for Phase 7B single-asset candidate, final, and fold turnover reporting; dynamic Model B ledgers were verified against the same denominator.
+- Reran the frozen selector over all 2,800 candidates and 112 expanding-fold selections. The corrected turnover inputs changed no selected status or parameter (0/112 selections changed), so stitched targets, equity curves, positions, trades, and tax ledgers remain byte-identical.
+- Fixed QLD/MA200 annual turnover now matches the accepted OOS anchors: weekly 1.610241, monthly 1.171084, bimonthly 0.731928, quarterly 0.878313.
+- Added 13 dedicated turnover/selection regression tests. The complete suite passed: 236 tests. The canonical run and detailed evidence are in `reports/runs/20260914_phase7b_turnover_audit_final`, with final status `PHASE 7B AUDIT PASS`.

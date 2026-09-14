@@ -1,0 +1,24 @@
+model_a_ma_days:
+- 150
+- 175
+- 200
+- 225
+- 250
+model_b_ma_days:
+- 150
+- 175
+- 200
+- 225
+- 250
+model_b_momentum_days:
+- 126
+- 189
+- 252
+model_b_low_vol_quantile:
+- 0.25
+- 0.33
+- 0.4
+minimum_cagr: 0.15
+maximum_abs_max_drawdown: 0.45
+objective: maximize_calmar
+fallback: NO_ELIGIBLE_PARAMETER -> CASH
