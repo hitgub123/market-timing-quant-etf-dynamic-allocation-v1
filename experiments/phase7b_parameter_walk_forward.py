@@ -15,7 +15,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from experiments.phase2_ma200 import FREQUENCIES
+from experiments.phase2_ma200 import (
+    FREQUENCIES,
+    _add_pretrade_equity as _phase2_add_pretrade_equity,
+    _turnover_audit as _phase2_turnover_audit,
+)
 from market_timing_quant.configuration import load_config
 from market_timing_quant.data import run_data_audit
 from market_timing_quant.metrics import drawdown_series, performance_metrics
@@ -43,15 +47,80 @@ MOMENTUM_DAYS = (126, 189, 252)
 LOW_VOL_QUANTILES = (0.25, 0.33, 0.40)
 MINIMUM_CAGR = 0.15
 MAXIMUM_ABS_MAX_DRAWDOWN = 0.45
+DEFAULT_SELECTION_COMPARISON_RUN = "20260913_phase7b_strict_gate_v1_final"
 
 
 def _cost_rate(config: dict) -> float:
     return (float(config["execution"]["commission_bps"]) + float(config["execution"]["slippage_bps"])) / 10_000
 
 
+def _add_pretrade_equity(
+    ledger: pd.DataFrame,
+    prices: pd.DataFrame | dict[str, pd.DataFrame],
+    initial_capital: float,
+) -> pd.DataFrame:
+    """Attach the canonical contemporaneous open-before-trade equity.
+
+    The Phase 7B execution functions intentionally return economic ledgers
+    without a reporting denominator for single-asset paths.  Phase 2's
+    audited reconstruction is reused for those paths.  Dynamic multi-asset
+    ledgers already carry the same field; when given a price map we verify it
+    rather than silently accepting a different denominator.
+    """
+    if isinstance(prices, pd.DataFrame):
+        return _phase2_add_pretrade_equity(ledger, prices, initial_capital)
+    if not prices:
+        raise ValueError("prices must contain at least one asset")
+    if not ledger.index.equals(next(iter(prices.values())).index):
+        raise ValueError("ledger and prices must share the evaluation calendar")
+    if "cash" not in ledger:
+        raise ValueError("ledger must contain cash to reconstruct pretrade equity")
+    reconstructed = ledger.cash.shift(1)
+    share_columns = []
+    for asset, frame in prices.items():
+        if not frame.index.equals(ledger.index):
+            raise ValueError("all prices must share the ledger evaluation calendar")
+        column = f"{asset}_shares"
+        if column in ledger:
+            share_columns.append(column)
+            prior_shares = ledger[column].shift(1).fillna(0.0).astype(float)
+            opens = frame["open"].astype(float)
+            if ((prior_shares > 0.0) & ~np.isfinite(opens)).any():
+                raise ValueError(f"open price is missing while {asset} is held")
+            # Assets unavailable before their listing contribute zero while
+            # unheld; this mirrors the execution engine's availability rule.
+            reconstructed = reconstructed + prior_shares * opens.fillna(0.0)
+    if not share_columns:
+        if "shares" not in ledger or len(prices) != 1:
+            raise ValueError("ledger does not expose asset shares for pretrade reconstruction")
+        frame = next(iter(prices.values()))
+        prior_shares = ledger["shares"].shift(1).fillna(0.0).astype(float)
+        opens = frame["open"].astype(float)
+        if ((prior_shares > 0.0) & ~np.isfinite(opens)).any():
+            raise ValueError("open price is missing while the asset is held")
+        reconstructed = reconstructed + prior_shares * opens.fillna(0.0)
+    reconstructed = reconstructed.fillna(float(initial_capital)).astype(float)
+    result = ledger.copy()
+    if "pretrade_equity" in result:
+        existing = result["pretrade_equity"].astype(float)
+        if not np.allclose(existing.to_numpy(), reconstructed.to_numpy(), rtol=0.0, atol=1e-9):
+            raise AssertionError("ledger pretrade_equity is not the canonical open-before-trade value")
+    result["pretrade_equity"] = reconstructed
+    return result
+
+
+def _turnover_audit(ledger: pd.DataFrame, trades: pd.DataFrame) -> dict[str, object]:
+    """Expose the exact audited Phase 2 turnover helper for Phase 7B tests."""
+    if len(trades) and "pretrade_equity" not in ledger:
+        raise ValueError("canonical turnover requires pretrade_equity on trade dates")
+    return _phase2_turnover_audit(ledger, trades)
+
+
 def _training_metric(ledger: pd.DataFrame, trades: pd.DataFrame, end: pd.Timestamp, capital: float) -> dict:
     prefix_ledger = ledger.loc[:end]
     prefix_trades = trades[pd.to_datetime(trades["date"]) <= end] if len(trades) else trades
+    if len(prefix_trades) and "pretrade_equity" not in prefix_ledger:
+        raise ValueError("training turnover requires canonical pretrade_equity")
     return performance_metrics(prefix_ledger, prefix_trades, capital)
 
 
@@ -129,6 +198,64 @@ def _select_training_folds(
     return pd.DataFrame(candidate_rows), pd.DataFrame(selection_rows)
 
 
+def _find_selection_comparison_source(output_root: Path, output: Path) -> Path | None:
+    """Find the previously delivered Phase 7B selection table for the audit."""
+    preferred = output_root / DEFAULT_SELECTION_COMPARISON_RUN / "selected_parameters_by_fold.csv"
+    if preferred.exists() and preferred.parent.resolve() != output.resolve():
+        return preferred
+    candidates = sorted(
+        (path for path in output_root.glob("*phase7b*/selected_parameters_by_fold.csv")
+         if path.parent.resolve() != output.resolve()),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    return candidates[0] if candidates else None
+
+
+def _selection_old_vs_new(old: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
+    """Compare every frozen model/frequency/fold selection input and result."""
+    key = ["model", "frequency", "test_year"]
+    if old.duplicated(key).any() or new.duplicated(key).any():
+        raise AssertionError("selection comparison requires one row per model/frequency/fold")
+    fields = {
+        "selection_status": "selection_status",
+        "selected_ma_days": "selected_ma_days",
+        "selected_momentum_days": "selected_momentum_days",
+        "selected_low_vol_quantile": "selected_low_vol_quantile",
+        "training_cagr": "training_cagr",
+        "training_max_drawdown": "training_max_drawdown",
+        "training_calmar": "training_calmar",
+        "training_turnover": "training_turnover",
+    }
+    old_part = old[key + list(fields)].rename(columns={value: f"old_{name}" for name, value in fields.items()})
+    new_part = new[key + list(fields)].rename(columns={value: f"new_{name}" for name, value in fields.items()})
+    merged = old_part.merge(new_part, on=key, how="outer", validate="one_to_one", sort=False)
+    if len(merged) != len(new) or len(merged) != 112:
+        raise AssertionError(f"expected 112 selection comparisons, got {len(merged)}")
+
+    def same(left: object, right: object) -> bool:
+        if pd.isna(left) and pd.isna(right):
+            return True
+        if isinstance(left, str) or isinstance(right, str):
+            return left == right
+        try:
+            return bool(np.isclose(float(left), float(right), rtol=0.0, atol=1e-12, equal_nan=True))
+        except (TypeError, ValueError):
+            return left == right
+
+    changed = []
+    parameter_fields = [
+        ("old_selection_status", "new_selection_status"),
+        ("old_selected_ma_days", "new_selected_ma_days"),
+        ("old_selected_momentum_days", "new_selected_momentum_days"),
+        ("old_selected_low_vol_quantile", "new_selected_low_vol_quantile"),
+    ]
+    for _, row in merged.iterrows():
+        changed.append(any(not same(row[left], row[right]) for left, right in parameter_fields))
+    merged["selection_changed"] = changed
+    return merged.sort_values(key).reset_index(drop=True)
+
+
 def _stitch_series(
     selections: pd.DataFrame,
     folds: list,
@@ -204,7 +331,9 @@ def _fold_test_audit(
         year_trades = trades.loc[(pd.to_datetime(trades["date"]) >= fold.test_start) & (pd.to_datetime(trades["date"]) <= fold.test_end)] if len(trades) else trades
         if len(year_trades):
             dates = pd.to_datetime(year_trades["date"])
-            denominator_series = ledger["pretrade_equity"] if "pretrade_equity" in ledger else ledger["equity"]
+            if "pretrade_equity" not in ledger:
+                raise ValueError("fold turnover requires canonical pretrade_equity")
+            denominator_series = ledger["pretrade_equity"]
             denominators = denominator_series.reindex(dates).to_numpy(dtype=float)
             include = np.ones(len(year_trades), dtype=bool)
             first_trade_date = pd.to_datetime(trades["date"]).min() if len(trades) else None
@@ -254,7 +383,12 @@ def _metric_row(
     model: str,
     frequency: str,
     tax_mode: str,
+    prices: pd.DataFrame | dict[str, pd.DataFrame] | None = None,
 ) -> dict:
+    if prices is not None:
+        ledger = _add_pretrade_equity(ledger, prices, float(config["initial_capital"]))
+    if len(trades) and "pretrade_equity" not in ledger:
+        raise ValueError("final turnover requires canonical pretrade_equity")
     metric = performance_metrics(
         ledger, trades, float(config["initial_capital"]),
         terminal_tax_rate=float(config["tax"]["capital_gains_rate"]) if tax_mode == "after_tax" else None,
@@ -419,6 +553,8 @@ def _write_report(output: Path, metrics: pd.DataFrame, selections: pd.DataFrame,
         "", "## Selection rules", "",
         "Eligibility is training CAGR >= 15% and abs(MaxDD) <= 45%. Candidates within 5% of the best eligible Calmar use the frozen tie-break: lower absolute MaxDD, lower turnover, longer MA, longer momentum, then volatility quantile closest to 0.33.",
         "No test-fold performance enters parameter selection. Any fold without an eligible parameter is recorded as `NO_ELIGIBLE_PARAMETER`; constraints are never relaxed.",
+        "Annual turnover is the audited contemporaneous-open definition: sum(abs(trade notional) / open-before-trade pretrade equity) divided by calendar years. The true initial deployment BUY and hypothetical terminal liquidation are excluded.",
+        "The frozen selector was rerun after correcting turnover inputs; `selection_old_vs_new.csv` records the fold-by-fold comparison.",
     ]
     (output / "phase7b_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -464,6 +600,7 @@ def run(config_path: Path, output_root: Path, run_id: str | None = None) -> Path
                 commission_bps=float(config["execution"]["commission_bps"]),
                 slippage_bps=float(config["execution"]["slippage_bps"]), tax_rate=None,
             )
+            ledger = _add_pretrade_equity(ledger, prices["QLD"].reindex(full_index), capital)
             a_cache[key] = (ledger, trades); a_targets[key] = targets
         candidates, selections = _select_training_folds(
             a_cache, a_parameters, folds, model="MODEL_A_QLD_TREND", frequency=frequency, capital=capital,
@@ -487,6 +624,7 @@ def run(config_path: Path, output_root: Path, run_id: str | None = None) -> Path
                 commission_bps=float(config["execution"]["commission_bps"]),
                 slippage_bps=float(config["execution"]["slippage_bps"]), tax_rate=None,
             )
+            ledger = _add_pretrade_equity(ledger, full_price_map, capital)
             b_cache[key] = (ledger, trades); b_targets[key] = (targets, states)
         candidates, selections = _select_training_folds(
             b_cache, b_parameters, folds, model="MODEL_B_FOUR_STATE", frequency=frequency, capital=capital,
@@ -498,6 +636,13 @@ def run(config_path: Path, output_root: Path, run_id: str | None = None) -> Path
     selections = pd.concat(all_selections, ignore_index=True)
     candidate_table.to_csv(output / "training_candidate_results.csv", index=False)
     fold_table(folds).to_csv(output / "walk_forward_folds.csv", index=False)
+    comparison_source = _find_selection_comparison_source(output_root, output)
+    if comparison_source is None:
+        old_selections = selections.copy()
+    else:
+        old_selections = pd.read_csv(comparison_source)
+    selection_comparison = _selection_old_vs_new(old_selections, selections)
+    selection_comparison.to_csv(output / "selection_old_vs_new.csv", index=False)
 
     metric_rows = _buy_hold_rows(prices, oos_index, config)
     curves, drawdowns, trades_out, taxes_out, positions_out, targets_out = [], [], [], [], [], []
@@ -529,6 +674,7 @@ def run(config_path: Path, output_root: Path, run_id: str | None = None) -> Path
                     commission_bps=float(config["execution"]["commission_bps"]),
                     slippage_bps=float(config["execution"]["slippage_bps"]), tax_rate=tax_rate,
                 )
+                ledger = _add_pretrade_equity(ledger, prices["QLD"].reindex(oos_index), capital)
                 runs[(model, mode)] = (ledger, trades, taxes)
                 metric_rows.append(_metric_row(ledger, trades, config, strategy=strategy, model=model, frequency=frequency, tax_mode=mode))
                 curves.append(ledger[["equity"]].assign(strategy=strategy, model=model, frequency=frequency, tax_mode=mode).reset_index())
@@ -546,6 +692,11 @@ def run(config_path: Path, output_root: Path, run_id: str | None = None) -> Path
                     target, schedule, initial_capital=capital,
                     commission_bps=float(config["execution"]["commission_bps"]),
                     slippage_bps=float(config["execution"]["slippage_bps"]), tax_rate=tax_rate,
+                )
+                ledger = _add_pretrade_equity(
+                    ledger,
+                    {asset: prices[asset].reindex(oos_index) for asset in ("QQQ", "QLD", "TQQQ")},
+                    capital,
                 )
                 ledger["state"] = states
                 runs[(model, mode)] = (ledger, trades, taxes)
