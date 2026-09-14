@@ -6,12 +6,12 @@ No signals.py, data, or Phase 5-7 code was changed.
 
 ## A. Complete pytest result
 
-pytest -q -> **115 passed in 13.84s**.
-Dedicated Phase 4 file: tests/test_phase4_absolute_momentum.py -> **19 passed**.
+pytest -q -> **116 passed in 15.72s**.
+Dedicated Phase 4 file: tests/test_phase4_absolute_momentum.py -> **20 passed**.
 
 ## B. Dedicated Phase 4 test count
 
-19 dedicated tests cover the frozen grid, formula/zero boundary, next-open timing, schedule semantics, signal/held separation, CASH, warm-up/calendar, terminal-tax non-mutation, stability enumeration, old-to-new economic invariance, artifact completeness, and report semantics.
+20 dedicated tests cover the frozen grid, formula/zero boundary, next-open timing, schedule semantics, signal/held separation, CASH, warm-up/calendar, terminal-tax non-mutation, stability enumeration, old-to-new economic invariance, artifact completeness, and report semantics.
 
 ## C. Exact grid/count audit
 
