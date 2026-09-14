@@ -4,7 +4,7 @@ Compared against `reports/runs/20260913_phase2_ma200_final`, the stale Phase 2 r
 
 ## A. Complete pytest result
 
-The complete suite result after adding the dedicated Phase 2 module is **81 passed** (`81 passed in 11.77s`), with no failures, errors, skips, xfails, or warnings. The dedicated Phase 2 module itself is **12 passed**.
+The complete suite result after adding the dedicated Phase 2 module is **81 passed** (`81 passed in 12.16s`), with no failures, errors, skips, xfails, or warnings. The dedicated Phase 2 module itself is **12 passed**.
 
 The dedicated tests cover the exact 200-session MA window and strict comparison, future-data mutation, actual close-*t* to next-open execution, a large open/close gap, all four first-available-session schedules, non-rebalance-day waiting, QQQ-signal/QLD-held separation, zero-return CASH, exact 5 bps costs, average-cost immediate tax and loss-pool treatment, warm-up/calendar alignment, non-mutating terminal diagnostics, and final artifact completeness.
 
