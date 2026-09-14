@@ -2,9 +2,9 @@
 
 ## A. Full pytest result
 
-pytest -q → **156 passed in 16.22s**.
+pytest -q → **156 passed in 16.41s**.
 
-pytest -q tests/test_phase5_relative_momentum.py → **40 passed in 2.98s**.
+pytest -q tests/test_phase5_relative_momentum.py → **40 passed in 2.97s**.
 
 ## B. Dedicated Phase 5 test count
 
@@ -197,4 +197,3 @@ Immutable raw snapshots match data/raw/manifest.yaml; no raw data file was modif
 None. Historical exact positive ties are zero for every lookback/frequency cell, so UNRESOLVED_FROZEN_SPEC_TIE_BREAK is not triggered. signals.py, Phase 0–4 code, and Phase 6–7 code were not modified. Phase 5 remains descriptive full-sample evidence only; no parameter is selected and no OOS/Walk-Forward claim is made.
 
 PHASE 5 AUDIT PASS
-
