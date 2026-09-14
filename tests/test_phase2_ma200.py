@@ -114,12 +114,18 @@ def test_phase2_signal_asset_is_separate_from_held_asset():
     changed_qld = qld.copy()
     changed_qld[["open", "adjusted_close"]] *= 11.0
     qqq_target = trend_target_next_open(qqq, "weekly", 200)
-    # QLD is the held asset, never an input to the QQQ MA signal.
+    # QLD is the held asset, never an input to the QQQ MA signal. Mutating its
+    # history therefore cannot change the signal state, but it does change the
+    # execution price/notional when it is actually held.
     pd.testing.assert_series_equal(qqq_target, trend_target_next_open(qqq, "weekly", 200))
     ledger, _, trades, _ = single_asset_timed_backtest(
         qld, qqq_target, initial_capital=1_000.0, commission_bps=0, slippage_bps=5, tax_rate=None,
     )
+    _, _, changed_trades, _ = single_asset_timed_backtest(
+        changed_qld, qqq_target, initial_capital=1_000.0, commission_bps=0, slippage_bps=5, tax_rate=None,
+    )
     assert trades.price.iloc[-1] == pytest.approx(250.0)
+    assert changed_trades.price.iloc[-1] == pytest.approx(2_750.0)
     assert ledger.shares.iloc[-1] > 0
     assert changed_qld.open.iloc[-1] != qld.open.iloc[-1]
 
