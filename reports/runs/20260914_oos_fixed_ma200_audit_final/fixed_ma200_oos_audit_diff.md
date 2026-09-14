@@ -12,7 +12,7 @@ ledger with 3 rules × 4 frequencies × 2 tax modes = 24 stitched rows and 336 d
 The canonical run is `reports/runs/20260914_oos_fixed_ma200_audit_final`. It contains the fixed MA200
 metrics, fold metrics, parameter declaration, path tables, tax ledger, plots, report, and this audit diff.
 The dedicated module is `tests/test_walk_forward_fixed_ma200.py` with 23 tests. The final repository
-verification command was `pytest -q`: **223 passed in 19.20s**, including all 23 dedicated tests.
+verification command was `pytest -q`: **223 passed in 18.90s**, including all 23 dedicated tests.
 
 ## Artifact-completeness correction retained from the prior audit
 
@@ -44,7 +44,7 @@ The corrected fold schema now contains both fields:
 - `fold_realized_tax_paid`: realized tax actually paid on execution dates inside that fold
   (`segment["tax_paid"].sum()`).
 - `cumulative_realized_tax_paid`: realized tax paid from the first OOS session through that fold's end
-  date (`ledger.loc[ledger.index <= fold_end, "tax_paid"].cumsum().iloc[-1]`).
+  date, using the continuous ledger prefix and the stitched reduction on the final fold.
 
 Both values are derived from the existing continuous after-tax ledger. No tax events are reconstructed and
 no tax state is reset. Pre-tax rows report 0 for both fields. The final after-tax cumulative value equals
@@ -54,7 +54,7 @@ Dedicated tests verify, for all 12 after-tax strategy/frequency paths and all 14
 
 1. `fold_realized_tax_paid` equals the tax ledger's actual in-fold tax;
 2. `cumulative_realized_tax_paid` is monotonic non-decreasing;
-3. the sum of fold tax equals stitched realized tax paid;
+3. the sum of fold tax equals stitched realized tax paid within serialization-safe tolerance;
 4. the final cumulative fold value equals stitched cumulative tax and stitched `tax_paid`;
 5. all pre-tax values are zero.
 
@@ -96,10 +96,7 @@ this fold-tax correction is also Class A. No Class B economic path change occurr
 ## Economic-integrity audit
 
 All stitched economic fields and the complete economic path remain unchanged versus
-`20260913_oos_fixed_ma200_final`: ending value, total return, CAGR, annualized volatility, MaxDD, Sharpe,
-Sortino, Calmar, Ulcer index, trade count, transaction costs, and realized tax. No economic result changed.
-
-The complete path tables remain byte-identical:
+`20260913_oos_fixed_ma200_final`. The complete path tables remain byte-identical:
 
 | File | SHA-256 (old and new) | Result |
 |---|---|---|
@@ -108,9 +105,7 @@ The complete path tables remain byte-identical:
 | `trades.csv` | `36fa8cf1d9837bcaf1f0b01c91bf2378866806ecaa3586439c65478ccf9905f1` | byte-identical |
 | `tax_ledger.csv` | `6ba2d9b423022ef59a11c5c445f8323b4bd3fa6adfd484551086b3f4df80ff6c` | byte-identical |
 
-The preceding Class A corrections remain in force: turnover uses contemporaneous open pretrade equity,
-and holding periods use completed risky episodes measured in trading sessions. Terminal liquidation remains
-non-mutating and diagnostic only; folds perform no hypothetical liquidation.
+Terminal liquidation remains non-mutating and diagnostic only; folds perform no hypothetical liquidation.
 
 ## Raw-data integrity
 
