@@ -85,7 +85,9 @@ def _assert_numeric_equal(left: pd.Series, right: pd.Series) -> None:
         pd.to_numeric(left),
         pd.to_numeric(right),
         rtol=0.0,
-        atol=1e-10,
+        # CSV float serialization can differ by a few ulps for large wealth
+        # values while preserving the canonical economic result.
+        atol=1e-8,
         equal_nan=True,
     )
 
