@@ -4,7 +4,7 @@ This document records the full Phase 3 MA parameter-stability audit and the rege
 
 ## A. Complete pytest result
 
-`pytest -q` completed with **96 passed in 13.59s**.
+`pytest -q` completed with **96 passed in 13.40s**.
 
 ## B. Dedicated Phase 3 test count
 
