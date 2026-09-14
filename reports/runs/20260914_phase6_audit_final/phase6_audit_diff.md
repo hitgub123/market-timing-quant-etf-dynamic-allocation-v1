@@ -2,9 +2,9 @@
 
 ## A. Full pytest result
 
-pytest -q → **200 passed in 19.78s**.
+pytest -q → **200 passed in 20.09s**.
 
-pytest -q tests/test_phase6_vol_target.py → **44 passed in 2.97s**.
+pytest -q tests/test_phase6_vol_target.py → **44 passed in 3.01s**.
 
 ## B. Dedicated Phase 6 test count
 
