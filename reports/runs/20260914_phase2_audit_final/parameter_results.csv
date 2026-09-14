@@ -1,0 +1,13 @@
+strategy,frequency,ma_window,searched
+QQQ_MA200_QQQ,weekly,200,False
+QQQ_MA200_QQQ,monthly,200,False
+QQQ_MA200_QQQ,bimonthly,200,False
+QQQ_MA200_QQQ,quarterly,200,False
+QQQ_MA200_QLD,weekly,200,False
+QQQ_MA200_QLD,monthly,200,False
+QQQ_MA200_QLD,bimonthly,200,False
+QQQ_MA200_QLD,quarterly,200,False
+SPY_MA200_SSO,weekly,200,False
+SPY_MA200_SSO,monthly,200,False
+SPY_MA200_SSO,bimonthly,200,False
+SPY_MA200_SSO,quarterly,200,False
