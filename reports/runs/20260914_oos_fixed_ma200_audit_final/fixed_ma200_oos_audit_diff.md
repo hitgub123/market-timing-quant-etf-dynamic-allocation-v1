@@ -98,6 +98,21 @@ or serialization-safe equality for `ending_value`, `total_return`, `cagr`, `annu
 `tax_paid`. All 24 rows pass with zero economic delta. The following reporting-only fields changed as
 expected:
 
+| Economic field | Rows compared | Maximum absolute old→new delta |
+|---|---:|---:|
+| `ending_value` | 24 | 0 |
+| `total_return` | 24 | 0 |
+| `cagr` | 24 | 0 |
+| `annualized_volatility` | 24 | 0 |
+| `max_drawdown` | 24 | 0 |
+| `sharpe` | 24 | 0 |
+| `sortino` | 24 | 0 |
+| `calmar` | 24 | 0 |
+| `ulcer_index` | 24 | 0 |
+| `number_of_trades` | 24 | 0 |
+| `transaction_costs` | 24 | 0 |
+| `tax_paid` (realized tax) | 24 | 0 |
+
 | Strategy family | Frequencies | Old hold field | New mean / median / max trading sessions | Turnover change |
 |---|---|---:|---:|---|
 | QQQ → QQQ | weekly | 4989 | 254.636 / 211 / 662 | stale denominator → open pretrade |
