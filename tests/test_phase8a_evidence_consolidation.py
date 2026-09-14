@@ -302,6 +302,10 @@ def test_aligned_daily_series_have_exact_common_sessions_without_duplicates():
 
 def test_source_artifact_hashes_remain_unchanged_and_manifest_matches():
     manifest = _read("canonical_source_manifest.csv")
+    for row in manifest.itertuples(index=False):
+        path = ROOT / row.relative_path
+        assert path.is_file()
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == row.sha256
     for (phase, name), expected in SOURCE_HASHES.items():
         path = {"phase7a": PHASE7A, "phase7b": PHASE7B, "fixed_ma200": FIXED}[phase] / name
         actual = hashlib.sha256(path.read_bytes()).hexdigest()
