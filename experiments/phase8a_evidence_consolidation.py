@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 from pathlib import Path
+import shutil
 import sys
 
 import numpy as np
@@ -421,9 +422,9 @@ def _aligned_returns(equity: pd.DataFrame) -> pd.DataFrame:
 
 def _source_manifest(reports_root: Path) -> pd.DataFrame:
     files = {
-        "phase7a": ("metrics_pre_tax.csv", "metrics_after_tax.csv", "equity_curve.csv", "positions.csv", "trades.csv", "tax_ledger.csv", "state_decisions.csv", "execution_targets.csv"),
-        "phase7b": ("phase7b_stitched_oos_results.csv", "metrics_pre_tax.csv", "metrics_after_tax.csv", "equity_curve.csv", "positions.csv", "trades.csv", "tax_ledger.csv", "stitched_execution_targets.csv", "selected_parameters_by_fold.csv"),
-        "fixed_ma200": ("oos_results.csv", "metrics_pre_tax.csv", "metrics_after_tax.csv", "equity_curve.csv", "positions.csv", "trades.csv", "tax_ledger.csv", "oos_fold_metrics.csv"),
+        "phase7a": ("config_snapshot.yaml", "metrics_pre_tax.csv", "metrics_after_tax.csv", "equity_curve.csv", "positions.csv", "trades.csv", "tax_ledger.csv", "state_decisions.csv", "execution_targets.csv"),
+        "phase7b": ("config_snapshot.yaml", "phase7b_stitched_oos_results.csv", "metrics_pre_tax.csv", "metrics_after_tax.csv", "equity_curve.csv", "positions.csv", "trades.csv", "tax_ledger.csv", "stitched_execution_targets.csv", "selected_parameters_by_fold.csv"),
+        "fixed_ma200": ("config_snapshot.yaml", "oos_results.csv", "metrics_pre_tax.csv", "metrics_after_tax.csv", "equity_curve.csv", "positions.csv", "trades.csv", "tax_ledger.csv", "oos_fold_metrics.csv"),
     }
     rows = []
     for phase, names in files.items():
@@ -516,6 +517,12 @@ def run(config_path: Path, reports_root: Path, output_root: Path, run_id: str | 
     manifest.to_csv(output / "canonical_source_manifest.csv", index=False)
     aligned.to_csv(output / "aligned_daily_equity.csv", index=False)
     returns.to_csv(output / "aligned_daily_returns.csv", index=False)
+    # Carry forward the accepted canonical configuration snapshot for
+    # reproducibility; Phase 8A itself introduces no configuration changes.
+    shutil.copyfile(
+        _source_path(reports_root, "phase7b", "config_snapshot.yaml"),
+        output / "config_snapshot.yaml",
+    )
     _write_report(output, metrics, relative, complexity, manifest, aligned)
     return output
 
