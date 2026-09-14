@@ -222,10 +222,10 @@ def _selection_old_vs_new(old: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
         "selected_ma_days": "selected_ma_days",
         "selected_momentum_days": "selected_momentum_days",
         "selected_low_vol_quantile": "selected_low_vol_quantile",
-        "training_cagr": "training_cagr",
-        "training_max_drawdown": "training_max_drawdown",
-        "training_calmar": "training_calmar",
-        "training_turnover": "training_turnover",
+        "selected_training_CAGR": "selected_training_CAGR",
+        "selected_training_MaxDD": "selected_training_MaxDD",
+        "selected_training_Calmar": "selected_training_Calmar",
+        "selected_training_turnover": "training_turnover",
     }
     old_part = old[key + list(fields)].rename(columns={value: f"old_{name}" for name, value in fields.items()})
     new_part = new[key + list(fields)].rename(columns={value: f"new_{name}" for name, value in fields.items()})
@@ -253,6 +253,16 @@ def _selection_old_vs_new(old: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
     for _, row in merged.iterrows():
         changed.append(any(not same(row[left], row[right]) for left, right in parameter_fields))
     merged["selection_changed"] = changed
+    # Keep lower-snake-case aliases for consumers that normalize metric names.
+    for name in ("cagr", "max_drawdown", "calmar", "turnover"):
+        source = {
+            "cagr": "selected_training_CAGR",
+            "max_drawdown": "selected_training_MaxDD",
+            "calmar": "selected_training_Calmar",
+            "turnover": "selected_training_turnover",
+        }[name]
+        merged[f"old_training_{name}"] = merged[f"old_{source}"]
+        merged[f"new_training_{name}"] = merged[f"new_{source}"]
     return merged.sort_values(key).reset_index(drop=True)
 
 
