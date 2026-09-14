@@ -204,6 +204,20 @@ def test_phase4_rebalance_schedules_use_first_available_session():
     assert not rebalance_mask(quarterly, "quarterly").loc[["2024-03-28", "2024-06-28"]].any()
 
 
+def test_phase4_momentum_change_between_rebalances_waits_for_next_schedule():
+    window = 126
+    index = pd.bdate_range(end="2023-03-13", periods=window + 5)
+    closes = [100.0] * window + [100.0, 101.0, 101.0, 101.0, 101.0]
+    target = absolute_momentum_target_next_open(
+        pd.Series(closes, index=index), "weekly", window,
+    )
+    wednesday, thursday, friday, monday = index[-4:]
+    assert target.loc[wednesday] == 0.0
+    assert target.loc[thursday] == 0.0
+    assert target.loc[friday] == 0.0
+    assert target.loc[monday] == 1.0
+
+
 @pytest.mark.parametrize("signal_asset,held_asset", [("SPY", "SSO"), ("QQQ", "QLD")])
 def test_phase4_signal_asset_is_separate_from_held_asset(signal_asset: str, held_asset: str):
     window = 126
@@ -261,6 +275,12 @@ def test_phase4_window_specific_warmup_and_calendar_alignment_audit():
     assert len(alignments) == 2
     assert {row["common_evaluation_rows"] for row in alignments} == {5080}
     assert {row["missing_targets_after_reindex"] for row in alignments} == {0}
+    curves = pd.read_csv(CANONICAL_RUN / "equity_curve.csv")
+    positions = pd.read_csv(CANONICAL_RUN / "positions.csv")
+    trades = pd.read_csv(CANONICAL_RUN / "trades.csv")
+    assert curves.date.min() == str(start.date())
+    assert positions.date.min() == str(start.date())
+    assert pd.to_datetime(trades.date).min() >= start
 
 
 def test_phase4_tax_terminal_diagnostics_are_non_mutating():
@@ -323,7 +343,8 @@ def test_phase4_old_to_new_economic_fields_are_unchanged():
     assert len(old) == len(new) == 48
     key = ["rule", "frequency", "momentum_window", "tax_mode"]
     economic_fields = [
-        "ending_value", "total_return", "cagr", "max_drawdown", "calmar", "number_of_trades",
+        "ending_value", "total_return", "cagr", "max_drawdown", "sharpe", "sortino", "calmar",
+        "ulcer_index", "number_of_trades",
         "transaction_costs", "tax_paid",
     ]
     for _, old_row in old.iterrows():
