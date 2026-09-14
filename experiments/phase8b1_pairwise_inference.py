@@ -27,6 +27,7 @@ PHASE8A_RUN = PROJECT_ROOT / "reports/runs" / PHASE8A_SOURCE_RUN_ID
 PHASE8A_DAILY_RETURNS = PHASE8A_RUN / "aligned_daily_returns.csv"
 PHASE8A_CHAMPION = PHASE8A_RUN / "oos_champion_table.csv"
 EXPECTED_PHASE8A_DAILY_RETURNS_SHA256 = "0e7b790318cfbe0618305e8dbe9fa301911677667385e8d303ee665c3d1e3ee4"
+EXPECTED_PHASE8A_CHAMPION_SHA256 = "718ca799db65ea03ae625e400634f5246195e58a8b8fc9ec6416852d7a8a53af"
 
 OOS_START = pd.Timestamp("2013-01-02")
 OOS_END = pd.Timestamp("2026-08-31")
@@ -485,11 +486,16 @@ def _after_tax_descriptive_rows(champion: pd.DataFrame) -> pd.DataFrame:
 
 
 def _load_inputs(phase8a_run: Path = PHASE8A_RUN) -> tuple[pd.DataFrame, pd.DataFrame, str]:
+    if Path(phase8a_run).resolve() != PHASE8A_RUN.resolve():
+        raise AssertionError(f"Phase 8B-1 accepts only the canonical Phase 8A run: {PHASE8A_SOURCE_RUN_ID}")
     daily_path = phase8a_run / "aligned_daily_returns.csv"
     champion_path = phase8a_run / "oos_champion_table.csv"
     actual_hash = _sha256(daily_path)
     if actual_hash != EXPECTED_PHASE8A_DAILY_RETURNS_SHA256:
         raise AssertionError(f"Phase 8A daily-return hash mismatch: {actual_hash}")
+    champion_hash = _sha256(champion_path)
+    if champion_hash != EXPECTED_PHASE8A_CHAMPION_SHA256:
+        raise AssertionError(f"Phase 8A champion-table hash mismatch: {champion_hash}")
     daily = pd.read_csv(daily_path)
     daily["date"] = pd.to_datetime(daily.date)
     expected_dates = pd.DatetimeIndex(pd.date_range(OOS_START, OOS_END, freq="B"))
@@ -512,6 +518,7 @@ def _configuration(index_checksums: dict[int, str], source_hash: str) -> dict[st
         "phase": "8B-1",
         "phase8a_source_run_id": PHASE8A_SOURCE_RUN_ID,
         "phase8a_aligned_daily_returns_sha256": source_hash,
+        "phase8a_champion_table_sha256": EXPECTED_PHASE8A_CHAMPION_SHA256,
         "oos_start": OOS_START.date().isoformat(),
         "oos_end": OOS_END.date().isoformat(),
         "expected_sessions": EXPECTED_SESSIONS,
@@ -589,7 +596,7 @@ def _write_report(
         "",
         f"For each pair, d_t = strategy return_t − benchmark return_t on the identical dates. The Politis–Romano stationary bootstrap uses seed **{BOOTSTRAP_SEED}**, **{BOOTSTRAP_REPLICATIONS:,}** replications, primary expected block length **{PRIMARY_BLOCK_LENGTH}**, and sensitivity lengths **{', '.join(map(str, SENSITIVITY_BLOCK_LENGTHS))}**. One shared index matrix is applied to both members of each pair. The primary one-sided return p-value resamples centered differences (d − observed mean) and counts null bootstrap means at least as large as the observed mean. Percentile 95% intervals are reported for mean return, Sharpe, and CAGR; MaxDD and Calmar intervals are explicitly path-dependent diagnostics.",
         "",
-        "The null is H0: expected paired excess return ≤ 0 versus H1: expected paired excess return > 0. A CAGR, Calmar, or drawdown interval is not relabeled as return evidence. No iid Student t-test is used as the primary method.",
+        "The null is H0: expected paired excess return ≤ 0 versus H1: expected paired excess return > 0. A CAGR, Calmar, or drawdown interval is not relabeled as return evidence. Undefined Sharpe or Calmar values on zero-volatility/zero-drawdown CASH paths remain unavailable. No iid Student t-test is used as the primary method.",
         "",
         "### Primary block-length summary",
         "",
