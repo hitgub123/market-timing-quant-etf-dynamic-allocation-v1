@@ -178,6 +178,10 @@ def _segment_metrics(
     fold_realized_tax_paid = float(segment["tax_paid"].sum()) if "tax_paid" in segment else 0.0
     cumulative_tax_path = ledger.loc[ledger.index <= end, "tax_paid"].cumsum()
     cumulative_realized_tax_paid = float(cumulative_tax_path.iloc[-1]) if len(cumulative_tax_path) else 0.0
+    if len(ledger) and end >= ledger.index[-1] and "tax_paid" in ledger:
+        # Use the exact same reduction as the stitched metric on the final
+        # fold, while keeping cumsum monotonic for all intermediate folds.
+        cumulative_realized_tax_paid = float(ledger["tax_paid"].sum())
     result.update({
         "strategy": strategy,
         "tax_mode": mode,
