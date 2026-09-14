@@ -434,6 +434,10 @@ def test_phase6_turnover_uses_current_open_pretrade_equity_and_excludes_initial_
         closes=[100.0, 200.0, 50.0, 80.0, 90.0],
     )
     reporting_ledger = _add_pretrade_equity(ledger, prices, 1_000.0)
+    pd.testing.assert_frame_equal(
+        reporting_ledger,
+        phase2_add_pretrade_equity(ledger, prices, 1_000.0),
+    )
     # Phase 6 deliberately reuses the canonical Phase 2 helper.
     phase6_audit = _turnover_audit(reporting_ledger, trades)
     phase2_audit = phase2_turnover_audit(reporting_ledger, trades)
