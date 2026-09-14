@@ -27,6 +27,25 @@ The full signal is computed on the signal asset, then reindexed to the held ETF 
 | QQQ_MA200_QLD (QQQ → QLD) | 5080 | 5080 | 5080 | 0 |
 | SPY_MA200_SSO (SPY → SSO) | 5080 | 5080 | 5080 | 0 |
 
+## First execution dates
+
+The first execution date below is the first actual BUY or SELL in the pre-tax strategy ledger; there is no trade or equity before the common evaluation start.
+
+| Rule | Frequency | First evaluation date | First strategy execution date |
+|---|---|---|---|
+| QQQ_MA200_QQQ | weekly | 2006-06-21 | 2006-09-18 |
+| QQQ_MA200_QQQ | monthly | 2006-06-21 | 2006-10-02 |
+| QQQ_MA200_QQQ | bimonthly | 2006-06-21 | 2006-06-21 |
+| QQQ_MA200_QQQ | quarterly | 2006-06-21 | 2006-06-21 |
+| QQQ_MA200_QLD | weekly | 2006-06-21 | 2006-09-18 |
+| QQQ_MA200_QLD | monthly | 2006-06-21 | 2006-10-02 |
+| QQQ_MA200_QLD | bimonthly | 2006-06-21 | 2006-06-21 |
+| QQQ_MA200_QLD | quarterly | 2006-06-21 | 2006-06-21 |
+| SPY_MA200_SSO | weekly | 2006-06-21 | 2006-07-03 |
+| SPY_MA200_SSO | monthly | 2006-06-21 | 2006-06-21 |
+| SPY_MA200_SSO | bimonthly | 2006-06-21 | 2006-06-21 |
+| SPY_MA200_SSO | quarterly | 2006-06-21 | 2006-06-21 |
+
 ## Strategy results
 
 Primary after-tax wealth and CAGR mean wealth after realized tax paid to date. `terminal_liquidation_*` values are non-mutating diagnostics that hypothetically sell the remaining terminal position, deduct the same transaction-cost rate, apply the frozen tax/loss-pool rules, and do not add a trade, change turnover, or change holding-period statistics.

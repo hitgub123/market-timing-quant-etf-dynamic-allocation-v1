@@ -55,6 +55,23 @@ The first evaluation-day target is derived only from information available by th
 | QQQ → QLD | 5,080 | 5,080 | 5,080 | 0 |
 | SPY → SSO | 5,080 | 5,080 | 5,080 | 0 |
 
+First actual strategy execution dates (from the pre-tax trade ledger) are:
+
+| Rule | Frequency | First evaluation date | First strategy execution date |
+|---|---|---|---|
+| QQQ_MA200_QQQ | weekly | 2006-06-21 | 2006-09-18 |
+| QQQ_MA200_QQQ | monthly | 2006-06-21 | 2006-10-02 |
+| QQQ_MA200_QQQ | bimonthly | 2006-06-21 | 2006-06-21 |
+| QQQ_MA200_QQQ | quarterly | 2006-06-21 | 2006-06-21 |
+| QQQ_MA200_QLD | weekly | 2006-06-21 | 2006-09-18 |
+| QQQ_MA200_QLD | monthly | 2006-06-21 | 2006-10-02 |
+| QQQ_MA200_QLD | bimonthly | 2006-06-21 | 2006-06-21 |
+| QQQ_MA200_QLD | quarterly | 2006-06-21 | 2006-06-21 |
+| SPY_MA200_SSO | weekly | 2006-06-21 | 2006-07-03 |
+| SPY_MA200_SSO | monthly | 2006-06-21 | 2006-06-21 |
+| SPY_MA200_SSO | bimonthly | 2006-06-21 | 2006-06-21 |
+| SPY_MA200_SSO | quarterly | 2006-06-21 | 2006-06-21 |
+
 ## F. Complete old → new metric diff
 
 The old run had only `average_holding_period_days`; its value was the full calendar duration `7376`. It did not have the audited mean/median/max fields. The new primary holding fields are completed position episodes measured in trading sessions; an open terminal position is excluded. Every economic result and trade count is unchanged; turnover and holding fields are reporting-definition corrections (classification A), not strategy-economic changes (classification B).
