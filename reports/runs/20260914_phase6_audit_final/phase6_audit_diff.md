@@ -2,13 +2,13 @@
 
 ## A. Full pytest result
 
-pytest -q → **199 passed in 19.74s**.
+pytest -q → **200 passed in 19.78s**.
 
-pytest -q tests/test_phase6_vol_target.py → **43 passed in 3.18s**.
+pytest -q tests/test_phase6_vol_target.py → **44 passed in 2.97s**.
 
 ## B. Dedicated Phase 6 test count
 
-The dedicated suite tests/test_phase6_vol_target.py contains 43 collected tests (including parametrized cases).
+The dedicated suite tests/test_phase6_vol_target.py contains 44 collected tests (including parametrized cases).
 
 ## C. Exact grid/count verification
 
@@ -25,7 +25,7 @@ The existing asset-specific convention is preserved: each asset uses its own adj
 
 ## E. Exact realized-volatility formula audit
 
-The actual call path uses adjusted close, daily_return_t = price_t / price_(t−1) − 1, rolling(L, min_periods=L).std(ddof=1), and annualization sqrt(252). The current close t participates in vol_t; the first valid value is at index L and requires L+1 prices. Deterministic 20D, 40D, and 60D tests independently reproduce the formula.
+The actual call path uses adjusted close, daily_return_t = price_t / price_(t−1) − 1, rolling(L, min_periods=L).std(ddof=1), and annualization sqrt(252). The current close t participates in vol_t; the first valid value is at index L and requires L+1 prices. Deterministic 20D, 40D, and 60D tests independently reproduce the formula. An additional test covers extremely small positive volatility.
 
 ## F. Target-weight and clipping audit
 
