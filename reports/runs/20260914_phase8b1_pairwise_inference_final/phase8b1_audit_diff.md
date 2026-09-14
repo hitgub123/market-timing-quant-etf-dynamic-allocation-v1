@@ -49,9 +49,9 @@ Configuration metadata and tests confirm no model selection, frequency selection
 |---|---|
 | `pairwise_observed_metrics.csv` | `bc8bdc6830797267b8046bd61a9ce826748498c9bddf5a085a31b590840e367b` |
 | `stationary_bootstrap_results.csv` | `5d4717d9f46f81da7c8b4089d16690c6824b21fe7494df9cc5c8dadd4e50e6c2` |
-| `hac_mean_return_results.csv` | `b550cee09174c1cb6813c6f76f968c65b093c164f6ec46de98e93bd2545474a7` |
+| `hac_mean_return_results.csv` | `c5e65dcf8d7871caf1ae690c48b494b905c8044038c59e18036be57f133cf8b1` |
 | `after_tax_descriptive_comparisons.csv` | `59af7ddb1e879be122b894fbaac3dd151817923275f6728992443f41c1f7fc55` |
-| `bootstrap_configuration.json` | `09ec07e89986fa584dcc9b54fd80d5015409048d080b21bd3b423208e15d1bdd` |
+| `bootstrap_configuration.json` | `87aeb247f72d7902ed1fbfa01b3d179bbdfebe09e8cb040019cc8d38421cbb2c` |
 | `phase8b1_report.md` | `4defef48205ab8950aaf8508ca07c412d9017a9d05dfcdcc9f9b87e9a1b3323e` |
 
 ## J. Unresolved issues
