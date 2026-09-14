@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -5,6 +7,9 @@ import pytest
 from experiments.phase1_static_frontier import FREQUENCIES, PAIRS, TRIPLES, candidate_allocations, mark_pareto
 from market_timing_quant.metrics import performance_metrics
 from market_timing_quant.portfolio import buy_and_hold, rebalance_schedule, static_allocation_backtest
+
+
+CANONICAL_PHASE1_RUN = Path(__file__).resolve().parents[1] / "reports/runs/20260914_phase1_audit_final_v2"
 
 
 def _prices(index, first, second):
@@ -157,3 +162,59 @@ def test_pareto_equal_economic_points_all_remain_nondominated():
 def test_pareto_tolerance_equality_is_not_treated_as_dominance():
     frame = pd.DataFrame({"max_drawdown": [-.2, -.2 - 5e-13], "cagr": [.05, .05 + 5e-13]})
     assert mark_pareto(frame).tolist() == [True, True]
+
+
+def test_canonical_phase1_artifact_set_is_complete_and_cross_file_consistent():
+    """Validate the finalized generated run when the audit artifacts are present."""
+    if not CANONICAL_PHASE1_RUN.exists():
+        pytest.skip("canonical Phase 1 run has not been generated in this checkout")
+    required_files = {
+        "metrics_pre_tax.csv", "metrics_after_tax.csv", "static_frontier.csv", "parameter_results.csv",
+        "phase1_report.md", "equity_curve.csv", "drawdown.csv", "positions.csv", "trades.csv", "tax_ledger.csv",
+        "static_frontier_pre_tax.png", "static_frontier_after_tax.png",
+        "static_frontier_after_tax_terminal_liquidation.png",
+    }
+    assert required_files <= {path.name for path in CANONICAL_PHASE1_RUN.iterdir()}
+    pre = pd.read_csv(CANONICAL_PHASE1_RUN / "metrics_pre_tax.csv")
+    after = pd.read_csv(CANONICAL_PHASE1_RUN / "metrics_after_tax.csv")
+    frontier = pd.read_csv(CANONICAL_PHASE1_RUN / "static_frontier.csv")
+    parameters = pd.read_csv(CANONICAL_PHASE1_RUN / "parameter_results.csv")
+    assert len(pre) == 996
+    assert len(after) == 996
+    assert len(frontier) == 1992
+    assert len(parameters) == 1992
+    assert frontier.tax_mode.value_counts().to_dict() == {"pre_tax": 996, "after_tax": 996}
+    assert set(pre.columns) <= set(frontier.columns)
+    assert set(after.columns) <= set(frontier.columns)
+    expected_frontier = pd.concat([pre, after], ignore_index=True)
+    assert frontier.columns.tolist() == expected_frontier.columns.tolist()
+    for field in frontier.columns:
+        if pd.api.types.is_numeric_dtype(frontier[field]):
+            assert np.allclose(
+                frontier[field].to_numpy(dtype=float), expected_frontier[field].to_numpy(dtype=float),
+                rtol=1e-12, atol=1e-8, equal_nan=True,
+            )
+        else:
+            assert frontier[field].fillna("<NA>").astype(str).equals(expected_frontier[field].fillna("<NA>").astype(str))
+    assert parameters.equals(frontier)
+    required_columns = {
+        "strategy", "tax_mode", "frequency", "kind", "weight_SPY", "weight_QQQ", "weight_SSO",
+        "weight_QLD", "weight_CASH", "economic_allocation_id", "cagr", "max_drawdown", "calmar",
+        "annual_turnover", "average_holding_period_days", "mean_holding_period_days",
+        "median_holding_period_days", "max_holding_period_days", "pareto",
+        "terminal_liquidation_wealth", "terminal_liquidation_cagr", "pareto_terminal_liquidation",
+        "cumulative_realized_tax_paid", "tax_semantics",
+    }
+    assert required_columns <= set(frontier.columns)
+
+    keys = ["strategy", "tax_mode"]
+    numeric = ["ending_value", "cagr", "max_drawdown", "calmar", "annual_turnover", "pareto"]
+    terminal_numeric = ["terminal_liquidation_wealth", "terminal_liquidation_cagr", "pareto_terminal_liquidation"]
+    for source, fields in ((pre, numeric), (after, numeric + terminal_numeric)):
+        joined = source.merge(frontier, on=keys, suffixes=("_source", "_frontier"), validate="one_to_one")
+        for field in fields:
+            left, right = joined[f"{field}_source"], joined[f"{field}_frontier"]
+            if field in {"pareto", "pareto_terminal_liquidation"}:
+                assert left.fillna(False).astype(bool).equals(right.fillna(False).astype(bool))
+            else:
+                assert np.allclose(left.to_numpy(dtype=float), right.to_numpy(dtype=float), rtol=1e-12, atol=1e-8, equal_nan=True)

@@ -112,3 +112,18 @@ Raw snapshot SHA-256 values remain unchanged and match `data/raw/manifest.yaml`:
 `PHASE 1 AUDIT PASS`
 
 No unresolved Phase 1 issue remains within this audit scope. Phase 2–7 strategy logic and artifacts were not modified.
+
+## Artifact completeness correction
+
+The finalized Phase 1 run had written `static_frontier.csv` according to the existing runner, but the file was omitted from the previously delivered artifact set because `reports/runs/` is ignored by default; it was not a missing computation and no ledger needed to be recomputed. It has now been regenerated directly from the exact finalized `metrics_pre_tax.csv` and `metrics_after_tax.csv` tables.
+
+- `metrics_pre_tax.csv`: 996 rows
+- `metrics_after_tax.csv`: 996 rows
+- `static_frontier.csv`: 1,992 rows (`pre_tax` 996, `after_tax` 996)
+- `static_frontier.csv` SHA-256: `03603b23f493e4a82c43f95be7c0a8911bbc1b92e886b72c6afe6210de49a783`
+- `parameter_results.csv` SHA-256: `03603b23f493e4a82c43f95be7c0a8911bbc1b92e886b72c6afe6210de49a783`
+- The two combined files are byte-identical.
+- All source-table columns survive concatenation, including after-tax terminal-liquidation fields, tax semantics, cumulative realized tax, and Pareto fields.
+- No ending value, CAGR, MaxDD, Calmar, turnover, Pareto count, or terminal-liquidation diagnostic changed.
+
+The artifact-completeness regression now checks the final file set, row counts, tax-mode counts, source-column preservation, serialization-safe numeric equality, and byte identity of `static_frontier.csv` and `parameter_results.csv`.
