@@ -114,6 +114,7 @@ def test_phase5_artifact_completeness_counts_and_required_columns():
         "config_snapshot.yaml", "metrics_pre_tax.csv", "metrics_after_tax.csv",
         "relative_momentum_results.csv", "parameter_results.csv", "equity_curve.csv",
         "drawdown.csv", "positions.csv", "trades.csv", "tax_ledger.csv", "phase5_report.md",
+        "phase5_audit_diff.md",
         "relative_momentum_heatmap.png", "relative_momentum_heatmap_after_tax.png",
         "equity_curve.png", "drawdown.png", "rolling_returns.png", "rolling_maxdd.png",
         "cagr_maxdd_scatter.png",
