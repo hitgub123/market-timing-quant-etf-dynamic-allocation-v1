@@ -12,6 +12,7 @@ import pandas as pd
 
 from experiments.phase8b1_pairwise_inference import (
     BLOCK_LENGTHS,
+    BOOTSTRAP_CHUNK_SIZE,
     BOOTSTRAP_REPLICATIONS,
     BOOTSTRAP_SEED,
     EXPECTED_PHASE8A_DAILY_RETURNS_SHA256,
@@ -29,6 +30,7 @@ from experiments.phase8b1_pairwise_inference import (
     centered_null_bootstrap_p_value,
     _load_inputs,
     _observed_rows,
+    _paired_series,
     _seed_for_block,
     _hac_mean_return_rows,
     stationary_bootstrap_indices,
@@ -199,6 +201,39 @@ def test_centered_null_is_invariant_to_chunking_with_the_same_index_stream():
         exceedances += int(np.count_nonzero(null_statistics >= observed_mean_daily))
     chunked_p = (1 + exceedances) / (len(indices) + 1)
     assert chunked_p == full_p
+
+
+def test_primary_output_p_value_matches_explicit_null_on_frozen_chunked_indices():
+    daily = _source_daily()
+    strategy, benchmark, _ = _paired_series(
+        daily,
+        "FIXED_MA200_QQQ_TO_QLD",
+        "weekly",
+        "QQQ_BUY_HOLD",
+        "none",
+    )
+    observed_mean_daily = float(np.mean(strategy - benchmark))
+    rng = np.random.default_rng(_seed_for_block(PRIMARY_BLOCK_LENGTH))
+    exceedances = 0
+    for start in range(0, BOOTSTRAP_REPLICATIONS, BOOTSTRAP_CHUNK_SIZE):
+        count = min(BOOTSTRAP_CHUNK_SIZE, BOOTSTRAP_REPLICATIONS - start)
+        indices = stationary_bootstrap_indices(len(strategy), count, PRIMARY_BLOCK_LENGTH, rng)
+        null_statistics = centered_null_bootstrap_means(
+            strategy - benchmark,
+            indices,
+            observed_mean_daily=observed_mean_daily,
+        )
+        exceedances += int(np.count_nonzero(null_statistics >= observed_mean_daily))
+    expected_p = (1 + exceedances) / (BOOTSTRAP_REPLICATIONS + 1)
+    output = _read("stationary_bootstrap_results.csv")
+    row = output.loc[
+        output.comparison_id.eq("A_FIXED_MA200_VS_QQQ")
+        & output.strategy_frequency.eq("weekly")
+        & output.expected_block_length.eq(PRIMARY_BLOCK_LENGTH)
+        & output.metric.eq("annualized_mean_return_difference")
+    ].iloc[0]
+    assert int(row.null_bootstrap_exceedance_count) == exceedances
+    np.testing.assert_allclose(row.one_sided_return_null_p_value, expected_p, rtol=0.0, atol=1e-15)
 
 
 def test_primary_and_sensitivity_block_lengths_are_frozen():

@@ -812,6 +812,10 @@ def _write_remediation_audit_diff(output: Path, prior_output: Path) -> None:
     p_table["p_value_delta"] = p_table["new_p_value"] - p_table["old_p_value"]
     p_table["changed"] = ~np.isclose(p_table["old_p_value"], p_table["new_p_value"], rtol=0.0, atol=0.0, equal_nan=True)
     p_table = p_table.sort_values(["expected_block_length", "comparison_id", "strategy_frequency"]).reset_index(drop=True)
+    p_table_display = p_table[["comparison_id", "strategy_frequency", "expected_block_length", "old_p_value", "new_p_value", "p_value_delta", "null_bootstrap_exceedance_count"]].copy()
+    for column in ("old_p_value", "new_p_value", "p_value_delta"):
+        p_table_display[column] = p_table_display[column].map(lambda value: "" if pd.isna(value) else f"{float(value):.12f}")
+    p_table_display["null_bootstrap_exceedance_count"] = p_table_display["null_bootstrap_exceedance_count"].map(lambda value: "" if pd.isna(value) else str(int(value)))
 
     old_index_hashes = old_config["stationary_bootstrap"]["index_sha256_by_block_length"]
     new_index_hashes = new_config["stationary_bootstrap"]["index_sha256_by_block_length"]
@@ -877,7 +881,7 @@ def _write_remediation_audit_diff(output: Path, prior_output: Path) -> None:
         "",
         "The p-value table below includes every one of the 20 comparison/frequency rows for the primary block length and all four sensitivity block lengths. `null_bootstrap_exceedance_count` is the new explicit centered-null tail count.",
         "",
-        p_table[["comparison_id", "strategy_frequency", "expected_block_length", "old_p_value", "new_p_value", "p_value_delta", "null_bootstrap_exceedance_count"]].to_markdown(index=False),
+        p_table_display.to_markdown(index=False, disable_numparse=True),
         "",
         "## C. Frozen stream and provenance",
         "",
