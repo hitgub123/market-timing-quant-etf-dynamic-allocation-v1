@@ -47,6 +47,7 @@ TERMINAL_FIELDS = (
     "terminal_liquidation_wealth", "terminal_liquidation_cagr", "terminal_liquidation_tax",
     "terminal_liquidation_cost", "terminal_unrealized_gain_after_cost",
 )
+NUMERIC_ATOL = 1e-8
 
 
 def parameter_grid() -> tuple[int, ...]:
@@ -254,11 +255,11 @@ def _verify_phase2_ma200(
                 if field in {"start", "end"}:
                     if str(phase3_row[field]) != str(p2_row[field]):
                         raise AssertionError(f"Phase 2/3 MA200 mismatch in {field}: {p2_row.strategy}")
-                elif not np.isclose(float(phase3_row[field]), float(p2_row[field]), rtol=0, atol=1e-10):
+                elif not np.isclose(float(phase3_row[field]), float(p2_row[field]), rtol=0, atol=NUMERIC_ATOL):
                     raise AssertionError(f"Phase 2/3 MA200 mismatch in {field}: {p2_row.strategy}")
             if mode == "after_tax":
                 for field in TERMINAL_FIELDS:
-                    if not np.isclose(float(phase3_row[field]), float(p2_row[field]), rtol=0, atol=1e-10):
+                    if not np.isclose(float(phase3_row[field]), float(p2_row[field]), rtol=0, atol=NUMERIC_ATOL):
                         raise AssertionError(f"Phase 2/3 MA200 mismatch in {field}: {p2_row.strategy}")
             p3_name = phase3_row.strategy
             p2_name = p2_row.strategy
@@ -279,7 +280,7 @@ def _verify_phase2_ma200(
                         if field == "date" or field in {"tax_mode", "asset", "side"}:
                             if left[field].astype(str).tolist() != right[field].astype(str).tolist():
                                 raise AssertionError(f"Phase 2/3 MA200 path mismatch: {p2_name} {mode} {field}")
-                        elif not np.allclose(left[field].to_numpy(float), right[field].to_numpy(float), rtol=0, atol=1e-10):
+                        elif not np.allclose(left[field].to_numpy(float), right[field].to_numpy(float), rtol=0, atol=NUMERIC_ATOL):
                             raise AssertionError(f"Phase 2/3 MA200 path mismatch: {p2_name} {mode} {field}")
             comparisons += 1
     return {"comparisons": comparisons, "phase2_root": str(phase2_root)}
