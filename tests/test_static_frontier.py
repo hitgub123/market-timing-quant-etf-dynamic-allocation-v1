@@ -131,6 +131,7 @@ def test_static_ledger_charges_costs_and_realized_tax_without_negative_cash():
     assert after.equity.iloc[-1] < pre.equity.iloc[-1]
     assert (after.cash >= -1e-10).all()
     assert after.tax_paid.sum() == pytest.approx(taxes.tax_paid.sum())
+    assert (after.equity <= pre.equity + 1e-9).all()
 
 
 def test_pareto_marks_only_improving_cagr_as_risk_increases():

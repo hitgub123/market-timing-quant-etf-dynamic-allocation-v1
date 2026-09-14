@@ -119,6 +119,10 @@ def _representative_points(frame: pd.DataFrame, cagr_column: str, pareto_column:
 
 
 def _write_phase1_report(output: Path, pre: pd.DataFrame, after: pd.DataFrame, turnover_audits: list[dict[str, object]]) -> None:
+    if "terminal_liquidation_cagr" not in after or "pareto_terminal_liquidation" not in after:
+        after = after.copy()
+        after["terminal_liquidation_cagr"] = np.nan
+        after["pareto_terminal_liquidation"] = False
     pre_points = _representative_points(pre, "cagr", "pareto")
     after_points = _representative_points(after, "cagr", "pareto")
     terminal_points = _representative_points(after, "terminal_liquidation_cagr", "pareto_terminal_liquidation")
@@ -129,7 +133,9 @@ def _write_phase1_report(output: Path, pre: pd.DataFrame, after: pd.DataFrame, t
     def point_lines(title: str, points: pd.DataFrame, cagr_column: str) -> list[str]:
         lines = ["", f"### {title}", "", "| Strategy | Start | End | CAGR | MaxDD | Calmar |", "|---|---|---|---:|---:|---:|"]
         for row in points.itertuples(index=False):
-            calmar = f"{row.calmar:.3f}" if pd.notna(row.calmar) else "N/A"
+            cagr_value = getattr(row, cagr_column)
+            calmar_value = cagr_value / abs(row.max_drawdown) if pd.notna(cagr_value) and row.max_drawdown < 0 else None
+            calmar = f"{calmar_value:.3f}" if calmar_value is not None else "N/A"
             lines.append(f"| {row.strategy} | {row.start} | {row.end} | {getattr(row, cagr_column):.2%} | {row.max_drawdown:.2%} | {calmar} |")
         return lines
 
@@ -160,6 +166,16 @@ def _write_phase1_report(output: Path, pre: pd.DataFrame, after: pd.DataFrame, t
         "Terminal-liquidation after-tax metrics are diagnostic and do not mutate the strategy ledger.",
         "", "## Benchmark endpoints", "",
         "SPY, QQQ, SSO, and QLD 100% endpoints are present on the common sample. CASH, when shown, is the zero-return diagnostic baseline.",
+        "", "| Benchmark endpoint | Start | End | CAGR | MaxDD | Calmar | Annual turnover |",
+        "|---|---|---|---:|---:|---:|---:|",
+    ]
+    common_benchmarks = pre[(pre.frequency == "monthly") & (pre.kind == "pair") & (pre.tax_mode == "pre_tax")]
+    for asset in ("SPY", "QQQ", "SSO", "QLD"):
+        benchmark = common_benchmarks[common_benchmarks[f"weight_{asset}"] == 1.0].iloc[0]
+        calmar = f"{benchmark.calmar:.3f}" if pd.notna(benchmark.calmar) else "N/A"
+        report.append(f"| {asset} 100% | {benchmark.start} | {benchmark.end} | {benchmark.cagr:.2%} | {benchmark.max_drawdown:.2%} | {calmar} | {benchmark.annual_turnover:.3f} |")
+    report += [
+        "| CASH 100% diagnostic | 2006-06-21 | 2026-08-31 | 0.00% | 0.00% | N/A | 0.000 |",
         "", "## Turnover audit", "",
         "| Strategy | Included normalized turnover | Backtest years | Reported annual turnover | Nonzero-trade rebalances | Gross traded notional |",
         "|---|---:|---:|---:|---:|---:|",
