@@ -270,37 +270,54 @@ def test_phase6_zero_volatility_and_insufficient_history_are_deterministic_cash(
 @pytest.mark.parametrize("window", [20, 60])
 @pytest.mark.parametrize("frequency", ["weekly", "monthly"])
 def test_phase6_parameterized_call_path_preserves_close_to_next_open_no_lookahead(window: int, frequency: str):
-    # The final observed close changes vol_t. The target is only available at
-    # the next eligible open; changing later data cannot rewrite prior targets.
-    index = pd.bdate_range("2023-01-03", periods=window + 12)
+    # The final observed close changes vol_t materially. The target changes at
+    # the next eligible session, while later data cannot rewrite prior targets.
+    index = pd.bdate_range("2023-01-03", periods=window + 90)
+    schedule = rebalance_mask(index, frequency)
+    scheduled_dates = index[schedule.to_numpy()]
+    assert len(scheduled_dates) >= 2
+    execution_date = scheduled_dates[-1]
+    cutoff = index[index < execution_date][-1]
     close_values = np.full(len(index), 100.0)
-    close_values[-2] = 100.0
-    close_values[-1] = 145.0
+    cutoff_pos = index.get_loc(cutoff)
+    close_values[cutoff_pos] = 145.0
     close = pd.Series(close_values, index=index)
-    target = volatility_target_next_open(close, frequency, window, 0.20)
     mutated = close.copy()
-    mutated.iloc[-1] = 290.0
+    mutated.iloc[cutoff_pos] = 290.0
+    original_decision = volatility_target_decision(close, window, 0.20)
+    mutated_decision = volatility_target_decision(mutated, window, 0.20)
+    assert original_decision.loc[cutoff] != mutated_decision.loc[cutoff]
+    target = volatility_target_next_open(close, frequency, window, 0.20)
     mutated_target = volatility_target_next_open(mutated, frequency, window, 0.20)
-    cutoff = index[-1]
+    assert target.loc[execution_date] != mutated_target.loc[execution_date]
     pd.testing.assert_series_equal(target.loc[: cutoff - pd.Timedelta(days=1)], mutated_target.loc[: cutoff - pd.Timedelta(days=1)])
 
-    # A synthetic scheduled target isolates the execution leg: the trade date
-    # is the next open and the 5 bps cost is charged on delta notional.
-    prices = _prices(index[-4:], [100.0, 77.0, 150.0, 150.0], [100.0, 100.0, 100.0, 100.0])
-    decisions = pd.Series([0.0, 0.0, 1.0, 1.0], index=prices.index)
+    # A synthetic scheduled target isolates the execution leg. A close-time
+    # decision immediately before the second schedule is applied at that
+    # schedule's open, never at the close or one additional period later.
+    short_index = pd.bdate_range("2023-01-03", periods=90)
+    short_schedule = rebalance_mask(short_index, frequency)
+    dates = short_index[short_schedule.to_numpy()]
+    assert len(dates) >= 2
+    second = dates[1]
+    prior = short_index[short_index < second][-1]
+    decisions = pd.Series(0.0, index=short_index)
+    decisions.loc[prior] = 1.0
     scheduled_target = scheduled_continuous_target_next_open(decisions, frequency)
-    # The schedule can vary by frequency; whenever a target first becomes 1,
-    # it is applied on that same row, never on a second later row.
-    first_one = scheduled_target[scheduled_target.eq(1.0)]
-    if len(first_one):
-        _, ledger, _, trades, _ = _run_engine(
-            scheduled_target.tolist(), opens=prices.open.tolist(), closes=prices.adjusted_close.tolist(),
-            scheduled=[True] * len(prices),
-        )
-        assert pd.Timestamp(trades.date.iloc[-1]) == first_one.index[0]
-        assert trades.price.iloc[-1] == pytest.approx(prices.loc[first_one.index[0], "open"])
-        assert trades.transaction_cost.iloc[-1] == pytest.approx(trades.notional.iloc[-1] * EXECUTION_RATE)
-        assert ledger.loc[first_one.index[0], "shares"] > 0.0
+    assert scheduled_target.loc[second] == 1.0
+    assert scheduled_target.loc[prior] == 0.0
+    opens = np.full(len(short_index), 100.0)
+    opens[short_index.get_loc(second)] = 77.0
+    prices = _prices(short_index, opens.tolist(), [100.0] * len(short_index))
+    ledger, _, trades, _ = continuous_weight_backtest(
+        prices, scheduled_target, short_schedule, initial_capital=1_000.0,
+        commission_bps=0.0, slippage_bps=5.0, tax_rate=None,
+    )
+    assert pd.Timestamp(trades.date.iloc[0]) == second
+    assert trades.price.iloc[0] == pytest.approx(77.0)
+    assert trades.transaction_cost.iloc[0] == pytest.approx(trades.notional.iloc[0] * EXECUTION_RATE)
+    assert ledger.loc[prior, "shares"] == 0.0
+    assert ledger.loc[second, "shares"] > 0.0
 
 
 def test_phase6_rebalance_schedules_are_first_available_and_not_daily():
@@ -371,6 +388,13 @@ def test_phase6_partial_sale_tax_average_basis_loss_pool_and_reentry():
     assert tax.loss_pool.iloc[-1] > 0.0
     assert ledger.cash.ge(0.0).all()
     assert (trades[trades.side.eq("BUY")].transaction_cost >= 0).all()
+    first_buy = trades[trades.side.eq("BUY")].iloc[0]
+    first_sale = sells.iloc[0]
+    average_basis = (first_buy.notional + first_buy.transaction_cost) / first_buy.shares
+    assert first_sale.realized_gain == pytest.approx(
+        first_sale.shares * (first_sale.price - average_basis) - first_sale.transaction_cost,
+        abs=1e-8,
+    )
 
 
 def test_phase6_terminal_liquidation_is_non_mutating_and_tax_paid_to_date_is_primary():
@@ -394,7 +418,6 @@ def test_phase6_terminal_liquidation_is_non_mutating_and_tax_paid_to_date_is_pri
     pd.testing.assert_frame_equal(reporting_ledger, before_ledger)
     pd.testing.assert_frame_equal(trades, before_trades)
     pd.testing.assert_frame_equal(tax, before_tax)
-    assert not (trades.side.eq("SELL") & trades.date.eq(trades.date.max())).any() or True
 
 
 def test_phase6_turnover_uses_current_open_pretrade_equity_and_excludes_initial_deployment():
