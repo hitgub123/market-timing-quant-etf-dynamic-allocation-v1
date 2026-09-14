@@ -1,0 +1,98 @@
+{
+  "annualization": {
+    "arithmetic_mean_and_volatility": "252 trading sessions",
+    "cagr": "canonical 365.25 / calendar-day exponent on the fixed OOS span",
+    "sharpe": "daily mean / daily sample standard deviation * sqrt(252), zero risk-free rate"
+  },
+  "bootstrap_chunk_size": 250,
+  "bootstrap_replications": 10000,
+  "comparisons": [
+    {
+      "benchmark_frequency": "none",
+      "benchmark_id": "QQQ_BUY_HOLD",
+      "comparison_id": "A_FIXED_MA200_VS_QQQ",
+      "comparison_label": "Fixed MA200 QQQ\u2192QLD/CASH vs QQQ buy-and-hold",
+      "strategy_id": "FIXED_MA200_QQQ_TO_QLD"
+    },
+    {
+      "benchmark_frequency": "none",
+      "benchmark_id": "QQQ_BUY_HOLD",
+      "comparison_id": "B_PHASE7A_VS_QQQ",
+      "comparison_label": "Phase 7A fixed four-state vs QQQ buy-and-hold",
+      "strategy_id": "PHASE7A_FIXED_FOUR_STATE"
+    },
+    {
+      "benchmark_frequency": "same_frequency",
+      "benchmark_id": "FIXED_MA200_QQQ_TO_QLD",
+      "comparison_id": "C_PHASE7A_INCREMENTAL_VS_FIXED",
+      "comparison_label": "Phase 7A fixed four-state vs Fixed MA200 QQQ\u2192QLD/CASH",
+      "strategy_id": "PHASE7A_FIXED_FOUR_STATE"
+    },
+    {
+      "benchmark_frequency": "same_frequency",
+      "benchmark_id": "FIXED_MA200_QQQ_TO_QLD",
+      "comparison_id": "D_PHASE7B_MODEL_A_VS_FIXED",
+      "comparison_label": "Phase 7B Model A selected WF vs Fixed MA200 QQQ\u2192QLD/CASH",
+      "strategy_id": "PHASE7B_MODEL_A_SELECTED"
+    },
+    {
+      "benchmark_frequency": "same_frequency",
+      "benchmark_id": "PHASE7B_MODEL_A_SELECTED",
+      "comparison_id": "E_PHASE7B_MODEL_B_VS_MODEL_A",
+      "comparison_label": "Phase 7B Model B selected WF vs Model A selected WF",
+      "strategy_id": "PHASE7B_MODEL_B_SELECTED"
+    }
+  ],
+  "expected_sessions": 3436,
+  "frequency_selection_performed": false,
+  "hac": {
+    "lag_for_3436_sessions": 8,
+    "lag_rule": "floor(4 * (T / 100)^(2/9))",
+    "method": "Newey-West HAC variance of paired daily mean",
+    "role": "secondary cross-check only"
+  },
+  "oos_end": "2026-08-31",
+  "oos_start": "2013-01-02",
+  "phase": "8B-1",
+  "phase8a_aligned_daily_returns_sha256": "0e7b790318cfbe0618305e8dbe9fa301911677667385e8d303ee665c3d1e3ee4",
+  "phase8a_champion_table_sha256": "718ca799db65ea03ae625e400634f5246195e58a8b8fc9ec6416852d7a8a53af",
+  "phase8a_source_run_id": "20260914_phase8a_oos_evidence_consolidation_final",
+  "phase8b2_started": false,
+  "primary_tax_mode": "pre_tax",
+  "random_seed": 8301,
+  "selection_performed": false,
+  "software_versions": {
+    "numpy": "2.5.0",
+    "pandas": "3.0.3",
+    "python": "3.14.4",
+    "scipy": "1.18.0"
+  },
+  "stationary_bootstrap": {
+    "all_expected_block_lengths": [
+      5,
+      10,
+      20,
+      40,
+      60
+    ],
+    "index_sha256_by_block_length": {
+      "10": "4c6d72c8940ea37ac387680f516ff7206c91388578637bc0ba2257f23d0a1f2d",
+      "20": "0698377cc1696d1283e4d05298b72341d2d812c2b1c20bb2edabdcbfa014105c",
+      "40": "c016c551c60a1c48ec61d23bf4d46d2d8216116f12c7fa2b4fd2ab01d53ac3cf",
+      "5": "3a684376251ecf139f500334c6c514081ef8796c2f67a8a8ca743a08ef37461a",
+      "60": "c0eba28de9cdc1e31330854c6436666ff1386ebb99398510337ac83160deb483"
+    },
+    "method": "Politis-Romano stationary bootstrap",
+    "null_p_value": "resample centered paired differences (d - observed mean) and count null bootstrap means >= observed mean",
+    "primary_expected_block_length": 20,
+    "restart_probability": "1 / expected_block_length",
+    "same_indices_applied_to_pair_members": true,
+    "sensitivity_expected_block_lengths": [
+      5,
+      10,
+      40,
+      60
+    ]
+  },
+  "winner_designation": false
+}
