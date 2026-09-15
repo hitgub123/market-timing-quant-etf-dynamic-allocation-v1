@@ -1,0 +1,15 @@
+scenario_id,scenario_family,slippage_bps,execution_case,start_label,start_date,end_date,signal_convention,parameters_frozen,selection_performed,frequency_selection_performed,scenario_is_new_strategy
+baseline,baseline,5.0,next_open,2013,2013-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+slippage_00bps,slippage,0.0,next_open,2013,2013-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+slippage_05bps,slippage,5.0,next_open,2013,2013-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+slippage_10bps,slippage,10.0,next_open,2013,2013-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+slippage_20bps,slippage,20.0,next_open,2013,2013-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+execution_next_open,execution,5.0,next_open,2013,2013-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+execution_next_close,execution,5.0,next_close,2013,2013-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+execution_t2_open,execution,5.0,t2_open,2013,2013-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+start_2013,start_date,5.0,next_open,2013,2013-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+start_2014,start_date,5.0,next_open,2014,2014-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+start_2015,start_date,5.0,next_open,2015,2015-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+start_2016,start_date,5.0,next_open,2016,2016-01-04,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+start_2018,start_date,5.0,next_open,2018,2018-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False
+start_2020,start_date,5.0,next_open,2020,2020-01-02,2026-08-31,adjusted-close signal at t; execution never before the specified delayed session,True,False,False,False

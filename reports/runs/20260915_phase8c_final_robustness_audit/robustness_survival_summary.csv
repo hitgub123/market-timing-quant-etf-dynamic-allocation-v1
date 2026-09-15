@@ -1,0 +1,9 @@
+strategy_id,frequency,positive_cagr_vs_qqq_slippage_numerator,positive_cagr_vs_qqq_slippage_denominator,positive_cagr_vs_qqq_slippage,positive_cagr_vs_qqq_execution_numerator,positive_cagr_vs_qqq_execution_denominator,positive_cagr_vs_qqq_execution,positive_cagr_vs_qqq_start_date_numerator,positive_cagr_vs_qqq_start_date_denominator,positive_cagr_vs_qqq_start_date,qqq_dominance_numerator,qqq_dominance_denominator,qqq_dominance_survival,phase7a_positive_incremental_cagr_numerator,phase7a_positive_incremental_cagr_denominator,phase7a_positive_incremental_cagr,phase7a_positive_terminal_after_tax_cagr_numerator,phase7a_positive_terminal_after_tax_cagr_denominator,phase7a_positive_terminal_after_tax_cagr,survival_is_descriptive_only
+FIXED_MA200_QQQ_TO_QLD,weekly,4,4,4 / 4,3,3,3 / 3,6,6,6 / 6,0,14,0 / 14,13,14,13 / 14,10,14,10 / 14,True
+FIXED_MA200_QQQ_TO_QLD,monthly,4,4,4 / 4,3,3,3 / 3,6,6,6 / 6,0,14,0 / 14,8,14,8 / 14,2,14,2 / 14,True
+FIXED_MA200_QQQ_TO_QLD,bimonthly,4,4,4 / 4,3,3,3 / 3,6,6,6 / 6,0,14,0 / 14,10,14,10 / 14,5,14,5 / 14,True
+FIXED_MA200_QQQ_TO_QLD,quarterly,4,4,4 / 4,2,3,2 / 3,1,6,1 / 6,0,14,0 / 14,0,14,0 / 14,0,14,0 / 14,True
+PHASE7A_FIXED_FOUR_STATE,weekly,4,4,4 / 4,3,3,3 / 3,6,6,6 / 6,0,14,0 / 14,13,14,13 / 14,10,14,10 / 14,True
+PHASE7A_FIXED_FOUR_STATE,monthly,4,4,4 / 4,3,3,3 / 3,6,6,6 / 6,0,14,0 / 14,8,14,8 / 14,2,14,2 / 14,True
+PHASE7A_FIXED_FOUR_STATE,bimonthly,4,4,4 / 4,3,3,3 / 3,6,6,6 / 6,0,14,0 / 14,10,14,10 / 14,5,14,5 / 14,True
+PHASE7A_FIXED_FOUR_STATE,quarterly,1,4,1 / 4,1,3,1 / 3,0,6,0 / 6,0,14,0 / 14,0,14,0 / 14,0,14,0 / 14,True
