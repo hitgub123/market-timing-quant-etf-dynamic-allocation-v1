@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from statistics import NormalDist
 
 import numpy as np
 import pandas as pd
@@ -28,8 +27,6 @@ from experiments.phase8b2_multiple_testing import (
     _inventory_counts,
     _inventory_rows,
     _moment_statistics,
-    deflated_sharpe_ratio,
-    _expected_max_z,
     _json_fingerprint,
 )
 
@@ -182,21 +179,14 @@ def test_strict_and_conservative_trial_flags_are_not_posthoc_filtered():
     assert inventory.loc[inventory.category.eq("I"), "conservative_count_included"].eq(False).all()
 
 
-def test_dsr_hand_formula_matches_published_expression():
-    observed = 0.8
-    n_obs = 100
-    skew = 0.25
-    excess = 1.5
-    trials = 20
-    variance_factor = 1 - skew * observed + ((excess + 2) / 4) * observed**2
-    sigma = (variance_factor / (n_obs - 1)) ** 0.5
-    expected_z = _expected_max_z(trials)
-    expected_max = sigma * expected_z
-    expected_probability = NormalDist().cdf((observed - expected_max) / sigma)
-    result = deflated_sharpe_ratio(observed, n_obs, skew, excess, trials)
-    np.testing.assert_allclose(result["sharpe_standard_error"], sigma, rtol=0, atol=1e-15)
-    np.testing.assert_allclose(result["expected_max_sharpe"], expected_max, rtol=0, atol=1e-15)
-    np.testing.assert_allclose(result["dsr_probability"], expected_probability, rtol=0, atol=1e-15)
+def test_legacy_dsr_output_is_retained_only_for_remediation_comparison():
+    """The prior run is an immutable comparison artifact, not accepted DSR evidence."""
+    legacy = _read("deflated_sharpe_results.csv")
+    assert len(legacy) == 34
+    assert legacy.trial_count_basis.isin(("strict_selection_trials", "conservative_research_trials")).all()
+    source = (ROOT / "experiments/phase8b2_multiple_testing.py").read_text(encoding="utf-8")
+    assert "Legacy pathwise Sharpe diagnostic" in source
+    assert "not Bailey–López de Prado DSR" in source
 
 
 def test_dsr_moments_are_sourced_from_exact_aligned_oos_path():

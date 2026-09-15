@@ -1,0 +1,97 @@
+{
+  "accepted_phase8b2_hashes": {
+    "data_snooping_test_results.csv": "b166f3796f021852948c99834b3d434e5a055eda577b80a8dd4c4bdfa3a68f25",
+    "deflated_sharpe_results.csv": "889a8b5f3355003c478f58a9b11f01fc3ffe481f75d18822445fb6a26ab85f81",
+    "effective_trials_sensitivity.csv": "649f96dded68847eb3326bf70fc99f99fceda6a5572dd96f7c6e919b0f430747",
+    "multiple_testing_adjustments.csv": "688bbbd6f592473c1de7c1dce14059c153b94c7ecfb74b9dbb6e6625e63fb3a5",
+    "phase8b2_audit_diff.md": "e8b14d885edff760479f385e97071fd001b31300df888ba444b4457ce0f4d6b6",
+    "phase8b2_configuration.json": "85b2fa17d3c8b3d90401c0f4b52c735ef5a444dddafc2765ac90db8fd9402493",
+    "phase8b2_report.md": "5ca88803d20b80ae2833b206107d6f79f5906f7e99552f5e639595dd10498e28",
+    "research_trial_inventory.csv": "06f03a36f8b8a76dc5f23d1c5aeaa318fdba578dabe3f30b902601a317cf8387",
+    "trial_correlation_summary.csv": "f1053c9b27f1f9a67c0bd5127d578ac9a073a5dee1f975e97e4fcd41401c4fa3"
+  },
+  "dsr": {
+    "comparable_trial_count_used": 0,
+    "cross_trial_dispersion_identifiable": false,
+    "effective_path_count_role": "descriptive only",
+    "effective_path_count_sensitivity": 2.5203440927310954,
+    "methodology_artifact": "phase8b2_dsr_remediation.md",
+    "published_equations": {
+      "cross_trial_mean": "mean(S_trial)",
+      "cross_trial_variance": "sample variance(S_trial)",
+      "dsr": "Phi((SR_observed - SR_star) / sigma_observed)",
+      "observed_sampling_variance": "[1 - skew*SR + ((excess_kurtosis+2)/4)*SR^2] / (T-1)",
+      "sr_star": "mean(S_trial) + std(S_trial) * z_max(N_eff)"
+    },
+    "raw_trial_count_is_not_cross_trial_sharpe_distribution": true,
+    "raw_trial_counts_preserved": {
+      "conservative_research_trials": 4164,
+      "strict_selection_trials": 2800
+    },
+    "selection_performed": false,
+    "status": "DSR_NOT_IDENTIFIABLE_FROM_FROZEN_ARTIFACTS",
+    "trial_universe_audit_artifact": "dsr_trial_universe_audit.csv"
+  },
+  "expected_sessions": 3436,
+  "frequency_selection_performed": false,
+  "invariant_artifact_comparison": {
+    "data_snooping_test_results.csv": {
+      "byte_identical": true,
+      "new_sha256": "b166f3796f021852948c99834b3d434e5a055eda577b80a8dd4c4bdfa3a68f25",
+      "old_sha256": "b166f3796f021852948c99834b3d434e5a055eda577b80a8dd4c4bdfa3a68f25"
+    },
+    "effective_trials_sensitivity.csv": {
+      "byte_identical": true,
+      "new_sha256": "649f96dded68847eb3326bf70fc99f99fceda6a5572dd96f7c6e919b0f430747",
+      "old_sha256": "649f96dded68847eb3326bf70fc99f99fceda6a5572dd96f7c6e919b0f430747"
+    },
+    "multiple_testing_adjustments.csv": {
+      "byte_identical": true,
+      "new_sha256": "688bbbd6f592473c1de7c1dce14059c153b94c7ecfb74b9dbb6e6625e63fb3a5",
+      "old_sha256": "688bbbd6f592473c1de7c1dce14059c153b94c7ecfb74b9dbb6e6625e63fb3a5"
+    },
+    "research_trial_inventory.csv": {
+      "byte_identical": true,
+      "new_sha256": "06f03a36f8b8a76dc5f23d1c5aeaa318fdba578dabe3f30b902601a317cf8387",
+      "old_sha256": "06f03a36f8b8a76dc5f23d1c5aeaa318fdba578dabe3f30b902601a317cf8387"
+    },
+    "trial_correlation_summary.csv": {
+      "byte_identical": true,
+      "new_sha256": "f1053c9b27f1f9a67c0bd5127d578ac9a073a5dee1f975e97e4fcd41401c4fa3",
+      "old_sha256": "f1053c9b27f1f9a67c0bd5127d578ac9a073a5dee1f975e97e4fcd41401c4fa3"
+    }
+  },
+  "model_selection_performed": false,
+  "multiple_testing_preserved": true,
+  "new_dsr_results_sha256": "1f306a42aa2c40afd2a12bcce722177135082b04364832bdd1a01855cbc9ed69",
+  "old_dsr_results_sha256": "889a8b5f3355003c478f58a9b11f01fc3ffe481f75d18822445fb6a26ab85f81",
+  "oos_end": "2026-08-31",
+  "oos_start": "2013-01-02",
+  "phase": "8B-2 DSR remediation candidate",
+  "phase8a_source_run_id": "20260914_phase8a_oos_evidence_consolidation_final",
+  "phase8b1_source_run_id": "20260914_phase8b1_null_test_remediation_candidate",
+  "phase8b2_accepted_run_id": "20260915_phase8b2_multiple_testing_audit",
+  "prior_phase_artifacts_rewritten": false,
+  "selection_performed": false,
+  "software_versions": {
+    "numpy": "2.5.0",
+    "pandas": "3.0.3",
+    "python": "3.14.4"
+  },
+  "source_hashes": {
+    "phase8a/aligned_daily_returns.csv": "0e7b790318cfbe0618305e8dbe9fa301911677667385e8d303ee665c3d1e3ee4",
+    "phase8a/canonical_source_manifest.csv": "3ad085ad440090221f4794f456d18ef2cea433a035a288658c50a12ebbabf6dd",
+    "phase8a/oos_champion_table.csv": "718ca799db65ea03ae625e400634f5246195e58a8b8fc9ec6416852d7a8a53af",
+    "phase8b1/after_tax_descriptive_comparisons.csv": "59af7ddb1e879be122b894fbaac3dd151817923275f6728992443f41c1f7fc55",
+    "phase8b1/bootstrap_configuration.json": "2befcea6f833cb83c2cf59389e91212f214fd5e51cba5923909758b3655e5bba",
+    "phase8b1/hac_mean_return_results.csv": "c5e65dcf8d7871caf1ae690c48b494b905c8044038c59e18036be57f133cf8b1",
+    "phase8b1/pairwise_observed_metrics.csv": "bc8bdc6830797267b8046bd61a9ce826748498c9bddf5a085a31b590840e367b",
+    "phase8b1/phase8b1_audit_diff.md": "873cd0fd82b25903734cd01f98f6fc22e4556dc9e1afd4b051bf5a59ae193a86",
+    "phase8b1/phase8b1_report.md": "a6aa496fc4435efdc82b4deb7e0d6df7e4ee4ca39b8d9a210d9c2d1d98e179ad",
+    "phase8b1/stationary_bootstrap_results.csv": "7ddb2eaea36fa3ac714669a2f6b69c057b94d43cecbcbb99058714d69f97165b"
+  },
+  "status": "DSR_NOT_IDENTIFIABLE_FROM_FROZEN_ARTIFACTS",
+  "white_reality_check_candidate_count": 16,
+  "white_reality_check_preserved": true,
+  "winner_designation": false
+}

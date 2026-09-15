@@ -484,6 +484,11 @@ def _moment_statistics(returns: np.ndarray) -> dict[str, float]:
 
 
 def _expected_max_z(trial_count: float) -> float:
+    """Legacy pathwise benchmark helper retained only for audit diffing.
+
+    This helper is not a Bailey–López de Prado DSR implementation because it
+    has no independently reconstructed cross-trial Sharpe distribution.
+    """
     n = float(trial_count)
     if not np.isfinite(n) or n < 1:
         raise ValueError("trial_count must be finite and at least one")
@@ -498,22 +503,19 @@ def _expected_max_z(trial_count: float) -> float:
     )
 
 
-def deflated_sharpe_ratio(
+def legacy_pathwise_sharpe_diagnostic(
     observed_sharpe: float,
     n_observations: int,
     skewness: float,
     excess_kurtosis: float,
     trial_count: float,
 ) -> dict[str, float]:
-    """Published DSR approximation using excess kurtosis.
+    """Legacy pathwise Sharpe diagnostic; explicitly not Bailey–López DSR.
 
-    The Sharpe-estimate standard error is
-    sqrt((1 - S*skew + ((K_excess + 2)/4)*S^2)/(T-1)).  The expected maximum
-    Sharpe is sigma_SR times the Euler-constant approximation for N trials;
-    DSR is Phi((S_observed - E[max S]) / sigma_SR).  Raw research counts are
-    the primary N; correlation-adjusted effective counts are reported only as
-    a sensitivity because the historical trial ledger is much larger than the
-    17 visible Phase 8A paths.
+    The former Phase 8B-2 run used the observed path's sampling SE as a
+    cross-trial dispersion proxy.  It is retained only so the old artifact can
+    be identified in the remediation diff.  It must not be called DSR or used
+    as evidence.
     """
     if n_observations <= 1 or trial_count < 1:
         raise ValueError("n_observations must exceed one and trial_count must be positive")
@@ -572,10 +574,10 @@ def _dsr_rows(paths: pd.DataFrame, strict_count: int, conservative_count: int, e
         strategy_id, frequency = path_id.rsplit("__", 1)
         role = "QQQ reference" if strategy_id == "QQQ_BUY_HOLD" else "accepted pre-tax OOS strategy path"
         for basis, count in (("strict_selection_trials", strict_count), ("conservative_research_trials", conservative_count)):
-            result = deflated_sharpe_ratio(
+            result = legacy_pathwise_sharpe_diagnostic(
                 stats["observed_sharpe"], stats["n_observations"], stats["skewness"], stats["excess_kurtosis"], count
             )
-            correlation_result = deflated_sharpe_ratio(
+            correlation_result = legacy_pathwise_sharpe_diagnostic(
                 stats["observed_sharpe"], stats["n_observations"], stats["skewness"], stats["excess_kurtosis"], effective_count
             )
             primary_rows.append({
@@ -594,7 +596,7 @@ def _dsr_rows(paths: pd.DataFrame, strict_count: int, conservative_count: int, e
                 "selection_performed": False,
             })
         for count in sensitivity_counts:
-            result = deflated_sharpe_ratio(
+            result = legacy_pathwise_sharpe_diagnostic(
                 stats["observed_sharpe"], stats["n_observations"], stats["skewness"], stats["excess_kurtosis"], count
             )
             sensitivity_rows.append({
@@ -693,18 +695,11 @@ def _configuration(
             "posthoc_filtering": False,
             "selection_performed": False,
         },
-        "deflated_sharpe_ratio": {
-            "published_reference": "Bailey and Lopez de Prado expected-maximum Sharpe approximation",
-            "paths": "QQQ reference plus every Fixed MA200, Phase 7A, Model A, and Model B pre-tax OOS path at all four frequencies",
+        "legacy_pathwise_sharpe_diagnostic": {
+            "status": "NOT_BAILEY_LOPEZ_DE_PRADO_DSR",
+            "paths": "Historical Phase 8B-2 pathwise diagnostic retained only for the remediation diff",
             "path_count": len(dsr.path_id.unique()),
-            "trial_count_bases": ["strict_selection_trials", "conservative_research_trials"],
-            "primary_trial_count_method": "raw frozen count is used as N for expected maximum; no hidden path filtering",
-            "sharpe_standard_error": "sqrt((1 - S*skew + ((excess_kurtosis + 2)/4)*S^2)/(T-1))",
-            "expected_maximum": "sigma_SR*((1-gamma)*Phi^-1(1-1/N)+gamma*Phi^-1(1-1/(N*e)))",
-            "dsr": "Phi((observed_SR - expected_max_SR)/sigma_SR)",
-            "moment_convention": "population central third/fourth moments of the accepted daily OOS vector; sample daily volatility uses ddof=1",
-            "correlation_adjustment": "participation ratio of the 17-path return correlation eigenvalues; sensitivity only",
-            "estimated_effective_path_trials": effective_trials,
+            "warning": "The former output reused one path's sampling SE as cross-trial Sharpe dispersion. It is not a valid DSR and is not evidence.",
             "selection_performed": False,
         },
         "data_snooping": {
@@ -770,7 +765,7 @@ def _write_report(
         "",
         f"The common OOS calendar is **{OOS_START.date()} through {OOS_END.date()}**, exactly **{EXPECTED_SESSIONS:,}** accepted sessions. Phase 8A source run: `{PHASE8A_SOURCE_RUN_ID}`. Phase 8B-1 source run: `{PHASE8B1_SOURCE_RUN_ID}`. All source hashes are recorded in `phase8b2_configuration.json` and were verified before this audit output was created.",
         "",
-        "Phase 8B-2 performs no model or frequency selection. It enumerates the frozen research history, adjusts the already-issued 20 primary Phase 8B-1 mean-return p-values, reports DSR paths without filtering, and applies a frozen White Reality Check candidate set.",
+        "Phase 8B-2 performs no model or frequency selection. It enumerates the frozen research history, adjusts the already-issued 20 primary Phase 8B-1 mean-return p-values, retains a legacy pathwise Sharpe diagnostic only for audit comparison, and applies a frozen White Reality Check candidate set.",
         "",
         "## Research-trial inventory",
         "",
@@ -786,11 +781,11 @@ def _write_report(
         "",
         primary_view.to_markdown(index=False),
         "",
-        "## Deflated Sharpe Ratio",
+        "## Legacy pathwise Sharpe diagnostic (not DSR)",
         "",
-        "DSR is reported for the QQQ reference and every accepted pre-tax OOS strategy path: Fixed MA200, Phase 7A, Phase 7B Model A, and Phase 7B Model B at weekly, monthly, bimonthly, and quarterly frequencies. No path is selected because of its DSR. Daily skewness and excess kurtosis are calculated from the exact aligned OOS vectors; no benchmark, frequency, or path is omitted.",
+        "The historical run contains a pathwise Sharpe penalty table for the QQQ reference and every accepted pre-tax OOS path. It is retained only as a legacy comparison artifact. Because it reused the observed path's own sampling SE as cross-trial dispersion, it is explicitly not Bailey–López de Prado DSR and is not used for a conclusion. The corrected remediation candidate reports DSR_NOT_IDENTIFIABLE_FROM_FROZEN_ARTIFACTS instead.",
         "",
-        "The published approximation uses sigma_SR = sqrt((1 − S·skew + ((excess kurtosis + 2)/4)·S²)/(T−1)), the Euler-constant expected maximum over N trials, and Phi((S − expected maximum)/sigma_SR). Primary N is each raw frozen inventory count. A participation-ratio estimate from the 17 visible path correlation eigenvalues is reported only as a transparent effective-trial sensitivity; it does not retroactively shrink the research ledger.",
+        "The former approximation is not accepted as DSR. The corrected equations, required cross-trial inputs, and identifiability decision are in the remediation candidate's phase8b2_dsr_remediation.md.",
         "",
         f"Estimated effective path count (sensitivity) = **{effective_trials:.6f}**.",
         "",
@@ -808,7 +803,7 @@ def _write_report(
         "",
         "Interpretation is hierarchical: (1) descriptive pairwise economic/path evidence, (2) the adjusted 20-test confirmatory mean-return family, (3) research-program snooping evidence from the complete inventory and White Reality Check, and (4) descriptive complexity evidence. MaxDD and Calmar remain descriptive path/risk diagnostics, not hidden multiple-testing outcomes. No winner, optimal parameter, recommended frequency, score, reoptimization, OOS claim beyond the frozen source, or Walk-Forward selection is made here. Walk-Forward parameter selection remains confined to the already accepted Phase 7B process.",
         "",
-        "The frozen configuration, source hashes, candidate fingerprint, bootstrap index hashes, formulas, and no-selection flags are machine-readable in `phase8b2_configuration.json`.",
+        "The frozen configuration, source hashes, candidate fingerprint, bootstrap index hashes, legacy warning, and no-selection flags are machine-readable in `phase8b2_configuration.json`.",
         "",
         "PHASE 8B-2 MULTIPLE-TESTING AUDIT COMPLETE — NO MODEL OR FREQUENCY SELECTION PERFORMED",
     ]
