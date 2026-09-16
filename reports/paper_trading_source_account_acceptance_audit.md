@@ -1,114 +1,95 @@
 # Paper Trading Protocol v1 — Source Account Acceptance Audit
 
 **Scope:** authoritative-source account/API capability acceptance
-**Prior remediation commit:** `f5ccb4fae9bab405ec23bee1abf35275fe18c21f`
-**Account-enabled rerun base commit:** `6fbc718a839bdef2ec67b11abd3de51a0172b14f`
+**Prior account-gated commit:** `1cec7f42a6942043a9a227349762d8e033890f2e`
 **Date:** 2026-09-17
 
 ## A. Exact source-gate outcome
 
-`ACCOUNT_CREDENTIALS_NOT_AVAILABLE`
+`SOURCE_ACCEPTANCE_FAIL`
 
-The approved execution environment contained none of the checked credential
-names (`ALPHA_VANTAGE_API_KEY`, `MASSIVE_API_KEY`, `POLYGON_API_KEY`). No
-authenticated vendor request was made. No API key, price response, historical
-metric, strategy return, or signal was fabricated.
+Both temporary credential variables were present only inside the isolated
+acceptance process. Their values were never printed, logged, hashed, saved,
+serialized, or committed. No historical performance, backtest, optimization,
+signal evaluation, or paper-trading observation was performed.
 
-## B. Alpha Vantage endpoint entitlement
+The gate fails because the authenticated Alpha Vantage account does not expose
+the premium adjusted endpoint or full raw daily history, and its compact raw
+daily response has only 100 rows, below the required 200-observation depth.
 
-| Required capability | Result | Evidence |
+## B. Alpha Vantage authenticated endpoint audit
+
+| Required capability | Result | Sanitized evidence |
 |---|---|---|
-| `TIME_SERIES_DAILY_ADJUSTED` QQQ | `UNVERIFIED_CAPABILITY` | Account credential unavailable |
-| `TIME_SERIES_DAILY` QQQ | `UNVERIFIED_CAPABILITY` | Account credential unavailable |
-| `TIME_SERIES_DAILY` QLD | `UNVERIFIED_CAPABILITY` | Account credential unavailable |
-| `SPLITS`/`DIVIDENDS` | `UNVERIFIED_CAPABILITY` | Account credential unavailable |
-| 200-observation history | `UNVERIFIED_CAPABILITY` | Account/plan entitlement unavailable |
+| `TIME_SERIES_DAILY_ADJUSTED` QQQ | `FAIL_PREMIUM_ENDPOINT_RESTRICTION` | HTTP 200 premium restriction; 215 response bytes |
+| `TIME_SERIES_DAILY` QQQ, full | `FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION` | HTTP 200 full-outputsize premium restriction; 279 response bytes |
+| `TIME_SERIES_DAILY` QLD, full | `FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION` | HTTP 200 full-outputsize premium restriction; 279 response bytes |
+| `TIME_SERIES_DAILY` QQQ, compact | `PASS_COMPACT_ONLY` | 100 rows; fields `open`, `high`, `low`, `close`, `volume` |
+| `TIME_SERIES_DAILY` QLD, compact | `PASS_COMPACT_ONLY` | 100 rows; fields `open`, `high`, `low`, `close`, `volume` |
+| `SPLITS` QQQ / QLD | `PASS` | 1 / 6 rows; `effective_date`, `split_factor` |
+| `DIVIDENDS` QQQ / QLD | `PASS` | 88 / 34 rows; declaration, ex-dividend, record, payment, amount |
 
-Public documentation was inspected only for endpoint semantics. It is not
-treated as account entitlement. No official source response was retrieved.
+The response messages explicitly identified premium entitlement and the free
+key's 1-request-per-second / 25-requests-per-day policy. No secret-bearing URL,
+header, or response body was retained.
 
-## C. Publication and rate limits
+## C. Rate-limit and publication evidence
 
-Publication SLA classification: `UNRESOLVED`.
-Publication deadline: `PUBLICATION_DEADLINE_NOT_READY`.
-No after-close latency sample was collected because credentials were absent; no
-15-minute SLA was invented.
+The existing conservative demand calculation remains 74 scheduled-session
+units, 16 base requests per unit, 20 with the 25% safety margin, and 1,480
+requests across the conservative annual sum. Account-observable Alpha Vantage
+messages reported 1 request per second and 25 requests per day. No rate-limit
+headers were returned. Operational acceptance remains
+`RATE_LIMIT_NOT_READY`.
 
-## B1. Account-enabled rerun attempt
+No deterministic after-close publication SLA was established. No polling
+deadline was invented and no publication latency observation was run. The
+publication classification remains `UNRESOLVED` and the deadline remains
+`PUBLICATION_DEADLINE_NOT_READY`.
 
-The required presence-only check returned:
+## D. Massive reconciliation audit
 
-`ALPHA_VANTAGE_API_KEY present = FALSE`
+Massive authenticated day-aggregate calls for QQQ and QLD returned HTTP 200,
+response status `DELAYED`, 501 rows each, and fields `o`, `h`, `l`, `c`, `v`,
+`vw`, `t`, and `n`. The requested 2000-01-01 to 2026-09-17 range yielded rows
+corresponding to 2024-09-16 through 2026-09-15. No explicit plan error explained
+the older-history boundary; it is recorded as an observed limitation only.
+Massive remains reconciliation-only and was not promoted to authoritative
+adjusted-close status.
 
-The credential value was never read or exposed. No authenticated Alpha Vantage
-request was attempted, so this run produced no authenticated vendor evidence,
-sanitized request metadata, response bytes, or exception output. The existing
-account-dependent statuses were therefore left unchanged. Massive remains
-unresolved and reconciliation-only; its absence was not used to fail or alter
-the Alpha Vantage check.
+## E. Raw snapshot reconstruction and provenance
 
-Rerun result: `ACCOUNT_CREDENTIALS_NOT_AVAILABLE`.
+Every authenticated response was written to an isolated temporary archive
+before parsing, read back, and verified byte-identical. Endpoint-specific raw
+byte lengths and SHA-256 hashes are recorded in
+`docs/paper_trading_source_account_acceptance.json`; no raw archive contains a
+credential and no official observation directory was written. The existing
+synthetic 200-observation reconstruction control remains unchanged and passes.
+No vendor revision ID was invented; a null `source_revision_id` remains valid.
 
-The conservative request-demand calculation is 74 scheduled-session units per
-12 months, 16 requests per unit, a 25% safety margin, 20 requests per unit,
-and 1,480 requests for the conservative annual sum. Actual account limits
-could not be compared, so the rate gate is `RATE_LIMIT_NOT_READY`. Retries are
-bounded and deterministic.
+## F. Source-role and boundary audit
 
-## D. Snapshot reconstruction
+Alpha Vantage remains the proposed authoritative source by frozen role, but the
+tested account cannot support the required adjusted/full-history MA200 input.
+Massive is reconciliation-only. No values were averaged or substituted, and
+no strategy, cost, tax, schedule, statistic, threshold, or closed research
+artifact changed. No engine, scheduler, start timestamp, official observation,
+Final Freeze, or Phase 9 artifact was created.
 
-`SOURCE_SNAPSHOT_RECONSTRUCTION_PASS` was demonstrated using only a synthetic
-fixture. Exact raw bytes were hashed before parsing, 200 adjusted values were
-reloaded from the immutable bytes, and the test-only MA200/signal reproduced
-exactly. No fixture entered an official directory.
+## G. Secret-leak audit
 
-## E. Massive reconciliation and optional proxy
+The temporary credentials were injected only into the isolated process. The
+secret scan covers tracked files, Git diff, reports, generated metadata,
+acceptance output, and sanitized request metadata. No key value was printed or
+persisted. Result: `SECRET_LEAK_SCAN_PASS`.
 
-Massive remained `RECONCILIATION_MARKET_DATA_SOURCE`. Its QQQ/QLD endpoint
-access and plan/rate-limit constraints are
-`ACCOUNT_CREDENTIALS_NOT_AVAILABLE`. The optional execution proxy remains
-`NOT_OBSERVABLE_IN_PAPER_MODE`; this does not block source acceptance and does
-not replace the frozen 5-bps simulated path.
+## H. Tests
 
-## F. Revision semantics
-
-Vendor revision capability is `UNVERIFIED_CAPABILITY`. The protocol-owned raw
-snapshot remains authoritative, and the schema/fixture confirm that
-`source_revision_id = null` is valid. No vendor revision ID was invented.
-
-## G. Source disagreement and secret audit
-
-The synthetic disagreement fixture passed: Alpha Vantage stays authoritative,
-Massive stays reconciliation-only, mismatch creates an incident, values are
-never averaged, and operator choice cannot depend on favorable signal/outcome.
-
-`SECRET_LEAK_SCAN_PASS` — no credential was printed, stored, committed, or
-placed in request metadata, raw archives, test fixtures, or this report.
-
-## H. Integrity and boundary checks
-
-No strategy/statistical/ledger redesign occurred. No historical performance,
-backtest, optimizer, paper engine, scheduler, official observation, prospective
-start timestamp, 36-month clock, final acceptance manifest, or Phase 9 artifact
-was created. Research v1 freeze integrity and closed prospective design
-integrity remain unchanged.
-
-## I. Tests
-
-Dedicated source-acceptance tests (19 passed) cover credential absence, the
-account-enabled presence-only rerun gate, snapshot byte
-reconstruction, exact 200-value/MA reconstruction, artifact statuses and
-schema, request-budget arithmetic, no-performance use, reconciliation-only
-Massive, no favorable substitution, optional proxy behavior, secret leakage,
-no-start boundaries, and frozen-integrity checks.
-
-The source-acceptance plus prospective governance suites passed 159 tests; the
-full pytest suite passed 543 tests. The secret-leak scan passed across tracked
-files, the Git diff, reports, generated metadata, and acceptance test/request
-metadata surfaces; no exception/error output or sanitized request metadata was
-generated because no authenticated request was attempted. The account-enabled
-rerun keeps the source gate fail-closed and does not start an engine, scheduler,
-official observation, acceptance manifest, or Phase 9. This phase remains an
-account-gated acceptance, not Final Freeze.
+The dedicated source-acceptance suite passed 21 tests. The source-acceptance
+plus prospective governance suites passed 161 tests. The full pytest suite
+passed 545 tests. The dedicated secret-leak test covers
+tracked files, Git diff, reports, generated metadata, acceptance output, and
+sanitized request metadata. This remains a pre-start source acceptance and is
+not Final Freeze.
 
 PAPER TRADING SOURCE ACCOUNT ACCEPTANCE COMPLETE — AWAITING EXTERNAL SOURCE AUDIT

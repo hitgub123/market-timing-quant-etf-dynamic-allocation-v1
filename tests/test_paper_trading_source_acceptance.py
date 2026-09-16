@@ -1,8 +1,9 @@
-"""Pre-start source-account acceptance tests.
+"""Pre-start authenticated source-account acceptance tests.
 
-No test in this module calls a vendor or uses real market data. Account-gated
-checks are represented as explicit unavailable statuses; synthetic fixtures
-prove only provenance and deterministic operational behavior.
+The live vendor calls were performed once in an isolated process. These tests
+validate only the sanitized, non-secret evidence artifact and retain synthetic
+controls for provenance and deterministic reconstruction. They never call a
+vendor and never contain credential values.
 """
 
 from __future__ import annotations
@@ -14,12 +15,11 @@ from pathlib import Path
 import re
 import subprocess
 
-import pytest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 ARTIFACT = DOCS / "paper_trading_source_account_acceptance.json"
+RUN_COMMIT = "1cec7f42a6942043a9a227349762d8e033890f2e"
 FREEZE_COMMIT = "c75af4cf196419c6a27fbddcb10aaad966148b89"
 RESEARCH_TAG = "2b2bf987f2e00540412d263a8ef39566af1d1e2a"
 RESEARCH_MANIFEST_SHA = "dcb8f9d79de93c61e0bd7d93b743b0356be9eb3b1467acf5db9a58563889d400"
@@ -42,76 +42,108 @@ def synthetic_raw_response() -> bytes:
     ).encode("utf-8")
 
 
-def test_account_gate_and_no_authenticated_request_are_explicit() -> None:
+def test_account_gate_records_authenticated_fail_closed_result() -> None:
     artifact = load_artifact()
-    assert artifact["no_api_requests_made"] is True
+    assert artifact["no_api_requests_made"] is False
     assert artifact["historical_performance_used"] is False
-    assert artifact["credentials"] == {
-        "mechanism": "environment variables or approved secret store",
-        "names_checked": ["ALPHA_VANTAGE_API_KEY", "MASSIVE_API_KEY", "POLYGON_API_KEY"],
-        "available": False,
-        "result": "ACCOUNT_CREDENTIALS_NOT_AVAILABLE",
-        "values_stored": False,
-    }
-    assert artifact["final_source_gate"] == "ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
+    assert artifact["credentials"]["available"] is True
+    assert artifact["credentials"]["values_stored"] is False
+    assert artifact["credentials"]["result"] == "ACCOUNT_CREDENTIALS_PRESENT"
+    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
 
 
-def test_account_enabled_rerun_records_presence_only_fail_closed() -> None:
+def test_account_enabled_rerun_records_presence_without_values() -> None:
     artifact = load_artifact()
     rerun = artifact["account_enabled_rerun"]
-    assert artifact["rerun_from_commit"] == "6fbc718a839bdef2ec67b11abd3de51a0172b14f"
-    assert rerun["credential_presence_check"] == {
-        "name": "ALPHA_VANTAGE_API_KEY",
-        "present": False,
-        "value_read": False,
-        "reported_result": "ALPHA_VANTAGE_API_KEY present = FALSE",
-    }
-    assert rerun["authenticated_requests_status"] == "NOT_RUN_ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
-    assert rerun["sanitized_request_metadata_created"] is False
-    assert rerun["exception_output_captured"] is False
-    assert rerun["account_dependent_fields_updated"] is False
-    assert rerun["result"] == "ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
+    assert artifact["rerun_from_commit"] == RUN_COMMIT
+    presence = rerun["credential_presence_check"]
+    assert presence["ALPHA_VANTAGE_API_KEY"]["present"] is True
+    assert presence["MASSIVE_API_KEY"]["present"] is True
+    assert presence["ALPHA_VANTAGE_API_KEY"]["value_exposed"] is False
+    assert presence["MASSIVE_API_KEY"]["value_exposed"] is False
+    assert presence["ALPHA_VANTAGE_API_KEY"]["value_stored"] is False
+    assert presence["MASSIVE_API_KEY"]["value_stored"] is False
+    assert rerun["authenticated_requests_status"] == "COMPLETED_WITH_CAPABILITY_LIMITATIONS"
+    assert rerun["sanitized_request_metadata_created"] is True
+    assert rerun["result"] == "SOURCE_ACCEPTANCE_FAIL"
 
 
-def test_account_enabled_rerun_does_not_claim_authenticated_evidence() -> None:
-    docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
-    report = (ROOT / "reports/paper_trading_source_account_acceptance_audit.md").read_text(encoding="utf-8")
-    assert "ALPHA_VANTAGE_API_KEY present = FALSE" in docs
-    assert "ALPHA_VANTAGE_API_KEY present = FALSE" in report
-    assert "no authenticated vendor evidence" in docs.lower()
-    assert "No authenticated Alpha Vantage" in report
-    assert "request was attempted" in report
-    assert "TIME_SERIES_DAILY_ADJUSTED" in docs
-    assert load_artifact()["no_api_requests_made"] is True
-
-
-def test_account_capability_artifact_has_required_fields_and_statuses() -> None:
+def test_authenticated_endpoint_capabilities_and_history_depth_are_explicit() -> None:
     artifact = load_artifact()
-    required = {
-        "authoritative_source",
-        "account_plan_classification",
-        "adjusted_daily_access",
-        "raw_daily_access",
-        "corporate_action_access",
-        "history_depth_adequate",
-        "publication_sla_classification",
-        "publication_deadline_status",
-        "rate_limit_status",
-        "snapshot_reconstruction_status",
-        "vendor_revision_capability",
-        "reconciliation_source_status",
-        "execution_proxy_status",
-        "secret_leak_scan_status",
-        "final_source_gate",
-    }
-    assert required <= set(artifact)
-    assert artifact["publication_sla_classification"] in {
-        "DOCUMENTED_PUBLICATION_SLA",
-        "ACCOUNT_SPECIFIC_PUBLICATION_SLA",
-        "NO_DOCUMENTED_PUBLICATION_SLA",
-        "UNRESOLVED",
-    }
-    assert artifact["publication_deadline_status"] == "PUBLICATION_DEADLINE_NOT_READY"
+    alpha = artifact["authenticated_endpoint_evidence"]["alpha_vantage"]
+    assert alpha["TIME_SERIES_DAILY_ADJUSTED_QQQ"]["access"] == "FAIL_PREMIUM_ENDPOINT_RESTRICTION"
+    assert alpha["TIME_SERIES_DAILY_QQQ_FULL"]["access"] == "FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION"
+    assert alpha["TIME_SERIES_DAILY_QLD_FULL"]["access"] == "FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION"
+    for symbol in ("QQQ", "QLD"):
+        compact = alpha[f"TIME_SERIES_DAILY_{symbol}_COMPACT"]
+        assert compact["access"] == "PASS_COMPACT_ONLY"
+        assert compact["row_count"] == 100
+        assert compact["row_count"] < 200
+        assert compact["field_semantics"] == ["1. open", "2. high", "3. low", "4. close", "5. volume"]
+    assert artifact["history_depth_adequate"] == "FAIL_100_COMPACT_ROWS_LT_200"
+
+
+def test_corporate_action_access_and_field_semantics_are_explicit() -> None:
+    alpha = load_artifact()["authenticated_endpoint_evidence"]["alpha_vantage"]
+    assert alpha["SPLITS_QQQ"]["access"] == "PASS"
+    assert alpha["SPLITS_QLD"]["access"] == "PASS"
+    assert alpha["DIVIDENDS_QQQ"]["access"] == "PASS"
+    assert alpha["DIVIDENDS_QLD"]["access"] == "PASS"
+    assert alpha["SPLITS_QQQ"]["row_count"] == 1
+    assert alpha["SPLITS_QLD"]["row_count"] == 6
+    assert alpha["DIVIDENDS_QQQ"]["row_count"] == 88
+    assert alpha["DIVIDENDS_QLD"]["row_count"] == 34
+    assert alpha["DIVIDENDS_QQQ"]["field_semantics"] == [
+        "amount",
+        "declaration_date",
+        "ex_dividend_date",
+        "payment_date",
+        "record_date",
+    ]
+
+
+def test_authenticated_raw_snapshots_are_reconstructed_without_credentials() -> None:
+    artifact = load_artifact()
+    alpha = artifact["authenticated_endpoint_evidence"]["alpha_vantage"]
+    massive = artifact["authenticated_endpoint_evidence"]["massive"]
+    for endpoint in (*alpha.values(), *massive.values()):
+        assert endpoint["raw_archive_reconstruction"] == "PASS"
+        assert endpoint["raw_byte_length"] > 0
+        assert re.fullmatch(r"[a-f0-9]{64}", endpoint["raw_sha256"])
+    snapshot = artifact["snapshot_reconstruction"]
+    assert snapshot["authenticated_archive_mode"] == "EPHEMERAL_ISOLATED_TEMPORARY_DIRECTORY"
+    assert snapshot["authenticated_raw_bytes_archived_before_parse"] is True
+    assert snapshot["authenticated_raw_bytes_reconstructed"] is True
+    assert snapshot["authenticated_archive_contains_credentials"] is False
+
+
+def test_account_and_rate_limit_messages_are_sanitized() -> None:
+    artifact = load_artifact()
+    assert artifact["account_plan_classification"] == "FREE_KEY_PLAN_PREMIUM_ENDPOINTS_RESTRICTED"
+    assert artifact["rate_limit_status"] == "OBSERVED_25_PER_DAY_1_REQUEST_PER_SECOND"
+    assert artifact["rate_limit_evidence"]["per_second_burst"] == "1 request per second"
+    assert artifact["rate_limit_evidence"]["daily_limit"] == "25 requests per day"
+    text = json.dumps(artifact, sort_keys=True).lower()
+    assert "apikey=" not in text
+    assert "authorization:" not in text
+
+
+def test_massive_is_reconciliation_only_and_authenticated_access_is_recorded() -> None:
+    artifact = load_artifact()
+    assert artifact["reconciliation_source_role"] == "RECONCILIATION_MARKET_DATA_SOURCE"
+    assert artifact["reconciliation_source_status"] == "AUTHENTICATED_ACCESS_PASS_DELAYED_501_ROWS"
+    assert artifact["execution_proxy_status"] == "NOT_OBSERVABLE_IN_PAPER_MODE"
+    massive = artifact["authenticated_endpoint_evidence"]["massive"]
+    for symbol in ("QQQ", "QLD"):
+        entry = massive[f"DAY_AGGREGATES_{symbol}"]
+        assert entry["access"] == "PASS"
+        assert entry["http_status"] == 200
+        assert entry["response_status"] == "DELAYED"
+        assert entry["row_count"] == 501
+        assert entry["requested_from"] == "2000-01-01"
+        assert entry["requested_to"] == "2026-09-17"
+    docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
+    assert "not promoted to the authoritative adjusted-close source" in docs
 
 
 def test_public_documentation_references_are_primary_vendor_sources() -> None:
@@ -165,7 +197,7 @@ def test_snapshot_fixture_is_nonofficial_and_has_no_prospective_directory() -> N
 def test_source_revision_null_is_supported_without_invented_vendor_id() -> None:
     schema = json.loads((ROOT / "schemas/paper_trading/paper_observations.schema.json").read_text(encoding="utf-8"))
     assert schema["properties"]["source_revision_id"]["type"] == ["string", "null"]
-    assert load_artifact()["source_revision_id_null_supported"] == "PASS_BY_SCHEMA_AND_SYNTHETIC_FIXTURE"
+    assert load_artifact()["source_revision_id_null_supported"] == "PASS_BY_SCHEMA_AND_AUTHENTICATED_RESPONSES"
     text = (DOCS / "PAPER_TRADING_SOURCE_FREEZE_READINESS.md").read_text(encoding="utf-8")
     assert "no vendor ID is invented" in text
 
@@ -175,8 +207,8 @@ def test_publication_status_is_unresolved_without_fabricated_sla() -> None:
     assert artifact["publication_sla_classification"] == "UNRESOLVED"
     assert artifact["publication_deadline_status"] == "PUBLICATION_DEADLINE_NOT_READY"
     docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
-    assert "No after-close polling was run" in docs
-    assert "no 15-minute sla was invented" in docs.lower()
+    assert "No deterministic after-close publication SLA was established" in docs
+    assert "No polling deadline was invented" in docs
 
 
 def test_rate_budget_calculation_is_deterministic_and_performance_blind() -> None:
@@ -190,15 +222,6 @@ def test_rate_budget_calculation_is_deterministic_and_performance_blind() -> Non
     assert budget["annual_expected_requests_with_margin"] == sessions["conservative_sum"] * per_session["budget_with_safety_margin"]
     assert budget["status"] == "RATE_LIMIT_NOT_READY"
     assert "performance" not in budget["planning_basis"].lower() or "no prices" in budget["planning_basis"].lower()
-
-
-def test_massive_is_reconciliation_only_and_optional_proxy_cannot_block() -> None:
-    artifact = load_artifact()
-    assert artifact["reconciliation_source_role"] == "RECONCILIATION_MARKET_DATA_SOURCE"
-    assert artifact["reconciliation_source_status"] == "ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
-    assert artifact["execution_proxy_status"] == "NOT_OBSERVABLE_IN_PAPER_MODE"
-    docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
-    assert "not promoted to the authoritative adjusted-close source" in docs
 
 
 def test_source_disagreement_fixture_never_averages_or_substitutes() -> None:
@@ -250,14 +273,13 @@ def test_no_historical_strategy_metrics_or_performance_selection_in_artifacts() 
         assert "backtest" not in text.lower() or "no historical performance" in text.lower()
 
 
-def test_source_role_and_account_gate_are_not_converted_to_pass() -> None:
+def test_source_role_and_account_gate_remain_fail_closed() -> None:
     artifact = load_artifact()
     assert artifact["authoritative_source"] == "Alpha Vantage"
-    assert artifact["account_plan_classification"] == "ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
-    assert artifact["final_source_gate"] == "ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
-    assert artifact["adjusted_daily_access"] == "UNVERIFIED_CAPABILITY"
-    assert artifact["raw_daily_access"] == "UNVERIFIED_CAPABILITY"
-    assert artifact["corporate_action_access"] == "UNVERIFIED_CAPABILITY"
+    assert artifact["account_plan_classification"] == "FREE_KEY_PLAN_PREMIUM_ENDPOINTS_RESTRICTED"
+    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
+    assert artifact["adjusted_daily_access"] == "ACCOUNT_PLAN_RESTRICTION_PREMIUM_REQUIRED"
+    assert artifact["raw_daily_access"] == "COMPACT_ACCESS_FULL_OUTPUTSIZE_RESTRICTED"
 
 
 def test_no_engine_scheduler_start_phase9_or_acceptance_manifest() -> None:
@@ -286,10 +308,10 @@ def test_research_v1_freeze_and_closed_design_integrity_unchanged() -> None:
         assert (ROOT / relative).read_bytes() == subprocess.check_output(["git", "show", f"{FREEZE_COMMIT}:{relative}"], cwd=ROOT)
 
 
-def test_source_acceptance_artifacts_exist_and_final_status_is_pending_account() -> None:
+def test_source_acceptance_artifacts_exist_and_final_status_is_fail_closed() -> None:
     assert (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").is_file()
     assert ARTIFACT.is_file()
     assert (ROOT / "reports/paper_trading_source_account_acceptance_audit.md").is_file()
     report = (ROOT / "reports/paper_trading_source_account_acceptance_audit.md").read_text(encoding="utf-8")
-    assert "ACCOUNT_CREDENTIALS_NOT_AVAILABLE" in report
+    assert "SOURCE_ACCEPTANCE_FAIL" in report
     assert report.rstrip().endswith("PAPER TRADING SOURCE ACCOUNT ACCEPTANCE COMPLETE — AWAITING EXTERNAL SOURCE AUDIT")
