@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/paper-trading/paper_data_revisions.schema.json",
+  "title": "paper_data_revisions append-only correction record",
+  "type": "object",
+  "additionalProperties": false,
+  "x-append-only": true,
+  "x-primary-key": "revision_id",
+  "required": ["revision_id", "original_record_id", "original_record_hash", "revised_record_id", "revised_record_hash", "schema_version", "protocol_version", "fixture_status", "vendor_revision_id", "old_values", "new_values", "discovery_at", "affected_sessions", "reconstructable", "auditor_disposition", "created_at", "previous_record_hash", "record_hash"],
+  "properties": {
+    "revision_id": {"type": "string"},
+    "original_record_id": {"type": "string"},
+    "original_record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "revised_record_id": {"type": "string"},
+    "revised_record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "schema_version": {"type": "string"},
+    "protocol_version": {"type": "string"},
+    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
+    "vendor_revision_id": {"type": ["string", "null"]},
+    "old_values": {"type": "object"},
+    "new_values": {"type": "object"},
+    "discovery_at": {"type": "string", "format": "date-time"},
+    "affected_sessions": {"type": "array", "items": {"type": "string", "format": "date"}, "uniqueItems": true},
+    "reconstructable": {"type": "boolean"},
+    "auditor_disposition": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

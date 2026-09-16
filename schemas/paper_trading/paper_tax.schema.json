@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/paper-trading/paper_tax.schema.json",
+  "title": "paper_tax frozen simplified tax record",
+  "type": "object",
+  "additionalProperties": false,
+  "x-append-only": true,
+  "x-primary-key": "tax_event_id",
+  "required": ["tax_event_id", "order_id", "schema_version", "protocol_version", "fixture_status", "tax_semantics", "tax_rate", "cost_basis_before", "proceeds", "realized_gain_loss", "tax_paid", "cumulative_realized_tax_paid", "tax_event_at", "created_at", "previous_record_hash", "record_hash"],
+  "properties": {
+    "tax_event_id": {"type": "string"},
+    "order_id": {"type": "string"},
+    "schema_version": {"type": "string"},
+    "protocol_version": {"type": "string"},
+    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
+    "tax_semantics": {"type": "string", "const": "SIMPLIFIED_IMMEDIATE_REALIZED_AVERAGE_COST"},
+    "tax_rate": {"type": "number", "const": 0.20315, "x-units": "decimal rate"},
+    "cost_basis_before": {"type": "number", "minimum": 0, "x-units": "USD"},
+    "proceeds": {"type": "number", "minimum": 0, "x-units": "USD"},
+    "realized_gain_loss": {"type": "number", "x-units": "USD"},
+    "tax_paid": {"type": "number", "minimum": 0, "x-units": "USD"},
+    "cumulative_realized_tax_paid": {"type": "number", "minimum": 0, "x-units": "USD"},
+    "tax_event_at": {"type": "string", "format": "date-time"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

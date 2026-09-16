@@ -587,3 +587,27 @@ Design-status register (every item remains `PROPOSED_NOT_FROZEN`):
 - paper-to-live boundary: `PROPOSED_NOT_FROZEN`.
 
 PAPER TRADING PROTOCOL V1 DESIGN REMEDIATION — DRAFT ONLY
+
+## 20. Operational freeze-preparation references
+
+The accepted statistical/economic design remains closed. Operational details
+prepared for a future external Operational Freeze Audit are specified in:
+
+- `docs/PAPER_TRADING_DATA_SOURCE_SPEC.md` and
+  `docs/paper_trading_data_source_decision.csv`;
+- `docs/PAPER_TRADING_CALENDAR_SPEC.md`;
+- `docs/PAPER_TRADING_LEDGER_SCHEMA.md` and `schemas/paper_trading/`;
+- `docs/PAPER_TRADING_ENVIRONMENT_SPEC.md`;
+- `docs/PAPER_TRADING_OPERATIONAL_RUNBOOK.md`;
+- `docs/paper_trading_incident_taxonomy.csv`;
+- `docs/PAPER_TRADING_DRY_RUN_ACCEPTANCE.md`;
+- `docs/PAPER_TRADING_IMPLEMENTATION_ACCEPTANCE_SPEC.md`;
+- `docs/PAPER_TRADING_GOLDEN_FIXTURE_SPEC.md`;
+- `docs/paper_trading_operational_decision_registry.csv`;
+- `docs/PAPER_TRADING_ACCEPTANCE_MANIFEST_SPEC.md`.
+
+These are all `PROPOSED_NOT_FROZEN`. This preparation does not create the
+final acceptance manifest, select live credentials, implement a production
+paper engine, start a scheduler, activate a prospective start, collect an
+official observation, or alter any closed statistical/economic threshold.
+This preparation does not create the final acceptance manifest.

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/paper-trading/paper_decisions.schema.json",
+  "title": "paper_decisions append-only record",
+  "type": "object",
+  "additionalProperties": false,
+  "x-append-only": true,
+  "x-primary-key": "decision_id",
+  "required": ["decision_id", "observation_id", "schema_version", "protocol_version", "fixture_status", "strategy_id", "schedule", "signal", "previous_target", "new_target", "state_change", "decision_ready_at", "intended_execution_session", "intended_execution_at", "code_commit", "created_at", "previous_record_hash", "record_hash"],
+  "properties": {
+    "decision_id": {"type": "string"},
+    "observation_id": {"type": "string"},
+    "schema_version": {"type": "string"},
+    "protocol_version": {"type": "string"},
+    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
+    "strategy_id": {"type": "string", "const": "FIXED_MA200_QQQ_TO_QLD"},
+    "schedule": {"type": "string", "enum": ["weekly", "monthly", "bimonthly", "quarterly"]},
+    "signal": {"type": "number", "enum": [0, 1]},
+    "previous_target": {"type": ["string", "null"], "enum": ["QLD", "CASH", null]},
+    "new_target": {"type": "string", "enum": ["QLD", "CASH"]},
+    "state_change": {"type": "boolean"},
+    "decision_ready_at": {"type": "string", "format": "date-time"},
+    "intended_execution_session": {"type": "string", "format": "date"},
+    "intended_execution_at": {"type": "string", "format": "date-time"},
+    "code_commit": {"type": "string"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

@@ -7,3 +7,21 @@ data/processed/*.parquet
 data/audit/*.csv
 data/audit/*.md
 
+# Pre-start/paper operational data and credentials must never enter Git.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+paper/raw/
+paper/observations/
+paper/decisions/
+paper/orders/
+paper/fills/
+paper/nav/
+paper/tax/
+paper/incidents/
+paper/revisions/
+paper/manifests/

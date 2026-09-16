@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/paper-trading/paper_orders.schema.json",
+  "title": "paper_orders theoretical order record",
+  "type": "object",
+  "additionalProperties": false,
+  "x-append-only": true,
+  "x-primary-key": "order_id",
+  "required": ["order_id", "decision_id", "schema_version", "protocol_version", "fixture_status", "symbol", "side", "target_weight", "theoretical_quantity", "intended_execution_session", "intended_execution_at", "canonical_fill_convention", "pretrade_nav", "status", "skip_reason", "created_at", "previous_record_hash", "record_hash"],
+  "properties": {
+    "order_id": {"type": "string"},
+    "decision_id": {"type": "string"},
+    "schema_version": {"type": "string"},
+    "protocol_version": {"type": "string"},
+    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
+    "symbol": {"type": "string", "const": "QLD"},
+    "side": {"type": "string", "enum": ["BUY", "SELL", "HOLD"]},
+    "target_weight": {"type": "number", "minimum": 0, "maximum": 1, "x-units": "decimal weight"},
+    "theoretical_quantity": {"type": "number", "minimum": 0, "x-units": "shares"},
+    "intended_execution_session": {"type": "string", "format": "date"},
+    "intended_execution_at": {"type": "string", "format": "date-time"},
+    "canonical_fill_convention": {"type": "string", "const": "NEXT_ELIGIBLE_OPEN_PLUS_MODEL_SLIPPAGE"},
+    "pretrade_nav": {"type": "number", "exclusiveMinimum": 0, "x-units": "USD"},
+    "status": {"type": "string", "enum": ["CREATED", "SKIPPED", "CANCELLED_BY_INCIDENT"]},
+    "skip_reason": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
