@@ -19,7 +19,28 @@ The machine-readable result is
 `docs/paper_trading_source_account_acceptance.json`. All account-dependent
 fields remain `UNVERIFIED_CAPABILITY` or `ACCOUNT_CREDENTIALS_NOT_AVAILABLE`.
 
-## 2. Public documentation inspection
+## 2. Account-enabled rerun attempt (2026-09-17)
+
+This acceptance was resumed from commit
+`6fbc718a839bdef2ec67b11abd3de51a0172b14f`. The required presence-only check
+returned exactly:
+
+`ALPHA_VANTAGE_API_KEY present = FALSE`
+
+The credential value was not read, printed, logged, persisted, serialized, or
+otherwise exposed. Because the required Alpha Vantage credential was absent in
+the approved environment, no authenticated request was made and no request or
+exception metadata was generated. Consequently, the account-dependent Alpha
+Vantage fields remain unresolved; no authenticated vendor evidence can be
+claimed from this run. Massive remains unresolved and reconciliation-only; its
+absence does not convert this Alpha Vantage gate into a different result.
+
+This is an account-enabled acceptance attempt, not a protocol redesign or a
+repeat of the synthetic contract. The final source gate therefore remains:
+
+`ACCOUNT_CREDENTIALS_NOT_AVAILABLE`
+
+## 3. Public documentation inspection
 
 The official Alpha Vantage documentation describes:
 
@@ -42,7 +63,7 @@ account. Massive remains strictly
 `RECONCILIATION_MARKET_DATA_SOURCE`; it is not promoted to the authoritative adjusted-close source.
 See the [Massive Stocks overview](https://polygon.io/docs/rest/stocks/overview).
 
-## 3. Capability acceptance table
+## 4. Capability acceptance table
 
 | Capability | Result | Reason |
 |---|---|---|
@@ -58,7 +79,7 @@ See the [Massive Stocks overview](https://polygon.io/docs/rest/stocks/overview).
 | Massive SIP execution proxy | `NOT_OBSERVABLE_IN_PAPER_MODE` | Optional diagnostic; never a freeze blocker |
 | Vendor revision ID | `UNVERIFIED_CAPABILITY` | No authenticated account/support evidence |
 
-## 4. Point-in-time snapshot reconstruction
+## 5. Point-in-time snapshot reconstruction
 
 The mandatory reconstruction test was run with a deterministic synthetic raw
 response, not vendor data. The exact bytes were hashed before parsing;
@@ -75,7 +96,7 @@ and contains no official price or performance evidence. The protocol supports
 `source_revision_id = null` when a vendor supplies no immutable revision ID;
 the protocol-owned raw snapshot remains authoritative provenance.
 
-## 5. Publication and rate-limit readiness
+## 6. Publication and rate-limit readiness
 
 No after-close polling was run because credentials were unavailable. No
 publication samples were used to choose a favorable deadline. The status is
@@ -97,7 +118,7 @@ or 1,480 requests per conservative 12-month sum. The intended account's actual
 burst/day/month limits were not available, so rate-limit acceptance remains
 `RATE_LIMIT_NOT_READY`. Unlimited retries are not permitted.
 
-## 6. Synthetic source-disagreement fixture
+## 7. Synthetic source-disagreement fixture
 
 A pre-start synthetic fixture supplies different raw OHLC values for the two
 proposed sources. The fixture asserts that Alpha Vantage remains authoritative,
@@ -106,7 +127,7 @@ incident, no values are averaged, and an operator cannot choose whichever
 vendor produces a better signal. No historical date was searched and no
 strategy outcome was calculated.
 
-## 7. Secret-leak audit and boundary checks
+## 8. Secret-leak audit and boundary checks
 
 The remediation commit, tracked files, generated artifacts, and test artifacts
 were scanned for credential material without printing or persisting any secret.
@@ -119,7 +140,7 @@ timestamp, production engine, scheduler, final acceptance manifest, or Phase 9
 artifact. Research v1 freeze integrity and all closed prospective/statistical
 contracts remain unchanged.
 
-## 8. Final source gate
+## 9. Final source gate
 
 The correct outcome is:
 

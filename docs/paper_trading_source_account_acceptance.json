@@ -2,6 +2,21 @@
   "artifact": "paper_trading_source_account_acceptance",
   "artifact_version": "1.0",
   "verified_at": "2026-09-16",
+  "rerun_from_commit": "6fbc718a839bdef2ec67b11abd3de51a0172b14f",
+  "account_enabled_rerun": {
+    "attempted_at": "2026-09-17",
+    "credential_presence_check": {
+      "name": "ALPHA_VANTAGE_API_KEY",
+      "present": false,
+      "value_read": false,
+      "reported_result": "ALPHA_VANTAGE_API_KEY present = FALSE"
+    },
+    "authenticated_requests_status": "NOT_RUN_ACCOUNT_CREDENTIALS_NOT_AVAILABLE",
+    "sanitized_request_metadata_created": false,
+    "exception_output_captured": false,
+    "account_dependent_fields_updated": false,
+    "result": "ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
+  },
   "acceptance_scope": "pre-start account and API capability acceptance only",
   "no_api_requests_made": true,
   "historical_performance_used": false,

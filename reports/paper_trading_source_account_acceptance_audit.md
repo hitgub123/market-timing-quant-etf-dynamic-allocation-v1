@@ -2,7 +2,8 @@
 
 **Scope:** authoritative-source account/API capability acceptance
 **Prior remediation commit:** `f5ccb4fae9bab405ec23bee1abf35275fe18c21f`
-**Date:** 2026-09-16
+**Account-enabled rerun base commit:** `6fbc718a839bdef2ec67b11abd3de51a0172b14f`
+**Date:** 2026-09-17
 
 ## A. Exact source-gate outcome
 
@@ -32,6 +33,21 @@ Publication SLA classification: `UNRESOLVED`.
 Publication deadline: `PUBLICATION_DEADLINE_NOT_READY`.
 No after-close latency sample was collected because credentials were absent; no
 15-minute SLA was invented.
+
+## B1. Account-enabled rerun attempt
+
+The required presence-only check returned:
+
+`ALPHA_VANTAGE_API_KEY present = FALSE`
+
+The credential value was never read or exposed. No authenticated Alpha Vantage
+request was attempted, so this run produced no authenticated vendor evidence,
+sanitized request metadata, response bytes, or exception output. The existing
+account-dependent statuses were therefore left unchanged. Massive remains
+unresolved and reconciliation-only; its absence was not used to fail or alter
+the Alpha Vantage check.
+
+Rerun result: `ACCOUNT_CREDENTIALS_NOT_AVAILABLE`.
 
 The conservative request-demand calculation is 74 scheduled-session units per
 12 months, 16 requests per unit, a 25% safety margin, 20 requests per unit,
@@ -79,15 +95,20 @@ integrity remain unchanged.
 
 ## I. Tests
 
-Dedicated source-acceptance tests (17 passed) cover credential absence, snapshot byte
+Dedicated source-acceptance tests (19 passed) cover credential absence, the
+account-enabled presence-only rerun gate, snapshot byte
 reconstruction, exact 200-value/MA reconstruction, artifact statuses and
 schema, request-budget arithmetic, no-performance use, reconciliation-only
 Massive, no favorable substitution, optional proxy behavior, secret leakage,
 no-start boundaries, and frozen-integrity checks.
 
-The source-acceptance plus prospective governance suites passed 157 tests; the
-full pytest suite passed 541 tests. The remediation is committed separately;
-the exact commit hash is reported in the final handoff. This phase remains an
+The source-acceptance plus prospective governance suites passed 159 tests; the
+full pytest suite passed 543 tests. The secret-leak scan passed across tracked
+files, the Git diff, reports, generated metadata, and acceptance test/request
+metadata surfaces; no exception/error output or sanitized request metadata was
+generated because no authenticated request was attempted. The account-enabled
+rerun keeps the source gate fail-closed and does not start an engine, scheduler,
+official observation, acceptance manifest, or Phase 9. This phase remains an
 account-gated acceptance, not Final Freeze.
 
 PAPER TRADING SOURCE ACCOUNT ACCEPTANCE COMPLETE — AWAITING EXTERNAL SOURCE AUDIT

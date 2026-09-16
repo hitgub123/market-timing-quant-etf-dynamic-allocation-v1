@@ -56,6 +56,35 @@ def test_account_gate_and_no_authenticated_request_are_explicit() -> None:
     assert artifact["final_source_gate"] == "ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
 
 
+def test_account_enabled_rerun_records_presence_only_fail_closed() -> None:
+    artifact = load_artifact()
+    rerun = artifact["account_enabled_rerun"]
+    assert artifact["rerun_from_commit"] == "6fbc718a839bdef2ec67b11abd3de51a0172b14f"
+    assert rerun["credential_presence_check"] == {
+        "name": "ALPHA_VANTAGE_API_KEY",
+        "present": False,
+        "value_read": False,
+        "reported_result": "ALPHA_VANTAGE_API_KEY present = FALSE",
+    }
+    assert rerun["authenticated_requests_status"] == "NOT_RUN_ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
+    assert rerun["sanitized_request_metadata_created"] is False
+    assert rerun["exception_output_captured"] is False
+    assert rerun["account_dependent_fields_updated"] is False
+    assert rerun["result"] == "ACCOUNT_CREDENTIALS_NOT_AVAILABLE"
+
+
+def test_account_enabled_rerun_does_not_claim_authenticated_evidence() -> None:
+    docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
+    report = (ROOT / "reports/paper_trading_source_account_acceptance_audit.md").read_text(encoding="utf-8")
+    assert "ALPHA_VANTAGE_API_KEY present = FALSE" in docs
+    assert "ALPHA_VANTAGE_API_KEY present = FALSE" in report
+    assert "no authenticated vendor evidence" in docs.lower()
+    assert "No authenticated Alpha Vantage" in report
+    assert "request was attempted" in report
+    assert "TIME_SERIES_DAILY_ADJUSTED" in docs
+    assert load_artifact()["no_api_requests_made"] is True
+
+
 def test_account_capability_artifact_has_required_fields_and_statuses() -> None:
     artifact = load_artifact()
     required = {
