@@ -597,6 +597,8 @@ prepared for a future external Operational Freeze Audit are specified in:
   `docs/paper_trading_data_source_decision.csv`;
 - `docs/PAPER_TRADING_CALENDAR_SPEC.md`;
 - `docs/PAPER_TRADING_LEDGER_SCHEMA.md` and `schemas/paper_trading/`;
+- `docs/PAPER_TRADING_SCHEMA_CONTRACT_MATRIX.csv` and
+  `docs/PAPER_TRADING_SOURCE_FREEZE_READINESS.md`;
 - `docs/PAPER_TRADING_ENVIRONMENT_SPEC.md`;
 - `docs/PAPER_TRADING_OPERATIONAL_RUNBOOK.md`;
 - `docs/paper_trading_incident_taxonomy.csv`;

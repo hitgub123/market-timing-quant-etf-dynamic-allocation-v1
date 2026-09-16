@@ -6,23 +6,188 @@
   "additionalProperties": false,
   "x-append-only": true,
   "x-primary-key": "tax_event_id",
-  "required": ["tax_event_id", "order_id", "schema_version", "protocol_version", "fixture_status", "tax_semantics", "tax_rate", "cost_basis_before", "proceeds", "realized_gain_loss", "tax_paid", "cumulative_realized_tax_paid", "tax_event_at", "created_at", "previous_record_hash", "record_hash"],
+  "required": [
+    "tax_event_id",
+    "order_id",
+    "fill_id",
+    "trigger_type",
+    "schema_version",
+    "protocol_version",
+    "fixture_status",
+    "tax_semantics",
+    "tax_rate",
+    "cost_basis_before",
+    "proceeds",
+    "realized_gain_loss",
+    "tax_paid",
+    "cumulative_realized_tax_paid",
+    "tax_event_at",
+    "created_at",
+    "previous_record_hash",
+    "record_hash",
+    "source",
+    "code_commit",
+    "batch_id",
+    "chain_scope",
+    "chain_sequence"
+  ],
   "properties": {
-    "tax_event_id": {"type": "string"},
-    "order_id": {"type": "string"},
-    "schema_version": {"type": "string"},
-    "protocol_version": {"type": "string"},
-    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
-    "tax_semantics": {"type": "string", "const": "SIMPLIFIED_IMMEDIATE_REALIZED_AVERAGE_COST"},
-    "tax_rate": {"type": "number", "const": 0.20315, "x-units": "decimal rate"},
-    "cost_basis_before": {"type": "number", "minimum": 0, "x-units": "USD"},
-    "proceeds": {"type": "number", "minimum": 0, "x-units": "USD"},
-    "realized_gain_loss": {"type": "number", "x-units": "USD"},
-    "tax_paid": {"type": "number", "minimum": 0, "x-units": "USD"},
-    "cumulative_realized_tax_paid": {"type": "number", "minimum": 0, "x-units": "USD"},
-    "tax_event_at": {"type": "string", "format": "date-time"},
-    "created_at": {"type": "string", "format": "date-time"},
-    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
-    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    "tax_event_id": {
+      "type": "string"
+    },
+    "order_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "fixture_status": {
+      "type": "string",
+      "enum": [
+        "SYNTHETIC_TEST_FIXTURE",
+        "OFFICIAL_PROSPECTIVE"
+      ]
+    },
+    "tax_semantics": {
+      "type": "string",
+      "const": "SIMPLIFIED_IMMEDIATE_REALIZED_AVERAGE_COST"
+    },
+    "tax_rate": {
+      "type": "number",
+      "const": 0.20315,
+      "x-units": "decimal rate"
+    },
+    "cost_basis_before": {
+      "type": "number",
+      "minimum": 0,
+      "x-units": "USD"
+    },
+    "proceeds": {
+      "type": "number",
+      "minimum": 0,
+      "x-units": "USD"
+    },
+    "realized_gain_loss": {
+      "type": "number",
+      "x-units": "USD"
+    },
+    "tax_paid": {
+      "type": "number",
+      "minimum": 0,
+      "x-units": "USD"
+    },
+    "cumulative_realized_tax_paid": {
+      "type": "number",
+      "minimum": 0,
+      "x-units": "USD"
+    },
+    "tax_event_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "previous_record_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "record_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "batch_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fill_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "trigger_type": {
+      "type": "string",
+      "enum": [
+        "ORDER",
+        "FILL",
+        "DISTRIBUTION",
+        "CORPORATE_ACTION",
+        "OTHER"
+      ]
+    }
+  },
+  "anyOf": [
+    {
+      "properties": {
+        "trigger_type": {"const": "ORDER"},
+        "order_id": {"type": "string"}
+      }
+    },
+    {
+      "properties": {
+        "trigger_type": {"const": "FILL"},
+        "fill_id": {"type": "string"}
+      }
+    },
+    {
+      "properties": {
+        "trigger_type": {"enum": ["DISTRIBUTION", "CORPORATE_ACTION", "OTHER"]},
+        "order_id": {"type": "null"},
+        "fill_id": {"type": "null"}
+      }
+    }
+  ],
+  "x-chain-scope": "paper_tax/protocol_version",
+  "x-chain-ordering": [
+    "canonical_event_time_utc",
+    "primary_key",
+    "created_at",
+    "chain_sequence"
+  ],
+  "x-genesis": {
+    "first_record_previous_record_hash": null,
+    "chain_sequence": 0
+  },
+  "x-corrections": "Corrections/revisions append records in their own ledger chain and never overwrite the original.",
+  "x-foreign-keys": {
+    "order_id": {
+      "schema": "paper_orders.schema.json",
+      "property": "order_id",
+      "required": false,
+      "conditional": "required when trigger_type=ORDER"
+    },
+    "fill_id": {
+      "schema": "paper_fills.schema.json",
+      "property": "fill_id",
+      "required": false,
+      "conditional": "present when tax event is triggered by a fill"
+    }
   }
 }

@@ -96,10 +96,14 @@ execution/reference prices remain unadjusted official session prices. Splits,
 dividends, and fund distributions are recorded as source corporate-action
 events; they are not silently back-applied to an already frozen decision.
 
-## 4. Corporate actions and revisions
+## 4. Point-in-time adjusted-close and revisions
 
 The initial observation stores both the source's raw payload hash and the
-parsed fields. A later change in an adjusted value or corporate-action event
+parsed fields. At every decision the exact raw response used to construct the
+QQQ MA200 window is archived before parsing. The observation's
+`source_snapshot_id` is the protocol-owned immutable `sha256:<raw_hash>` (or
+the SHA-256 of a sorted manifest of all raw hashes used for that window). A
+later change in an adjusted value or corporate-action event
 creates `DATA_REVISION_INCIDENT` and a row in `paper_data_revisions` containing
 the original value, revised value, original raw hash, revised raw hash,
 original/revised raw hashes, discovery
@@ -120,12 +124,47 @@ and flow into the frozen average-cost/tax policy only through an explicitly
 audited accounting transformation. No distribution is treated as an
 unlogged price change.
 
-## 5. Fail-closed and disagreement policy
+If Alpha Vantage supplies no immutable vendor revision identifier, the field
+`source_revision_id` remains `null`; no vendor ID is invented. The protocol
+snapshot hash is authoritative for provenance and permits an auditor to
+reconstruct the exact 200 adjusted closes, raw hashes, MA200, and signal that
+were available at decision time. A vendor revision can therefore create an
+append-only correction without retroactively changing the official decision.
+
+## 5. Publication, acquisition, and stale-data semantics
+
+`data_available_at` is the vendor publication/availability time when the
+vendor supplies one; `data_acquired_at` is the local retrieval time. Neither
+is the exchange event time. A valid completed-session close acquired 16 minutes
+after the exchange close is not stale merely because 15 minutes elapsed.
+
+An observation is mechanically `STALE` only when one of these conditions holds:
+
+1. its vendor session key is not exactly the expected calendar `session_date`;
+2. the payload is a duplicate of a prior session while the expected session is
+   still absent; or
+3. a predeclared, vendor-compatible publication deadline has expired and the
+   expected session remains unavailable.
+
+Publication delay and acquisition delay are recorded separately and do not by
+themselves invalidate a close. Alpha Vantage's authoritative daily endpoint
+does not publish a verified SLA for item 3, so the current fixed 15-minute
+rule is explicitly `STALE_SEMANTICS_UNVERIFIED` and is not freeze-ready. Any
+future change to that grace is classified `OPERATIONAL_SOURCE_COMPATIBILITY_REMEDIATION`,
+not statistical or economic redesign. The
+proposed deterministic replacement is a vendor-compatible deadline recorded
+in the source acceptance manifest (exchange close plus the documented vendor
+publication SLA, with a fixed polling cutoff); until that SLA is verified,
+the affected record is held without a signal and receives
+`STALE_SEMANTICS_UNVERIFIED`. No forward-fill, interpolation, or favorable
+source substitution is permitted.
+
+## 6. Fail-closed and disagreement policy
 
 | Condition | Deterministic action |
 |---|---|
 | scheduled close missing | `WAIT`; if not recovered by the stale deadline, `INCIDENT_AND_CONTINUE` with no signal |
-| scheduled close stale | `INCIDENT_AND_CONTINUE`; no forward-fill or signal |
+| scheduled close has wrong session/duplicate prior session | `INCIDENT_AND_CONTINUE`; no forward-fill or signal |
 | next open missing/delayed | `WAIT`; then `SKIP` the intended execution and record the reason |
 | non-positive/invalid price | `PROTOCOL_INVALID` for a malformed authoritative record, otherwise `SKIP` with incident before official use |
 | duplicate observation/order | `INCIDENT_AND_RECONSTRUCT`; duplicate immutable ID never creates a second economic event |
@@ -136,6 +175,7 @@ unlogged price change.
 | unscheduled closure/vendor outage | `WAIT`, then `INCIDENT_AND_CONTINUE`; no backdated fill |
 | corporate-action ambiguity | `INCIDENT_AND_RECONSTRUCT`; no signal until factors are resolved |
 | timestamp ambiguity | `SKIP` the affected record; unresolved boundary ambiguity is `PROTOCOL_INVALID` |
+| source capability or publication SLA unverified | hold the affected boundary; `SOURCE_CAPABILITY_UNVERIFIED` or `STALE_SEMANTICS_UNVERIFIED` |
 | revision after decision | append `DATA_REVISION_INCIDENT`; reconstruct or invalidate, never overwrite |
 | execution proxy unavailable | record `NOT_OBSERVABLE_IN_PAPER_MODE`; canonical 5-bps model path is unchanged |
 
@@ -143,14 +183,16 @@ No operator may choose a price because it improves return, and no missing value
 may be filled by interpolation, midpoint, last-known value, or a favorable
 synthetic price.
 
-## 6. Capability verification register
+## 7. Capability verification register
 
 | Capability | Status | Evidence/acceptance condition |
 |---|---|---|
-| Alpha Vantage adjusted QQQ close | `VERIFIED_BY_PUBLIC_DOCS` | Daily adjusted endpoint documents adjusted close and split/dividend events. |
-| Alpha Vantage raw QQQ/QLD OHLC | `VERIFIED_BY_PUBLIC_DOCS` | Separate daily endpoint documents raw OHLCV. |
+| Alpha Vantage adjusted QQQ close | `VERIFIED_WITH_ACCOUNT_DEPENDENCY` | Public documentation describes the daily adjusted endpoint; intended account/premium entitlement and live QQQ response remain unverified. |
+| Alpha Vantage raw QQQ/QLD OHLC | `VERIFIED_WITH_ACCOUNT_DEPENDENCY` | Public documentation describes the separate daily endpoint; intended account access remains unverified. |
 | Alpha Vantage daily event timestamp | `UNVERIFIED_CAPABILITY` | Daily response is date-keyed; calendar-derived event time is used instead. |
 | Alpha Vantage historical revision guarantees | `UNVERIFIED_CAPABILITY` | No immutable revision SLA is claimed; raw snapshots and correction ledger compensate. |
+| Alpha Vantage after-close publication SLA | `UNVERIFIED_CAPABILITY` | No account-specific publication deadline was verified; fixed 15-minute stale rule is not accepted. |
+| Alpha Vantage response/request revision identifier | `UNVERIFIED_CAPABILITY` | No immutable vendor ID is required; protocol snapshot hash is authoritative. |
 | Massive raw daily OHLCV | `VERIFIED_BY_PUBLIC_DOCS` | Day-aggregate documentation and flat-file archive. |
 | Massive UTC timestamps | `VERIFIED_BY_PUBLIC_DOCS` | Stocks overview documents UTC timestamp semantics. |
 | Massive split adjustment | `VERIFIED_BY_PUBLIC_DOCS` | Adjustment policy documents split adjustment and `adjusted=false`. |
@@ -158,12 +200,12 @@ synthetic price.
 | Massive NBBO quote timestamps | `VERIFIED_BY_PUBLIC_DOCS` | Quote flat-file documentation; plan entitlement remains an operational prerequisite. |
 | Opening-auction executable price | `UNVERIFIED_CAPABILITY` | A quote stream is not asserted to be an executable auction fill. |
 | Personal-research licensing/rate limits | `UNVERIFIED_CAPABILITY` | Account-specific terms and plan limits require acceptance before freeze. |
-| QQQ and QLD symbol support | `VERIFIED_BY_PUBLIC_DOCS` | Both vendors document ETF/ticker query interfaces; symbol-level acceptance remains a pre-freeze check. |
+| QQQ and QLD symbol support | `VERIFIED_WITH_ACCOUNT_DEPENDENCY` | Both vendors document ETF/ticker query interfaces; intended account-level symbol acceptance remains a pre-freeze check. |
 
-Every `UNVERIFIED_CAPABILITY` blocks a claim that depends on it. It does not
+Every `UNVERIFIED_CAPABILITY` or `VERIFIED_WITH_ACCOUNT_DEPENDENCY` blocks a claim that depends on it until the intended account/plan is tested. It does not
 silently become a verified feature at implementation time.
 
-## 7. Raw snapshot policy
+## 8. Raw snapshot policy
 
 Raw vendor bytes are archived exactly as received before parsing. Each request
 stores endpoint, method, sanitized parameters, response headers that are safe

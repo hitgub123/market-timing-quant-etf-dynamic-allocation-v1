@@ -1,0 +1,24 @@
+{
+  "status": "VERIFIED_ISOLATED",
+  "verified_at": "2026-09-16",
+  "repository_dependency_file": "requirements.txt",
+  "python": "3.14.4",
+  "platform": "Linux WSL2 x86_64; kernel 6.6.87.2-microsoft-standard-WSL2",
+  "packages": {
+    "numpy": "2.5.0",
+    "pandas": "3.0.3",
+    "pyarrow": "24.0.0",
+    "PyYAML": "6.0.3",
+    "pytest": "9.1.1",
+    "pandas-market-calendars": "5.4.0",
+    "matplotlib": "3.10.6",
+    "tzdata": "2026.4"
+  },
+  "calendar": {
+    "name": "NASDAQ",
+    "timezone": "America/New_York",
+    "fixtures": ["MONDAY_HOLIDAY", "EARLY_CLOSE", "DST_SPRING", "DST_AUTUMN", "MONTH_BOUNDARY", "BIMONTHLY_BOUNDARY", "QUARTER_BOUNDARY", "YEAR_BOUNDARY"]
+  },
+  "secrets_present": false,
+  "official_prospective_rows_created": false
+}

@@ -10,8 +10,14 @@ Shared invariants:
 - timestamps are timezone-aware ISO-8601 date-times;
 - `session_date` is an America/New_York exchange date;
 - primary keys are immutable and unique;
-- `record_hash` is SHA-256 of canonical JSON;
-- `previous_record_hash` creates the append-only chain;
+- every record carries `source`, `code_commit`, `batch_id`, `chain_scope`, and
+  `chain_sequence` in addition to the version/provenance fields;
+- `record_hash` is SHA-256 of the canonical JSON projection defined in
+  `docs/PAPER_TRADING_LEDGER_SCHEMA.md`;
+- `previous_record_hash` creates the append-only chain and is `null` only at
+  genesis;
+- `x-foreign-keys` describes machine-auditable parent links; cross-ledger
+  existence checks are performed by the acceptance validator;
 - null means unavailable, never zero or forward-filled;
 - all official records carry protocol/version/source/code provenance.
 

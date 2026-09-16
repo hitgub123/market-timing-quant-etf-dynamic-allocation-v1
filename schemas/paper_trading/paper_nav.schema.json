@@ -6,27 +6,168 @@
   "additionalProperties": false,
   "x-append-only": true,
   "x-primary-key": "nav_id",
-  "required": ["nav_id", "schema_version", "protocol_version", "fixture_status", "session_date", "valuation_timestamp", "cash", "holdings_value", "cost_basis", "pre_tax_nav", "tax_paid_to_date_nav", "benchmark_nav", "daily_return", "paired_excess_return", "drawdown", "turnover_trade_component", "order_hashes", "created_at", "previous_record_hash", "record_hash"],
+  "required": [
+    "nav_id",
+    "schema_version",
+    "protocol_version",
+    "fixture_status",
+    "session_date",
+    "valuation_timestamp",
+    "cash",
+    "holdings_value",
+    "cost_basis",
+    "pre_tax_nav",
+    "tax_paid_to_date_nav",
+    "benchmark_nav",
+    "daily_return",
+    "paired_excess_return",
+    "drawdown",
+    "turnover_trade_component",
+    "order_hashes",
+    "created_at",
+    "previous_record_hash",
+    "record_hash",
+    "source",
+    "code_commit",
+    "batch_id",
+    "chain_scope",
+    "chain_sequence"
+  ],
   "properties": {
-    "nav_id": {"type": "string"},
-    "schema_version": {"type": "string"},
-    "protocol_version": {"type": "string"},
-    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
-    "session_date": {"type": "string", "format": "date"},
-    "valuation_timestamp": {"type": "string", "format": "date-time"},
-    "cash": {"type": "number", "minimum": 0, "x-units": "USD"},
-    "holdings_value": {"type": "number", "minimum": 0, "x-units": "USD"},
-    "cost_basis": {"type": "number", "minimum": 0, "x-units": "USD"},
-    "pre_tax_nav": {"type": "number", "exclusiveMinimum": 0, "x-units": "USD"},
-    "tax_paid_to_date_nav": {"type": "number", "exclusiveMinimum": 0, "x-units": "USD"},
-    "benchmark_nav": {"type": "number", "exclusiveMinimum": 0, "x-units": "USD"},
-    "daily_return": {"type": "number", "x-units": "decimal return"},
-    "paired_excess_return": {"type": "number", "x-units": "decimal return"},
-    "drawdown": {"type": "number", "maximum": 0, "x-units": "decimal drawdown"},
-    "turnover_trade_component": {"type": "number", "minimum": 0, "x-units": "turnover multiple"},
-    "order_hashes": {"type": "array", "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "uniqueItems": true},
-    "created_at": {"type": "string", "format": "date-time"},
-    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
-    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    "nav_id": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "fixture_status": {
+      "type": "string",
+      "enum": [
+        "SYNTHETIC_TEST_FIXTURE",
+        "OFFICIAL_PROSPECTIVE"
+      ]
+    },
+    "session_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "valuation_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cash": {
+      "type": "number",
+      "minimum": 0,
+      "x-units": "USD"
+    },
+    "holdings_value": {
+      "type": "number",
+      "minimum": 0,
+      "x-units": "USD"
+    },
+    "cost_basis": {
+      "type": "number",
+      "minimum": 0,
+      "x-units": "USD"
+    },
+    "pre_tax_nav": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "x-units": "USD"
+    },
+    "tax_paid_to_date_nav": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "x-units": "USD"
+    },
+    "benchmark_nav": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "x-units": "USD"
+    },
+    "daily_return": {
+      "type": "number",
+      "x-units": "decimal return"
+    },
+    "paired_excess_return": {
+      "type": "number",
+      "x-units": "decimal return"
+    },
+    "drawdown": {
+      "type": "number",
+      "maximum": 0,
+      "x-units": "decimal drawdown"
+    },
+    "turnover_trade_component": {
+      "type": "number",
+      "minimum": 0,
+      "x-units": "turnover multiple"
+    },
+    "order_hashes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "uniqueItems": true
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "previous_record_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "record_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "batch_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_sequence": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "x-chain-scope": "paper_nav/protocol_version",
+  "x-chain-ordering": [
+    "canonical_event_time_utc",
+    "primary_key",
+    "created_at",
+    "chain_sequence"
+  ],
+  "x-genesis": {
+    "first_record_previous_record_hash": null,
+    "chain_sequence": 0
+  },
+  "x-corrections": "Corrections/revisions append records in their own ledger chain and never overwrite the original.",
+  "x-foreign-keys": {
+    "order_hashes": {
+      "schema": "paper_orders.schema.json",
+      "property": "record_hash",
+      "required": false,
+      "conditional": "empty when no trade on session"
+    }
   }
 }

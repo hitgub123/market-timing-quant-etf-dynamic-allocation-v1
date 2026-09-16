@@ -6,28 +6,172 @@
   "additionalProperties": false,
   "x-append-only": true,
   "x-primary-key": "incident_id",
-  "required": ["incident_id", "schema_version", "protocol_version", "fixture_status", "incident_code", "category", "severity", "trigger", "incident_at", "session_date", "source", "affected_record_ids", "raw_evidence_hashes", "automatic_action", "operator_action", "resolution", "protocol_validity_effect", "restart_required", "created_at", "previous_record_hash", "record_hash"],
+  "required": [
+    "incident_id",
+    "schema_version",
+    "protocol_version",
+    "fixture_status",
+    "incident_code",
+    "category",
+    "severity",
+    "trigger",
+    "incident_at",
+    "session_date",
+    "source",
+    "affected_record_ids",
+    "raw_evidence_hashes",
+    "automatic_action",
+    "operator_action",
+    "resolution",
+    "protocol_validity_effect",
+    "restart_required",
+    "created_at",
+    "previous_record_hash",
+    "record_hash",
+    "code_commit",
+    "batch_id",
+    "chain_scope",
+    "chain_sequence"
+  ],
   "properties": {
-    "incident_id": {"type": "string"},
-    "schema_version": {"type": "string"},
-    "protocol_version": {"type": "string"},
-    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
-    "incident_code": {"type": "string"},
-    "category": {"type": "string"},
-    "severity": {"type": "string", "enum": ["INFO", "WARNING", "RECOVERABLE", "MATERIAL", "PROTOCOL_INVALIDATING"]},
-    "trigger": {"type": "string"},
-    "incident_at": {"type": "string", "format": "date-time"},
-    "session_date": {"type": ["string", "null"], "format": "date"},
-    "source": {"type": "string"},
-    "affected_record_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-    "raw_evidence_hashes": {"type": "array", "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "uniqueItems": true},
-    "automatic_action": {"type": "string"},
-    "operator_action": {"type": "string"},
-    "resolution": {"type": ["string", "null"]},
-    "protocol_validity_effect": {"type": "string", "enum": ["NONE", "PAUSE_AFFECTED_RECORD", "RECONSTRUCT_REQUIRED", "PROTOCOL_INVALID"]},
-    "restart_required": {"type": "boolean"},
-    "created_at": {"type": "string", "format": "date-time"},
-    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
-    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    "incident_id": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "fixture_status": {
+      "type": "string",
+      "enum": [
+        "SYNTHETIC_TEST_FIXTURE",
+        "OFFICIAL_PROSPECTIVE"
+      ]
+    },
+    "incident_code": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "INFO",
+        "WARNING",
+        "RECOVERABLE",
+        "MATERIAL",
+        "PROTOCOL_INVALIDATING"
+      ]
+    },
+    "trigger": {
+      "type": "string"
+    },
+    "incident_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "session_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "source": {
+      "type": "string"
+    },
+    "affected_record_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "raw_evidence_hashes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "uniqueItems": true
+    },
+    "automatic_action": {
+      "type": "string"
+    },
+    "operator_action": {
+      "type": "string"
+    },
+    "resolution": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "protocol_validity_effect": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "PAUSE_AFFECTED_RECORD",
+        "RECONSTRUCT_REQUIRED",
+        "PROTOCOL_INVALID"
+      ]
+    },
+    "restart_required": {
+      "type": "boolean"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "previous_record_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "record_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "code_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "batch_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_sequence": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "x-chain-scope": "paper_incidents/protocol_version",
+  "x-chain-ordering": [
+    "canonical_event_time_utc",
+    "primary_key",
+    "created_at",
+    "chain_sequence"
+  ],
+  "x-genesis": {
+    "first_record_previous_record_hash": null,
+    "chain_sequence": 0
+  },
+  "x-corrections": "Corrections/revisions append records in their own ledger chain and never overwrite the original.",
+  "x-foreign-keys": {
+    "affected_record_ids": {
+      "schema": "any paper-trading ledger",
+      "property": "primary key",
+      "required": false,
+      "conditional": "empty only when incident has no affected record"
+    }
   }
 }

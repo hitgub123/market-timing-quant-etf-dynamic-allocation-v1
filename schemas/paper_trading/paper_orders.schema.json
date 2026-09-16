@@ -6,25 +6,158 @@
   "additionalProperties": false,
   "x-append-only": true,
   "x-primary-key": "order_id",
-  "required": ["order_id", "decision_id", "schema_version", "protocol_version", "fixture_status", "symbol", "side", "target_weight", "theoretical_quantity", "intended_execution_session", "intended_execution_at", "canonical_fill_convention", "pretrade_nav", "status", "skip_reason", "created_at", "previous_record_hash", "record_hash"],
+  "required": [
+    "order_id",
+    "decision_id",
+    "schema_version",
+    "protocol_version",
+    "fixture_status",
+    "symbol",
+    "side",
+    "target_weight",
+    "theoretical_quantity",
+    "intended_execution_session",
+    "intended_execution_at",
+    "canonical_fill_convention",
+    "pretrade_nav",
+    "status",
+    "skip_reason",
+    "created_at",
+    "previous_record_hash",
+    "record_hash",
+    "source",
+    "code_commit",
+    "batch_id",
+    "chain_scope",
+    "chain_sequence"
+  ],
   "properties": {
-    "order_id": {"type": "string"},
-    "decision_id": {"type": "string"},
-    "schema_version": {"type": "string"},
-    "protocol_version": {"type": "string"},
-    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
-    "symbol": {"type": "string", "const": "QLD"},
-    "side": {"type": "string", "enum": ["BUY", "SELL", "HOLD"]},
-    "target_weight": {"type": "number", "minimum": 0, "maximum": 1, "x-units": "decimal weight"},
-    "theoretical_quantity": {"type": "number", "minimum": 0, "x-units": "shares"},
-    "intended_execution_session": {"type": "string", "format": "date"},
-    "intended_execution_at": {"type": "string", "format": "date-time"},
-    "canonical_fill_convention": {"type": "string", "const": "NEXT_ELIGIBLE_OPEN_PLUS_MODEL_SLIPPAGE"},
-    "pretrade_nav": {"type": "number", "exclusiveMinimum": 0, "x-units": "USD"},
-    "status": {"type": "string", "enum": ["CREATED", "SKIPPED", "CANCELLED_BY_INCIDENT"]},
-    "skip_reason": {"type": ["string", "null"]},
-    "created_at": {"type": "string", "format": "date-time"},
-    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
-    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    "order_id": {
+      "type": "string"
+    },
+    "decision_id": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "fixture_status": {
+      "type": "string",
+      "enum": [
+        "SYNTHETIC_TEST_FIXTURE",
+        "OFFICIAL_PROSPECTIVE"
+      ]
+    },
+    "symbol": {
+      "type": "string",
+      "const": "QLD"
+    },
+    "side": {
+      "type": "string",
+      "enum": [
+        "BUY",
+        "SELL",
+        "HOLD"
+      ]
+    },
+    "target_weight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "x-units": "decimal weight"
+    },
+    "theoretical_quantity": {
+      "type": "number",
+      "minimum": 0,
+      "x-units": "shares"
+    },
+    "intended_execution_session": {
+      "type": "string",
+      "format": "date"
+    },
+    "intended_execution_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "canonical_fill_convention": {
+      "type": "string",
+      "const": "NEXT_ELIGIBLE_OPEN_PLUS_MODEL_SLIPPAGE"
+    },
+    "pretrade_nav": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "x-units": "USD"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "CREATED",
+        "SKIPPED",
+        "CANCELLED_BY_INCIDENT"
+      ]
+    },
+    "skip_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "previous_record_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "record_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "batch_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_sequence": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "x-chain-scope": "paper_orders/protocol_version",
+  "x-chain-ordering": [
+    "canonical_event_time_utc",
+    "primary_key",
+    "created_at",
+    "chain_sequence"
+  ],
+  "x-genesis": {
+    "first_record_previous_record_hash": null,
+    "chain_sequence": 0
+  },
+  "x-corrections": "Corrections/revisions append records in their own ledger chain and never overwrite the original.",
+  "x-foreign-keys": {
+    "decision_id": {
+      "schema": "paper_decisions.schema.json",
+      "property": "decision_id",
+      "required": true
+    }
   }
 }

@@ -6,25 +6,163 @@
   "additionalProperties": false,
   "x-append-only": true,
   "x-primary-key": "revision_id",
-  "required": ["revision_id", "original_record_id", "original_record_hash", "revised_record_id", "revised_record_hash", "schema_version", "protocol_version", "fixture_status", "vendor_revision_id", "old_values", "new_values", "discovery_at", "affected_sessions", "reconstructable", "auditor_disposition", "created_at", "previous_record_hash", "record_hash"],
+  "required": [
+    "revision_id",
+    "original_record_id",
+    "original_record_hash",
+    "revised_record_id",
+    "revised_record_hash",
+    "schema_version",
+    "protocol_version",
+    "fixture_status",
+    "vendor_revision_id",
+    "old_values",
+    "new_values",
+    "discovery_at",
+    "affected_sessions",
+    "reconstructable",
+    "auditor_disposition",
+    "created_at",
+    "previous_record_hash",
+    "record_hash",
+    "source",
+    "code_commit",
+    "batch_id",
+    "chain_scope",
+    "chain_sequence"
+  ],
   "properties": {
-    "revision_id": {"type": "string"},
-    "original_record_id": {"type": "string"},
-    "original_record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "revised_record_id": {"type": "string"},
-    "revised_record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "schema_version": {"type": "string"},
-    "protocol_version": {"type": "string"},
-    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
-    "vendor_revision_id": {"type": ["string", "null"]},
-    "old_values": {"type": "object"},
-    "new_values": {"type": "object"},
-    "discovery_at": {"type": "string", "format": "date-time"},
-    "affected_sessions": {"type": "array", "items": {"type": "string", "format": "date"}, "uniqueItems": true},
-    "reconstructable": {"type": "boolean"},
-    "auditor_disposition": {"type": ["string", "null"]},
-    "created_at": {"type": "string", "format": "date-time"},
-    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
-    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    "revision_id": {
+      "type": "string"
+    },
+    "original_record_id": {
+      "type": "string"
+    },
+    "original_record_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "revised_record_id": {
+      "type": "string"
+    },
+    "revised_record_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "fixture_status": {
+      "type": "string",
+      "enum": [
+        "SYNTHETIC_TEST_FIXTURE",
+        "OFFICIAL_PROSPECTIVE"
+      ]
+    },
+    "vendor_revision_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "old_values": {
+      "type": "object"
+    },
+    "new_values": {
+      "type": "object"
+    },
+    "discovery_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "affected_sessions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "date"
+      },
+      "uniqueItems": true
+    },
+    "reconstructable": {
+      "type": "boolean"
+    },
+    "auditor_disposition": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "previous_record_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "record_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "batch_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_sequence": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "x-chain-scope": "paper_data_revisions/protocol_version",
+  "x-chain-ordering": [
+    "canonical_event_time_utc",
+    "primary_key",
+    "created_at",
+    "chain_sequence"
+  ],
+  "x-genesis": {
+    "first_record_previous_record_hash": null,
+    "chain_sequence": 0
+  },
+  "x-corrections": "Corrections/revisions append records in their own ledger chain and never overwrite the original.",
+  "x-foreign-keys": {
+    "original_record_id": {
+      "schema": "any paper-trading ledger",
+      "property": "primary key",
+      "required": true
+    },
+    "original_record_hash": {
+      "schema": "any paper-trading ledger",
+      "property": "record_hash",
+      "required": true
+    },
+    "revised_record_id": {
+      "schema": "any paper-trading ledger",
+      "property": "primary key",
+      "required": true
+    },
+    "revised_record_hash": {
+      "schema": "any paper-trading ledger",
+      "property": "record_hash",
+      "required": true
+    }
   }
 }

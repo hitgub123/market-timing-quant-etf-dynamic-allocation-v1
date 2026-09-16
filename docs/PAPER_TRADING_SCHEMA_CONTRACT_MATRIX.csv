@@ -1,0 +1,52 @@
+requirement_id,normative_requirement,schema,property,required,status,audit_note
+SHARED-001,Immutable primary key,all eight schemas,x-primary-key,yes,PASS,Each schema declares a unique immutable primary-key property
+SHARED-002,Schema version,all eight schemas,schema_version,yes,PASS,Required string
+SHARED-003,Protocol version,all eight schemas,protocol_version,yes,PASS,Required string
+SHARED-004,Fixture status,all eight schemas,fixture_status,yes,PASS,Enum is SYNTHETIC_TEST_FIXTURE or OFFICIAL_PROSPECTIVE
+SHARED-005,Source provenance,all eight schemas,source,yes,PASS,External or deterministic derived source label
+SHARED-006,Code provenance,all eight schemas,code_commit,yes,PASS,Git commit string
+SHARED-007,Creation timestamp,all eight schemas,created_at,yes,PASS,Timezone-aware date-time
+SHARED-008,Immutable batch identifier,all eight schemas,batch_id,yes,PASS,Protocol-owned batch key
+SHARED-009,Record chain scope,all eight schemas,chain_scope,yes,PASS,Must equal schema x-chain-scope
+SHARED-010,Record chain sequence,all eight schemas,chain_sequence,yes,PASS,Zero-based integer
+SHARED-011,Append-only predecessor,all eight schemas,previous_record_hash,yes,PASS,Null only at genesis
+SHARED-012,Record hash,all eight schemas,record_hash,yes,PASS,SHA-256 canonical projection
+SHARED-013,Append-only metadata,all eight schemas,x-append-only,metadata,PASS,True and corrections are separate records
+SHARED-014,Record-chain scope,all eight schemas,x-chain-scope,metadata,PASS,One chain per ledger and protocol version
+SHARED-015,Deterministic ordering,all eight schemas,x-chain-ordering,metadata,PASS,"Event time, primary key, created_at, sequence"
+SHARED-016,Genesis behavior,all eight schemas,x-genesis,metadata,PASS,Sequence zero and null predecessor
+OBS-001,Authoritative raw payload hash,paper_observations,source_raw_hash,yes,PASS,SHA-256 hex
+OBS-002,Protocol snapshot provenance,paper_observations,source_snapshot_id,yes,PASS,sha256 raw response or sorted raw-hash manifest
+OBS-003,Exchange session identity,paper_observations,session_date,yes,PASS,New York exchange date
+OBS-004,Adjusted close input,paper_observations,adjusted_close,yes,PASS,Completed adjusted QQQ close
+OBS-005,Optional vendor revision,paper_observations,source_revision_id,yes,PASS,Nullable; never invented
+DEC-001,Observation foreign key,paper_decisions,observation_id,yes,PASS,Must exist in observations ledger
+DEC-002,Signal enum,paper_decisions,signal,yes,PASS,0 or 1 only
+ORD-001,Decision foreign key,paper_orders,decision_id,yes,PASS,Must exist in decisions ledger
+ORD-002,Target weight units,paper_orders,target_weight,yes,PASS,"Decimal weight in [0,1]"
+FILL-001,Order foreign key,paper_fills,order_id,yes,PASS,Must exist in orders ledger
+FILL-002,Proxy nullability,paper_fills,proxy_price,yes,PASS,Null with NOT_OBSERVABLE_IN_PAPER_MODE
+NAV-001,Conditional order links,paper_nav,order_hashes,yes,PASS,Order record hashes; empty when no trade
+NAV-002,Money units,paper_nav,pre_tax_nav/tax_paid_to_date_nav,yes,PASS,USD scale 2
+TAX-001,Triggering order foreign key,paper_tax,order_id,conditional,PASS,Required only when trigger_type=ORDER
+TAX-002,Conditional fill foreign key,paper_tax,fill_id,conditional,PASS,Required only when trigger_type=FILL
+TAX-003,Tax semantics,paper_tax,tax_semantics,yes,PASS,Frozen simplified average-cost semantics
+TAX-004,Explicit tax trigger type,paper_tax,trigger_type,yes,PASS,Corporate-action events may have null parent IDs
+INC-001,Conditional affected-record links,paper_incidents,affected_record_ids,yes,PASS,Empty only when incident has no affected record
+INC-002,Fixed taxonomy enum,paper_incidents,incident_code/severity/automatic_action,yes,PASS,Must map one-to-one to taxonomy row
+REV-001,Original immutable linkage,paper_data_revisions,original_record_id,yes,PASS,Original primary key must still exist
+REV-002,Original immutable hash,paper_data_revisions,original_record_hash,yes,PASS,Byte-identical parent hash
+REV-003,Replacement linkage,paper_data_revisions,revised_record_id/revised_record_hash,yes,PASS,"Replacement is appended, never overwrite"
+REV-004,Vendor revision optional,paper_data_revisions,vendor_revision_id,no,PASS,Nullable when vendor supplies no immutable ID
+SER-001,Canonical UTF-8 bytes,all ledgers,canonical_projection,metadata,PASS,"UTF-8 NFC, compact sorted-key JSON"
+SER-002,Fixed-point numeric representation,all ledgers,numeric fields,metadata,PASS,Field-aware scales and no exponent
+SER-003,Null representation,all ledgers,null,metadata,PASS,JSON null; CSV empty field
+SER-004,Negative-zero rejection,all ledgers,numeric fields,metadata,PASS,Reject -0 rather than normalize
+SER-005,Timestamp normalization,all ledgers,date-time fields,metadata,PASS,Timezone-aware and UTC Z
+SER-006,Array ordering,all ledgers,identifier arrays,metadata,PASS,Sort scalar ID arrays after uniqueness check
+FK-001,Decision to observation,decisions -> observations,observation_id,yes,PASS,Machine-auditable parent key
+FK-002,Order to decision,orders -> decisions,decision_id,yes,PASS,Machine-auditable parent key
+FK-003,Fill to order,fills -> orders,order_id,yes,PASS,Machine-auditable parent key
+FK-004,Tax to order/fill,tax -> orders/fills,order_id/fill_id,conditional,PASS,No fabricated parent
+FK-005,Revision to original,revision -> any ledger,original_record_id/hash,yes,PASS,Original immutable bytes retained
+FK-006,Incident to affected records,incident -> any ledger,affected_record_ids,conditional,PASS,Nullable by empty array only

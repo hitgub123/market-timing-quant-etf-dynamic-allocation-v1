@@ -6,26 +6,171 @@
   "additionalProperties": false,
   "x-append-only": true,
   "x-primary-key": "fill_id",
-  "required": ["fill_id", "order_id", "schema_version", "protocol_version", "fixture_status", "canonical_open_reference", "model_slippage_bps", "canonical_simulated_fill", "proxy_price", "proxy_source", "proxy_price_timestamp", "slippage_proxy_bps", "tracking_difference_bps", "validity_status", "intended_execution_at", "fill_recorded_at", "created_at", "previous_record_hash", "record_hash"],
+  "required": [
+    "fill_id",
+    "order_id",
+    "schema_version",
+    "protocol_version",
+    "fixture_status",
+    "canonical_open_reference",
+    "model_slippage_bps",
+    "canonical_simulated_fill",
+    "proxy_price",
+    "proxy_source",
+    "proxy_price_timestamp",
+    "slippage_proxy_bps",
+    "tracking_difference_bps",
+    "validity_status",
+    "intended_execution_at",
+    "fill_recorded_at",
+    "created_at",
+    "previous_record_hash",
+    "record_hash",
+    "source",
+    "code_commit",
+    "batch_id",
+    "chain_scope",
+    "chain_sequence"
+  ],
   "properties": {
-    "fill_id": {"type": "string"},
-    "order_id": {"type": "string"},
-    "schema_version": {"type": "string"},
-    "protocol_version": {"type": "string"},
-    "fixture_status": {"type": "string", "enum": ["SYNTHETIC_TEST_FIXTURE", "OFFICIAL_PROSPECTIVE"]},
-    "canonical_open_reference": {"type": "number", "exclusiveMinimum": 0, "x-units": "USD/share"},
-    "model_slippage_bps": {"type": "number", "const": 5, "x-units": "basis points"},
-    "canonical_simulated_fill": {"type": "number", "exclusiveMinimum": 0, "x-units": "USD/share"},
-    "proxy_price": {"type": ["number", "null"], "exclusiveMinimum": 0, "x-units": "USD/share"},
-    "proxy_source": {"type": ["string", "null"]},
-    "proxy_price_timestamp": {"type": ["string", "null"], "format": "date-time"},
-    "slippage_proxy_bps": {"type": ["number", "null"], "x-units": "basis points"},
-    "tracking_difference_bps": {"type": ["number", "null"], "x-units": "basis points"},
-    "validity_status": {"type": "string", "enum": ["VALID", "NOT_OBSERVABLE_IN_PAPER_MODE", "INVALID"]},
-    "intended_execution_at": {"type": "string", "format": "date-time"},
-    "fill_recorded_at": {"type": "string", "format": "date-time"},
-    "created_at": {"type": "string", "format": "date-time"},
-    "previous_record_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
-    "record_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+    "fill_id": {
+      "type": "string"
+    },
+    "order_id": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "fixture_status": {
+      "type": "string",
+      "enum": [
+        "SYNTHETIC_TEST_FIXTURE",
+        "OFFICIAL_PROSPECTIVE"
+      ]
+    },
+    "canonical_open_reference": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "x-units": "USD/share"
+    },
+    "model_slippage_bps": {
+      "type": "number",
+      "const": 5,
+      "x-units": "basis points"
+    },
+    "canonical_simulated_fill": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "x-units": "USD/share"
+    },
+    "proxy_price": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "exclusiveMinimum": 0,
+      "x-units": "USD/share"
+    },
+    "proxy_source": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "proxy_price_timestamp": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "slippage_proxy_bps": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "x-units": "basis points"
+    },
+    "tracking_difference_bps": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "x-units": "basis points"
+    },
+    "validity_status": {
+      "type": "string",
+      "enum": [
+        "VALID",
+        "NOT_OBSERVABLE_IN_PAPER_MODE",
+        "INVALID"
+      ]
+    },
+    "intended_execution_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "fill_recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "previous_record_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "record_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "batch_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "chain_sequence": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "x-chain-scope": "paper_fills/protocol_version",
+  "x-chain-ordering": [
+    "canonical_event_time_utc",
+    "primary_key",
+    "created_at",
+    "chain_sequence"
+  ],
+  "x-genesis": {
+    "first_record_previous_record_hash": null,
+    "chain_sequence": 0
+  },
+  "x-corrections": "Corrections/revisions append records in their own ledger chain and never overwrite the original.",
+  "x-foreign-keys": {
+    "order_id": {
+      "schema": "paper_orders.schema.json",
+      "property": "order_id",
+      "required": true
+    }
   }
 }

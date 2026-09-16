@@ -22,9 +22,14 @@ implemented by this document.
 1. Acquire the authoritative QQQ/QLD response and the reconciliation response.
 2. Store exact raw bytes, request metadata, retrieval time, endpoint, and
    SHA-256 before parsing.
-3. Validate schema, positive prices, completeness, source session date, and
-   freshness. A close acquired more than the fixed 15-minute stale grace after
-   the calendar close is an incident and cannot create a signal.
+3. Validate schema, positive prices, completeness, and exact source session
+   date. Record publication (`data_available_at`) and acquisition
+   (`data_acquired_at`) delays separately. Do not call a valid completed-session
+   close stale merely because 15 minutes elapsed; the fixed 15-minute rule is
+   `STALE_SEMANTICS_UNVERIFIED` until the authoritative vendor SLA is verified.
+   A wrong-session/duplicate prior-session payload is stale immediately; an
+   expected session past an approved vendor-compatible deadline is stale and
+   cannot create a signal.
 4. Reconcile raw OHLC and corporate-action identifiers. Do not average vendors.
 5. Only after the close boundary is reached, calculate the MA200 from exactly
    200 completed adjusted QQQ closes.
@@ -62,13 +67,16 @@ implemented by this document.
 3. Reconcile NAV and tax to cent tolerance. Keep terminal liquidation as a
    non-mutating diagnostic only.
 4. Verify order/decision/observation/tax links and the complete hash chain.
+   Any orphan link is `FOREIGN_KEY_VIOLATION`; any predecessor or record-hash
+   mismatch is `HASH_CHAIN_BREAK`; stop writes in either case.
 5. Write a batch manifest with raw hashes, record hashes, code commit, and
    sanitized environment metadata.
 
 ## 6. Incident handling
 
 Fail closed on missing, stale, invalid, duplicate, ambiguous, halted,
-disagreeing, or revised evidence. Append the incident before any retry. A
+disagreeing, unverified-capability, or revised evidence. Append the incident
+before any retry. A
 retry may re-acquire the same immutable request deterministically; it may not
 choose a favorable vendor response or rewrite an old record. Use the fixed
 taxonomy in `docs/paper_trading_incident_taxonomy.csv`; operators may not select

@@ -97,5 +97,5 @@ Before freeze, an auditor must verify the pinned package version, IANA timezone
 database version, NASDAQ output for all fixture cases, and agreement with the
 published NYSE/Nasdaq holiday and early-close schedules. A disagreement that
 cannot be resolved from versioned calendar evidence is a pre-start acceptance
-FAIL and prevents protocol freeze; it never changes a historical research
-result.
+FAIL, is recorded as `CALENDAR_FIXTURE_MISMATCH`, and prevents protocol freeze;
+it never changes a historical research result.

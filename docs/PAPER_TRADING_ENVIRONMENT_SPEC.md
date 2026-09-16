@@ -35,12 +35,21 @@ pandas-market-calendars==5.4.0
 matplotlib==3.10.6
 ```
 
-At preparation review the host reported Python 3.14.4, NumPy 2.5.0, pandas
+The host used for this remediation reports Python 3.14.4, NumPy 2.5.0, pandas
 3.0.3, PyArrow 24.0.0, PyYAML 6.0.3, pandas-market-calendars 5.4.0, tzdata
-2026.2, and Matplotlib 3.11.0. The Matplotlib drift is recorded, not silently
-accepted as the final operational environment; the future implementation
-acceptance must either use the lock exactly or record a versioned, audited
-exception. No Research v1 dependency was upgraded in this preparation phase.
+2026.2, and Matplotlib 3.11.0. The host Matplotlib drift is not accepted as a
+prospective environment. No Research v1 dependency was upgraded in this
+preparation phase.
+
+An isolated rebuild was performed from `requirements.txt` on 2026-09-16 in a
+throwaway virtual environment. It resolved Python 3.14.4 on Linux WSL2
+(`x86_64`, kernel `6.6.87.2-microsoft-standard-WSL2`) with NumPy 2.5.0,
+pandas 3.0.3, PyArrow 24.0.0, PyYAML 6.0.3, pytest 9.1.1,
+pandas-market-calendars 5.4.0, Matplotlib 3.10.6, and tzdata 2026.4. The
+sanitized result is recorded in
+`docs/paper_trading_environment_rebuild_manifest.json`; no credentials or
+official records entered that environment. This verifies the dependency lock
+in isolation, but does not authorize a freeze or start.
 
 ## 3. Clock and timezone requirements
 
@@ -62,16 +71,23 @@ freeze`/equivalent lock verification, `zoneinfo`/tzdata version, package
 metadata, Git commit, OS identity, and source-client versions. The exact source
 plan entitlement and license terms are recorded without storing credentials.
 An unresolved dependency mismatch is an acceptance FAIL; it is not silently
-normalized after observations exist.
+normalized after observations exist. The host-only mismatch above is therefore
+classified `ENVIRONMENT_MISMATCH` for any run performed outside the isolated
+environment. The isolated lock result is `VERIFIED_ISOLATED`, not a claim that
+the prospective environment has been frozen.
 
 ## 5. Rebuild procedure
 
-1. Create an isolated environment from the pinned lock.
+1. Create an isolated environment from the pinned lock (the remediation
+   rebuild is the reference procedure and result).
 2. Verify package hashes/metadata and the Git commit.
 3. Verify the IANA timezone database and XNYS fixture outputs.
 4. Verify canonical serialization and schema validators.
 5. Execute the uncounted dry-run fixtures only.
 6. Archive a sanitized environment manifest with no tokens or secrets.
 
-No environment step starts a scheduler, creates official observation #1, or
+The environment gate is fail-closed: a missing package, version mismatch,
+unknown timezone database, or failed calendar fixture appends
+`ENVIRONMENT_MISMATCH` and prevents official evidence. This procedure remains
+uncounted and never starts a scheduler, creates official observation #1, or
 opens the 36-month clock.
