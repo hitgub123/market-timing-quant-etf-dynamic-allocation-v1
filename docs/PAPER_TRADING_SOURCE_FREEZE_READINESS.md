@@ -46,7 +46,8 @@ exact bytes received before decompression/parsing. `source_snapshot_id` is
 SHA-256 of a canonical sorted manifest containing each raw hash, endpoint,
 sanitized request parameters, and session date. This protocol-owned ID is the
 immutable provenance key. A vendor revision ID is optional and remains null if
-the vendor does not provide one; the protocol never invents it.
+the vendor does not provide one; no vendor ID is invented and the protocol
+never invents it.
 
 The acceptance test must prove that the snapshot can reproduce the exact 200
 adjusted closes seen at decision time, the raw hashes, the computed MA200, and

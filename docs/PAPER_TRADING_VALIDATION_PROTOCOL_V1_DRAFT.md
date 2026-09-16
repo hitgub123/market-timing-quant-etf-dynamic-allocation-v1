@@ -599,6 +599,8 @@ prepared for a future external Operational Freeze Audit are specified in:
 - `docs/PAPER_TRADING_LEDGER_SCHEMA.md` and `schemas/paper_trading/`;
 - `docs/PAPER_TRADING_SCHEMA_CONTRACT_MATRIX.csv` and
   `docs/PAPER_TRADING_SOURCE_FREEZE_READINESS.md`;
+- `docs/PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md` and
+  `docs/paper_trading_source_account_acceptance.json`;
 - `docs/PAPER_TRADING_ENVIRONMENT_SPEC.md`;
 - `docs/PAPER_TRADING_OPERATIONAL_RUNBOOK.md`;
 - `docs/paper_trading_incident_taxonomy.csv`;
@@ -608,7 +610,8 @@ prepared for a future external Operational Freeze Audit are specified in:
 - `docs/paper_trading_operational_decision_registry.csv`;
 - `docs/PAPER_TRADING_ACCEPTANCE_MANIFEST_SPEC.md`.
 
-These are all `PROPOSED_NOT_FROZEN`. This preparation does not create the
+These are all `PROPOSED_NOT_FROZEN`; account acceptance currently remains
+`ACCOUNT_CREDENTIALS_NOT_AVAILABLE`. This preparation does not create the
 final acceptance manifest, select live credentials, implement a production
 paper engine, start a scheduler, activate a prospective start, collect an
 official observation, or alter any closed statistical/economic threshold.

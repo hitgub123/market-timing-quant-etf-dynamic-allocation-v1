@@ -1,0 +1,87 @@
+{
+  "artifact": "paper_trading_source_account_acceptance",
+  "artifact_version": "1.0",
+  "verified_at": "2026-09-16",
+  "acceptance_scope": "pre-start account and API capability acceptance only",
+  "no_api_requests_made": true,
+  "historical_performance_used": false,
+  "official_prospective_rows_created": false,
+  "credentials": {
+    "mechanism": "environment variables or approved secret store",
+    "names_checked": [
+      "ALPHA_VANTAGE_API_KEY",
+      "MASSIVE_API_KEY",
+      "POLYGON_API_KEY"
+    ],
+    "available": false,
+    "result": "ACCOUNT_CREDENTIALS_NOT_AVAILABLE",
+    "values_stored": false
+  },
+  "authoritative_source": "Alpha Vantage",
+  "account_plan_classification": "ACCOUNT_CREDENTIALS_NOT_AVAILABLE",
+  "adjusted_daily_access": "UNVERIFIED_CAPABILITY",
+  "raw_daily_access": "UNVERIFIED_CAPABILITY",
+  "corporate_action_access": "UNVERIFIED_CAPABILITY",
+  "history_depth_adequate": "UNVERIFIED_CAPABILITY",
+  "publication_sla_classification": "UNRESOLVED",
+  "publication_deadline_status": "PUBLICATION_DEADLINE_NOT_READY",
+  "rate_limit_status": "UNVERIFIED_CAPABILITY",
+  "rate_limit_gate": "RATE_LIMIT_NOT_READY",
+  "expected_request_budget": {
+    "planning_basis": "Conservative 12-month operational demand; no prices or performance metrics",
+    "scheduled_decision_sessions_upper_bound": {
+      "weekly": 52,
+      "monthly": 12,
+      "bimonthly": 6,
+      "quarterly": 4,
+      "conservative_sum": 74
+    },
+    "per_scheduled_session_requests": {
+      "scheduled_close_control": 1,
+      "adjusted_daily_qqq": 1,
+      "raw_daily_qqq": 1,
+      "raw_daily_qld": 1,
+      "splits_qqq": 1,
+      "dividends_qqq": 1,
+      "splits_qld": 1,
+      "dividends_qld": 1,
+      "reconciliation_qqq": 1,
+      "reconciliation_qld": 1,
+      "publication_polls": 4,
+      "fixed_retry_attempts": 2,
+      "base_requests": 16,
+      "safety_margin_fraction": 0.25,
+      "budget_with_safety_margin": 20
+    },
+    "annual_expected_requests_with_margin": 1480,
+    "account_limit_comparison": "NOT_AVAILABLE",
+    "status": "RATE_LIMIT_NOT_READY"
+  },
+  "snapshot_reconstruction_status": "SOURCE_SNAPSHOT_RECONSTRUCTION_PASS",
+  "snapshot_reconstruction": {
+    "fixture_status": "SYNTHETIC_TEST_FIXTURE",
+    "fixture_id": "SYNTHETIC_QQQ_ADJUSTED_WINDOW_V1",
+    "raw_response_sha256": "a2f55c424e36e55149262a517ae1ad23fbac4d32cad257b977b3d8cff61a2dc8",
+    "source_snapshot_id": "sha256:a2f55c424e36e55149262a517ae1ad23fbac4d32cad257b977b3d8cff61a2dc8",
+    "completed_adjusted_close_count": 200,
+    "reconstructed_adjusted_close_count": 200,
+    "test_only_ma200": 100.995,
+    "test_only_signal_classification": "ABOVE_MA",
+    "byte_reconstruction": "PASS",
+    "official_directory_written": false
+  },
+  "vendor_revision_capability": "UNVERIFIED_CAPABILITY",
+  "source_revision_id_null_supported": "PASS_BY_SCHEMA_AND_SYNTHETIC_FIXTURE",
+  "reconciliation_source": "Massive",
+  "reconciliation_source_role": "RECONCILIATION_MARKET_DATA_SOURCE",
+  "reconciliation_source_status": "ACCOUNT_CREDENTIALS_NOT_AVAILABLE",
+  "execution_proxy_status": "NOT_OBSERVABLE_IN_PAPER_MODE",
+  "source_disagreement_fixture_status": "PASS",
+  "secret_leak_scan_status": "SECRET_LEAK_SCAN_PASS",
+  "publication_latency_observation_status": "NOT_RUN_ACCOUNT_CREDENTIALS_NOT_AVAILABLE",
+  "final_source_gate": "ACCOUNT_CREDENTIALS_NOT_AVAILABLE",
+  "official_documentation": {
+    "alpha_vantage": "https://www.alphavantage.co/documentation/",
+    "massive_stocks_overview": "https://polygon.io/docs/rest/stocks/overview"
+  }
+}
