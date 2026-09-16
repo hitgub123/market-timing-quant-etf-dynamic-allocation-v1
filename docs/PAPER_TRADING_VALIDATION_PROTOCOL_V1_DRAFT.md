@@ -6,356 +6,458 @@
 **Implementation status:** not implemented  
 **Observation status:** no prospective observations collected
 
-This document defines a proposed independent prospective validation stage. It
-does not authorize paper trading, live trading, a live frequency, or a change to
-the frozen historical research. Every new operational choice and threshold in
-this document is explicitly `PROPOSED_NOT_FROZEN` and requires external audit
-and a final protocol freeze before the prospective start timestamp.
+This is a design remediation, not an engine specification ready for use. It
+does not authorize paper trading, a prospective start timestamp, live trading,
+or a change to Research v1.0. Every choice introduced below is
+`PROPOSED_NOT_FROZEN` and must be externally audited, frozen under a new
+commit/tag, and implementation-audited before any observation is counted.
 
-## 1. Purpose
+## 1. Scope and immutable boundary
 
-The purpose is to test whether the frozen Research v1.0 findings survive
-genuinely unseen future market observations. The exercise is prospective
-validation, not strategy development.
+The purpose is to test one already-frozen rule on genuinely unseen future
+observations. This document does not develop a strategy, search parameters,
+rank frequencies, optimize execution, add indicators, or rescue a historical
+objective. It does not run a backtest, create a paper engine, collect an
+observation, activate a timestamp, or start Phase 9.
 
-Paper trading is not intended to improve the strategy, find new parameters,
-select whichever historical frequency had the highest return, optimize
-execution, discover indicators, or rescue a failed historical objective. Any
-such activity invalidates this protocol version and belongs in a separately
-audited research version.
+The accepted historical reference remains immutable:
 
-## 2. Model-family boundary
+- tag: `research-v1.0-final`;
+- accepted commit: `2b2bf987f2e00540412d263a8ef39566af1d1e2a`;
+- freeze manifest SHA-256:
+  `dcb8f9d79de93c61e0bd7d93b743b0356be9eb3b1467acf5db9a58563889d400`.
+
+The freeze manifest, its companion SHA file, `docs/RESEARCH_V1_FROZEN.md`,
+Phase 0–8D canonical code, reports, plots, raw snapshots, and accepted economic
+paths are out of scope and must not be rewritten.
+
+## 2. Accepted model boundary
 
 ### Primary prospective model
 
-`FIXED_MA200_QQQ_TO_QLD` is the **PRIMARY PROSPECTIVE MODEL**. It is the frozen
-QQQ adjusted-close MA200 rule that maps to QLD or CASH. Phase 8D classified its
-historical evidence as `MODERATE`.
+`FIXED_MA200_QQQ_TO_QLD` is the **PRIMARY PROSPECTIVE MODEL**. It is not a new
+model: it is the frozen QQQ adjusted-close MA200 rule that maps to QLD or CASH.
+No parameter is selected by this remediation.
 
-### Non-decision comparator
+Research v1.0 semantics are carried forward exactly:
+
+1. signal input is complete, positive, split/dividend-adjusted QQQ close;
+2. the moving average is a simple average of exactly 200 completed
+   observations; it always uses exactly 200 observations;
+3. the information boundary is QQQ close at session `t`;
+4. the earliest execution is the next eligible U.S. trading-session open;
+5. close above the average maps to 100% QLD, otherwise 100% CASH;
+6. commission is 0 bps and the baseline slippage assumption is 5 bps;
+7. the simplified taxable account uses 20.315% immediate tax and average-cost
+   accounting, with realized gains/losses and zero cash return;
+8. there is no same-day execution, leverage change, or additional indicator.
+   There is no leverage change.
+There is no additional indicator.
+
+### Historical context only
 
 `PHASE7A_FIXED_FOUR_STATE` may be retained only as a **NON-DECISION SHADOW
-COMPARATOR**, if operationally useful. Phase 8D classified its incremental
-complexity versus Fixed MA200 as `NOT_JUSTIFIED`; a higher historical CAGR in a
-subset of scenarios is not a reason to promote it. It cannot replace the
-primary model or determine a live frequency.
+COMPARATOR**. It cannot change the primary model or determine a frequency.
+Phase7B Model A and Model B are historical context only. Phase7B Model A and
+Model B are not prospective candidates. The exact boundary is recorded as the
+literal statement `Phase7B Model A and Model B are not prospective candidates`.
+Their
+`NO_ELIGIBLE_PARAMETER` and `CASH_FALLBACK` behavior is not a prospective
+candidate. Phase7B cannot trigger a paper PASS.
 
-Phase7B Model A and Model B are not prospective candidates. Their
-`NO_ELIGIBLE_PARAMETER` and `CASH_FALLBACK` behavior remains historical context
-only.
-
-## 3. Frequency problem and alternatives
+## 3. Frequency design: one primary and three shadows
 
 Research v1.0 intentionally did not select weekly, monthly, bimonthly, or quarterly.
-This draft keeps the issue visible rather than solving it silently.
+This remediation resolves the inferential role prospectively while keeping all
+four schedules observable. There is no live-frequency choice in this draft.
 
-| Alternative | Statistical implications | Operational implications | Selection-bias implications | Proposed duration | Eventual decision rule |
-|---|---|---|---|---|---|
-| **A. Shadow-run all four** | Four paired return streams require a prospectively frozen multiplicity treatment; a single primary hypothesis must remain identifiable. | Four schedules, fills, tax ledgers, and reports; higher logging burden but no hidden choice. | Avoids selecting from historical CAGR; any later choice must be made by a separate frozen rule using prospective evidence. | At least the audited duration/event design in Section 10, marked `PROPOSED_NOT_FROZEN`. | Continue all shadows until a separately audited frequency-decision protocol is approved; no live-frequency choice in this draft. |
-| **B. Pre-freeze one frequency independently of historical return** | One primary stream reduces multiplicity, but inference applies only to the preselected schedule. | Lowest operating burden. | A rule based on calendar/operations can be independent of performance, but must be documented before start. | The same proposed time/event adequacy gate; `PROPOSED_NOT_FROZEN`. | Use only the pre-frozen rule; do not revisit it after results are visible. |
-| **C. Treat frequency as a prospective design dimension** | Frequency is part of the hypothesis family; family-level inference and adequacy must be frozen before observing outcomes. | Four shadows and a longer evidence-collection burden. | Explicitly acknowledges design multiplicity instead of hiding it. | Longer if the decision rule requires adequate observations for every shadow; `PROPOSED_NOT_FROZEN`. | A later, separately audited protocol may decide whether and how a frequency can be selected. |
+### Proposed roles (all `PROPOSED_NOT_FROZEN`)
 
-### Recommendation for audit
+`PRIMARY_PROSPECTIVE_SCHEDULE = WEEKLY`
 
-**PROPOSED_NOT_FROZEN:** use Alternative A operationally and Alternative C
-statistically: shadow-run all four frequencies, designate Fixed MA200 as the
-model family, predeclare one primary comparison, and defer any frequency choice
-until a separate prospective decision protocol has been audited. This is a
-recommendation for protocol design, not a final frequency selection.
+Status: `PROPOSED_NOT_FROZEN`.
+
+Weekly is defensible on design grounds that are knowable before observations:
+it gives the densest scheduled feedback among the four frozen calendars,
+provides more opportunities to detect a timestamp, calendar, or fill defect,
+responds sooner to a genuine MA200 state change, and has a manageable review
+burden. This rationale uses information density, operational observability,
+responsiveness, and statistical information—not any realized outcome or
+historical performance ranking.
+
+`ROBUSTNESS_SHADOW_SCHEDULE = MONTHLY, BIMONTHLY, QUARTERLY`
+
+The three shadows are run with identical data, capital, benchmark, tax, and
+execution conventions. They are descriptive robustness evidence. Their future
+returns cannot promote one of them to primary status, and they cannot create
+three additional confirmatory opportunities. A future frequency change or
+live-frequency decision requires a separately audited and frozen protocol.
+
+The distinction is explicit:
+
+- **PRIMARY_INFERENCE:** one predeclared weekly Fixed MA200 versus QQQ paired
+  comparison, with the statistical method in the companion statistical design;
+- **ROBUSTNESS_SHADOW_EVIDENCE:** monthly, bimonthly, and quarterly paths,
+  plus any Phase7A shadow, reported descriptively and unable to trigger PASS.
+
+No rule in this protocol ranks schedules or makes a performance-ranked
+frequency choice after the experiment.
 
 ## 4. Prospective start boundary
 
-The prospective start timestamp must be recorded only after all four gates have
-passed:
+No prospective start timestamp is activated, and no prospective observation is
+present. A future start may be recorded only after all of the following gates:
 
-1. external audit of this draft and its decision table;
-2. final protocol freeze under a new commit/tag;
-3. implementation audit against the frozen semantics; and
-4. a dry-run that proves logging, valuation, tax, and fill records without
-   counting dry-run observations.
+1. external audit accepts this design remediation;
+2. a final protocol is frozen under a new commit and tag;
+3. the implementation is audited against the frozen semantics and this
+   decision table;
+4. an uncounted dry-run proves append-only observation, order, fill, valuation,
+   tax, incident, and hash logging.
 
-The timestamp must be an exact ISO-8601 instant with an explicit offset and a
-corresponding U.S. trading-session date. `America/New_York` is the proposed
-session timezone because the instruments trade on U.S. exchanges;
-`PROPOSED_NOT_FROZEN`. The session date is the exchange calendar date, not the
-local calendar date of an operator in another timezone. Historical observations
-before the frozen prospective start timestamp, including data already present
-in Research v1.0, do not count toward prospective evidence.
+The future timestamp must be an exact ISO-8601 instant with an explicit offset,
+the corresponding U.S. exchange-session date, and `America/New_York` session
+timezone. The session date is not an operator's local calendar date. Historical
+data already present in Research v1.0 cannot count as prospective evidence.
 
-No prospective start timestamp is activated by this draft.
+## 5. Signal, warm-up, and execution convention
 
-## 5. Signal-generation protocol
+The future implementation must use one official U.S. exchange-session calendar.
+At a scheduled close, it may use only values available through that close.
+There is no interpolation, forward fill, synthetic signal, or favorable fill.
 
-The implementation must reproduce the following Research v1.0 semantics:
+The next eligible session open is the first permissible execution boundary.
+Therefore a close-`t` decision cannot trade at open `t`; it can first affect open `t+1`
+(or the next eligible session after a holiday). The formal boundary is close-t →
+open-t+1. The theoretical order is
+created before the fill and retains the signal timestamp, decision, target,
+intended session, baseline fill convention, observable price, simulated fill,
+quantity, pre-trade NAV, post-trade NAV, cost, and any skip reason.
 
-- **Source price:** complete, positive adjusted close for QQQ. Raw and adjusted
-  values are retained separately in the observation record.
-- **Lookback:** simple moving average with exactly 200 observations.
-- **Decision timestamp:** close of session `t`; the close is the information
-  boundary for that decision.
-- **Rebalance calendar:** weekly, monthly, bimonthly, and quarterly schedules
-  remain visible as four shadows. The schedule definition is the frozen
-  Research v1 convention; it must not be inferred from the best historical
-  return.
-- **Eligibility:** a target is eligible only when the required 200 complete
-  adjusted closes and the scheduled close are available. No future value may
-  enter the decision.
-- **Execution boundary:** a close-`t` decision may first affect the next
-  eligible U.S. trading-session open, never the open of `t`.
-- **State mapping:** QQQ close above its MA maps to 100% QLD; otherwise it maps
-  to 100% CASH. The model does not add QQQ, TQQQ, VIX, momentum, volatility, or
-  other states.
-- **Missing data:** do not interpolate, forward-fill, or silently revise a
-  missing required price. Do not create a synthetic signal or fill. The order
-  is skipped or held at the previously recorded target, with an incident and
-  reason recorded; the exact fail-closed handling is `PROPOSED_NOT_FROZEN` and
-  must be audited before start.
-- **Market holidays:** use one frozen official U.S. exchange-session calendar.
-  The next eligible open is the next session on that calendar.
-- **Partial sessions:** no special favorable fill is permitted. A partial or
-  unavailable session is logged and handled by the pre-frozen skip rule;
-  `PROPOSED_NOT_FROZEN`.
-- **Stale data:** record acquisition time and data age. A stale-data threshold,
-  and whether the order is held or skipped, are `PROPOSED_NOT_FROZEN`; no stale
-  value may silently pass as a current close.
-- **Corporate actions/data revisions:** retain the originally acquired value,
-  adjusted value, revision status, and hash. A vendor revision creates a
-  correction-ledger entry; it never silently rewrites an earlier prospective
-  observation or changes a completed report.
+MA warm-up is a diagnostic, not a reason to manufacture a trade. For QQQ and
+the signal/reference series used by a shadow, record for every window used by
+the frozen model: first valid MA date, number of pre-start observations,
+lookback start at the evaluation start, evaluation start, and missing aligned
+targets. No pre-evaluation equity or trade is created. The first evaluation-day
+target uses only the previously available 200 complete observations.
 
-## 6. Paper-order and fill protocol
+## 6. Observable fills and implementation diagnostics
 
-Each scheduled decision creates a theoretical order record before any simulated
-fill. At minimum record:
+The paper record separates the canonical model assumption from what the
+implementation actually observes:
 
-| Field | Requirement |
+| Field | Role |
 |---|---|
-| Signal timestamp | Close timestamp and exchange-session date for `t`. |
-| Decision | Binary QQQ-MA decision and state (`QLD` or `CASH`). |
-| Target weight | Target asset and weight, including zero/cash weight. |
-| Order-generation timestamp | Software timestamp when the order record was created. |
-| Intended execution session | First eligible session after `t`. |
-| Intended price convention | Next eligible open, with the frozen baseline identifiable. |
-| Observable market price | Raw/adjusted observable price used for the diagnostic. |
-| Simulated fill price | Deterministic paper fill derived from the predeclared convention. |
-| Assumed slippage | Baseline 5 bps, unless a separately frozen protocol says otherwise. |
-| Quantity | Theoretical quantity and rounding rule. |
-| Pre-trade NAV | Open-before-trade NAV used for accounting and turnover. |
-| Post-trade NAV | NAV after fill and transaction cost. |
-| Transaction cost | Commission plus slippage cost, separately identifiable. |
-| Unfilled/skipped reason | Required for missing data, holiday, stale data, or operational failure. |
+| 0 bps commission, 5 bps slippage | `MODEL_ASSUMPTION`; frozen comparability input |
+| official next-open reference | observable market-open diagnostic |
+| simulated next-open fill | canonical paper path |
+| observed slippage, tracking difference, and latencies | `OBSERVED_IMPLEMENTATION_DIAGNOSTIC` |
 
-Research v1 uses 0 commission bps and 5 bps slippage with execution at the next
-eligible open. A paper fill must retain that baseline as a comparison field and
-must not silently substitute a close, midpoint, same-day, or otherwise more
-favorable fill rule. Any live-observable fill diagnostic is additional evidence,
-not a rewrite of the historical baseline.
+The baseline is never retuned after observations begin. The proposed
+implementation-tolerance guardrails are in the threshold registry: p95
+absolute observed slippage at or below 25 bps, p95 absolute tracking
+difference at or below 50 bps, signal-to-order latency at or below 5 minutes,
+and order-to-fill latency at or below 15 minutes. These diagnostics do not
+replace the 5-bps model assumption.
 
-## 7. Prospective data provenance
+## 7. Data-source architecture and provenance
 
-Use an append-only architecture with separate roots:
+Before the final freeze, operations must approve a concrete two-source design.
+Vendor identity is still `PROPOSED_NOT_FROZEN`; the acceptance requirements
+are fixed here:
 
-```
-research_v1/                 # read-only references to the frozen historical set
-prospective_validation_v1/  # paper orders, fills, observations, incidents
-```
+- **Authoritative signal/valuation source:** a timestamped U.S. market-data
+  feed with adjusted and unadjusted OHLC fields, official exchange/session
+  timestamps, corporate-action records, revision snapshots, and stable raw
+  object hashes. It is the only source allowed to drive a signal or simulated
+  fill after acceptance.
+- **Backup/reconciliation source:** an independent timestamped feed with the
+  same fields and calendar keys. It reconciles every scheduled close and next
+  open. A disagreement creates an incident and cannot silently substitute a
+  favorable value.
 
-Every prospective observation must include acquisition timestamp, source,
-original value, adjusted value when applicable, revision status, observation
-hash, software version, Git commit, strategy-version identifier, exchange
-session date, and timezone/offset. A correction ledger records the prior hash,
-new hash, vendor explanation, detection time, affected reports, and auditor
-disposition. Past prospective observations are never silently overwritten when
-a vendor revises history.
+Every record stores source identity, acquisition timestamp, original and
+adjusted values, adjustment/corporate-action identifier, revision status,
+session date, timezone/offset, software version, Git commit, protocol/model
+version, and an observation hash. An append-only correction ledger records
+prior hash, replacement hash, vendor explanation, detection time, affected
+reports, and auditor disposition. No historical observation is silently
+rewritten.
 
-The paper engine and storage layout are not implemented by this task.
+## 8. Fail-closed stale, missing, and partial-session policy
 
-## 8. Benchmark
+The implementation must fail closed. A missing scheduled close, stale close,
+missing next-session open, delayed vendor update, partial session, exchange
+halt, or source disagreement creates an incident record with the reason and
+timestamps. The order is not filled from an interpolation, last-known value,
+midpoint, close, or synthetic favorable price. It is held or skipped according
+to the final frozen incident procedure; that procedure cannot invent a price.
+An exchange halt is always an incident and never a favorable fill.
 
-QQQ buy-and-hold remains the primary benchmark. For every prospective shadow,
-use the identical validation start, $100,000 capital base (unless a separately
-audited protocol changes that assumption), U.S. session calendar, valuation
-dates, and data provenance. Do not retrospectively change the benchmark or its
-start boundary.
+For design purposes, a scheduled close acquired more than 15 minutes after the
+official close is a proposed stale-data incident. A missing next open means no
+fill for that session. A partial or halted session is ineligible until a future
+fully eligible session, with no back-dated fill. These rules are
+`PROPOSED_NOT_FROZEN` and require operational sign-off before use.
 
-## 9. Metrics to collect
+## 9. Benchmark and metrics
 
-Collect the following without treating a short sample as reliable merely
-because a formula returns a number.
+QQQ buy-and-hold is the primary benchmark on identical dates, capital base,
+calendar, valuation convention, and provenance. Every shadow and the benchmark
+start from the same future validation boundary.
 
-**Performance:** cumulative return, CAGR where information content is adequate,
-realized volatility, Sharpe, Sortino, MaxDD, Calmar, and Ulcer Index.
+Collect performance, implementation, benchmark-relative, and accounting
+metrics, but label short-sample quantities as uncertain. Primary paired returns
+are daily strategy and QQQ returns on the same valid U.S. sessions. Record
+cumulative excess return, daily excess series, confidence interval, direction
+consistency, and an after-tax descriptive counterpart.
 
-**Implementation:** realized/simulated slippage, signal-to-order latency,
-order-to-fill latency, tracking difference, turnover, transaction costs,
-skipped/failed orders, and stale/missing-data incidents.
+Turnover preserves the audited definition: use contemporaneous open-before-trade
+equity (`pretrade_equity`), sum `abs(trade_notional) / pretrade_equity`, divide
+by calendar years, and exclude initial portfolio deployment and hypothetical
+terminal liquidation. Holding periods count completed position episodes in
+trading sessions only; open terminal positions are not completed episodes.
 
-**Tax/accounting:** realized gains/losses, average cost, the simplified 20.315%
-tax ledger, tax-paid-to-date NAV, and a terminal-liquidation diagnostic where
-meaningful. Terminal liquidation must remain non-mutating and diagnostic only.
+Tax preserves the audited simplified account: 20.315% immediate tax,
+average-cost basis, realized gains/losses, and tax-paid-to-date wealth. A
+terminal-liquidation wealth/tax/cost/unrealized-gain diagnostic is
+non-mutating: it creates no SELL, does not enter turnover or holding-period
+statistics, and does not mutate the ledger.
 
-**Benchmark-relative:** return difference versus QQQ, drawdown difference,
-Sharpe difference, and Calmar difference over identical prospective dates.
+## 10. Finite horizon and information adequacy
 
-## 10. Validation duration and information adequacy
+### Core horizon
 
-A MA200 strategy can have few regime changes, so a short paper period may show
-almost no informative trades. The final duration gate must be frozen before the
-start. Candidate designs for audit are:
+The proposed core evaluation horizon is **36 calendar months** from the one
+frozen prospective start. A mandatory evaluation occurs at the core end date.
+Status: `PROPOSED_NOT_FROZEN`.
+The clock is finite and cannot be reset, shortened after an unfavorable result,
+or silently extended because an event did not occur. This horizon is a design
+proposal, not evidence that three years validates long-run CAGR.
 
-- a minimum calendar duration, such as **36 months** (`PROPOSED_NOT_FROZEN`);
-- at least **24 scheduled rebalance observations for each shadow**
-  (`PROPOSED_NOT_FROZEN`), which intentionally makes quarterly evidence take
-  longer;
-- at least **8 completed actual position-change episodes**
-  (`PROPOSED_NOT_FROZEN`); and
-- at least one predeclared adverse/regime-transition episode, identified by an
-  ex-ante event definition rather than selected after inspecting returns
-  (`PROPOSED_NOT_FROZEN`).
+### What is counted
 
-The recommended audit design is the intersection of those four gates,
-`PROPOSED_NOT_FROZEN`. A time-only design, an event-only design, and a combined
-time/event design should be compared during audit. None may be relaxed because
-historical results make it inconvenient or tightened because a result looks
-unfavorable.
+The report keeps four non-interchangeable inventories:
 
-## 11. Success, failure, and inconclusive criteria
+1. **scheduled rebalance observations** — calendar opportunities (weekly is the
+   primary operational count; the other three are shadows);
+2. **actual target-state changes** — orders caused by a changed MA200 state;
+3. **completed position episodes** — opened and closed episodes used for
+   holding-period statistics;
+4. **adverse/regime-transition observations** — ex-ante defined stress or
+   transition diagnostics.
 
-The outcome must be one of `PROSPECTIVE_VALIDATION_PASS`,
-`PROSPECTIVE_VALIDATION_FAIL`, or `PROSPECTIVE_VALIDATION_INCONCLUSIVE`. There
-is no composite score. Each dimension is a separate gate:
+Scheduled observations are operational evidence. State changes and completed
+episodes are economic/mechanism evidence. Adverse observations are risk and
+information-adequacy diagnostics. None is substituted for another, and no
+arbitrary count of crossings is imposed merely to force a verdict. The report
+must show zero/low counts explicitly.
 
-### Strategy fidelity
+### Adequacy and finite extension
 
-**Hard failure:** any unapproved change to MA200, adjusted-close input,
-close-`t` information boundary, next-open execution, QLD/CASH mapping, tax
-semantics, benchmark, or frequency-shadow definitions; an unlogged order or
-observation; or silent rewriting of a prior observation. A fidelity failure
-invalidates the current protocol version and requires a new audit.
+At 36 months, information is adequate for a directional primary comparison only
+if there are at least 500 valid paired daily sessions, complete reconstructable
+records for the weekly primary, and enough observed state/episode information to
+interpret the mechanism. Absence of a state change or adverse transition is a
+valid reason for `PROSPECTIVE_VALIDATION_INCONCLUSIVE`, not a reason to force a
+trade or call PASS.
 
-### Operational reliability
+If and only if the 36-month result is `PROSPECTIVE_VALIDATION_INCONCLUSIVE`, one
+fixed **12-calendar-month extension** may be opened under the same start date,
+model, schedule, thresholds, benchmark, and data architecture. The extension
+ends at 48 months from the original start. There is no second extension, no
+parameter/threshold/frequency change, no reset, no deletion of the first 36
+months, and no repeated extension until PASS. The extension rule is
+`PROPOSED_NOT_FROZEN`; after 48 months the final result is PASS, FAIL, or
+INCONCLUSIVE under the same criteria.
 
-**Hard failure:** inability to reconstruct the signal, order, fill, NAV, tax,
-or incident history; an unapproved reset/restart; or unresolved data/operational
-incidents beyond a predeclared tolerance. The tolerance is
-`PROPOSED_NOT_FROZEN`.
+## 11. Primary prospective question and outcome states
 
-### Execution and slippage
+The primary question is:
 
-Compare simulated and observable fills, latencies, and tracking difference. A
-pass requires behavior within a pre-frozen slippage/latency/tracking guardrail;
-the guardrail is `PROPOSED_NOT_FROZEN`. Changing the assumption to improve the
-result is prohibited.
+> Does the frozen Fixed MA200 strategy execute faithfully on genuinely unseen
+> observations and produce paired benchmark-relative return evidence in the
+> direction predicted by Research v1.0, without unacceptable implementation
+> degradation or materially unacceptable drawdown deterioration?
 
-### Benchmark-relative economics
+This is a question about faithful execution, paired relative evidence, and
+predeclared risk/implementation limits. A 36-month CAGR estimate alone cannot
+validate a long-run timing strategy.
 
-After the information-adequacy gates, evaluate cumulative return and paired
-daily excess returns versus QQQ. A proposed economic pass requires a positive
-predeclared return-difference direction and no material unexplained tracking
-failure; any numerical guardrail is `PROPOSED_NOT_FROZEN`. Short-horizon CAGR or
-Sharpe alone cannot produce a pass.
+The outcomes are distinct:
 
-### Drawdown behavior
+### `PROTOCOL_INVALID`
 
-The historical project did not establish QQQ drawdown dominance. Therefore a
-prospective pass cannot be declared solely because cumulative return exceeds
-QQQ while MaxDD materially deteriorates. Compare strategy and QQQ MaxDD,
-drawdown difference, underwater duration, and recovery duration. The allowable
-drawdown guardrail is `PROPOSED_NOT_FROZEN` and must preserve the original risk
-concern.
+The evidence is invalid because strategy code or semantics changed without
+authorization, an observation was silently rewritten, the benchmark or start
+boundary changed, a material provenance gap is unrecoverable, or an
+unapproved parameter/frequency/reset occurred. This is not an economic failure;
+it requires a new labeled protocol, commit, tag, and audit.
 
-### Tax and turnover burden
+### `PROSPECTIVE_VALIDATION_FAIL`
 
-Reconcile realized gains/losses, average cost, tax-paid-to-date NAV, turnover,
-and costs. A proposed pass requires no unexplained tax/accounting break and
-burdens within a pre-frozen guardrail; all numerical limits are
-`PROPOSED_NOT_FROZEN`. Tax drag is not ignored merely because pre-tax return is
-positive.
+The protocol remains valid, but a predeclared economic, risk, accounting, or
+implementation guardrail fails. It is not relabeled as a protocol defect.
 
-### Outcome rule
+### `PROSPECTIVE_VALIDATION_INCONCLUSIVE`
 
-`PROSPECTIVE_VALIDATION_PASS` requires fidelity and operational hard gates to
-pass, information adequacy to be met, and the separately reported execution,
-benchmark-relative, drawdown, and tax/turnover conditions to satisfy their
-pre-frozen rules. `PROSPECTIVE_VALIDATION_FAIL` occurs on a hard failure or a
-pre-frozen economic failure. `PROSPECTIVE_VALIDATION_INCONCLUSIVE` applies when
-fidelity is intact but the time/event information gate is incomplete or the
-pre-frozen evidence conditions cannot yet distinguish the outcomes. These are
-separate conditions, not a combined numerical score.
+The protocol remains valid, but information is insufficient to distinguish PASS
+from FAIL at the core evaluation or after the one permitted extension.
 
-## 12. Drawdown issue
+### `PROSPECTIVE_VALIDATION_PASS`
 
-Research v1.0 did not demonstrate drawdown dominance over QQQ. Every monitoring
-report must therefore show strategy MaxDD, QQQ MaxDD on identical dates,
-drawdown difference, underwater duration, and recovery duration where
-observable. Return outperformance with materially worse drawdown must remain a
-risk exception, not a successful validation by itself.
+PASS requires intact fidelity, reconstructable operations, adequate primary
+information, no failed hard guardrail, and evidence satisfying the predeclared
+paired-return, drawdown, implementation, turnover, and accounting rules. No
+shadow can independently trigger PASS.
 
-## 13. Statistical plan
+## 12. Proposed economic and risk guardrails
 
-Do not automatically reuse the historical Phase8B p-value machinery. Before
-observations begin, an external audit must freeze a prospective plan using
-paired daily strategy/QQQ returns, an explicit serial-dependence treatment,
-limited-sample caveats, and one primary hypothesis. If all four frequencies
-are shadowed, the family and multiplicity treatment must be declared before the
-first observation. A minimum sample-adequacy rule is
-`PROPOSED_NOT_FROZEN`.
+All numerical values below are proposals registered in
+`docs/paper_trading_threshold_registry.csv`. Each has a derivation class and
+rationale. None was tuned to a historical pass.
 
-Prospective p-values are not calculated by this draft and historical p-values
-are not reused as prospective evidence. Descriptive metrics may be displayed
-with a clear small-sample warning.
+### Benchmark-relative evidence
 
-## 14. Future DSR
+Use the weekly paired daily excess series. A positive cumulative excess return
+and positive mean excess direction are evidence in the frozen predicted
+direction. A two-sided 95% HAC interval that remains materially negative after
+the proposed `-2 percentage-point annualized` evidence floor is a prospective
+economic failure; a positive point estimate whose interval remains compatible
+with both zero and harmful degradation is INCONCLUSIVE. This avoids making a
+raw three-year CAGR the sole criterion and avoids requiring significance when
+the information level cannot support it. After-tax excess is descriptive and
+cannot be substituted for the primary pre-tax hypothesis.
 
-Historical DSR is not retrofitted. If a future DSR is desired, the separately
-audited prospective protocol must define one trial, comparable trial Sharpe
-observations, the immutable trial universe, dependence/effective-trial
-treatment, and an append-only trial registry before any results are observed.
-Otherwise DSR remains outside the prospective validation protocol.
+### Drawdown
 
-## 15. Anti-overfitting governance
+On identical dates record strategy MaxDD, QQQ MaxDD, drawdown difference,
+underwater duration, and recovery duration. Keep the original frozen objectives
+visible and unchanged:
 
-During validation, prohibit MA200 modification; changing frequency after seeing
-prospective results; changing QLD leverage; adding indicators, VIX, momentum,
-or volatility states; changing slippage assumptions to improve results;
-excluding bad periods; resetting the validation start; restarting after losses;
-changing the benchmark; or redefining pass/fail thresholds. Any such change
-invalidates the current prospective version and requires a new separately
-labeled protocol, commit, tag, and audit.
+- Goal A: `strategy MaxDD >= QQQ MaxDD` under the negative convention;
+- Goal B: `MaxDD >= -45%`;
+- Goal C: `MaxDD >= -50%`.
 
-## 16. Monitoring reports
+Those are historical objectives and evidence fields, not a claim of dominance.
+For prospective governance, strategy MaxDD below **-60%** is a hard economic
+failure, and a strategy drawdown difference worse than **-10 percentage points**
+versus QQQ is a hard risk-evidence failure. These conservative limits do not
+make Goals A, B, or C easier and do not assert QQQ dominance.
 
-The future implementation should produce, without being implemented here:
+### Implementation, turnover, and accounting
 
-1. a daily operational log;
-2. a per-rebalance report;
-3. a monthly validation report;
-4. a quarterly evidence report;
-5. an incident report; and
-6. a final validation report.
+- p95 observed absolute slippage ≤ **25 bps**;
+- p95 absolute tracking difference ≤ **50 bps**;
+- signal-to-order latency ≤ **5 minutes**;
+- order-to-fill latency ≤ **15 minutes**;
+- annual turnover ≤ **6.0x** under the canonical denominator;
+- tax and NAV reconciliation absolute difference ≤ **$0.01**;
+- tax-ledger reconciliation absolute difference ≤ **$0.01**.
 
-Monthly and quarterly reports must not make early pass/fail declarations unless
-a predeclared hard failure condition has occurred. Reports must retain raw
-inputs, corrected values, hashes, and the exact software commit.
+Exceeding a hard implementation, turnover, or reconciliation limit is FAIL if
+the protocol remains reconstructable; an unreconstructable or silently changed
+record is PROTOCOL_INVALID. The 5-bps baseline remains a model assumption even
+when an observed diagnostic is outside tolerance.
+
+## 13. Prospective statistical design summary
+
+Only the weekly Fixed MA200 versus QQQ comparison is confirmatory. Define
+
+`d_t = strategy_daily_return_t - qqq_daily_return_t`
+
+on identical valid U.S. sessions. The primary statistic is the mean of `d_t`,
+reported in daily and annualized units with a two-sided 95% Newey–West/HAC
+confidence interval. The predeclared lag is
+
+`L = min(20, floor(4 * (n / 100)^(2/9)))`.
+
+The directional hypothesis is H0: expected paired excess return ≤ 0 versus H1:
+expected paired excess return > 0, with one-sided alpha 0.05 used only if the
+sample-adequacy gate is met. The decision remains evidence-based: uncertainty
+compatible with zero is INCONCLUSIVE rather than an automatic failure. Missing
+sessions are excluded only when both series are unavailable and are logged;
+there is no imputation or favorable carry. No prospective p-value is calculated
+by this remediation because no observations exist.
+
+Monthly, bimonthly, and quarterly shadows are descriptive. They cannot create
+additional confirmatory hypotheses or independently trigger PASS. Any future
+secondary inferential family requires a new frozen multiplicity decision.
+
+The complete method, assumptions, and design-only power table are in
+`docs/PAPER_TRADING_PROTOCOL_V1_STATISTICAL_DESIGN.md`.
+
+## 14. Design-only power and information analysis
+
+The companion analysis uses hypothetical annualized excess effects of 0%, 2%,
+4%, and 6%, 252 sessions per year, an illustrative annualized paired-return
+standard deviation of 1.5%, and AR(1) serial correlation `phi = 0.25`. It uses
+`n_eff = n * (1 - phi) / (1 + phi)` only to illustrate information loss. These
+are transparent design assumptions, not realized strategy estimates, and are
+not a backtest. The table covers 12, 24, and 36 months and the one permitted
+48-month extension. It demonstrates what the horizon can and cannot establish;
+it does not alter the 36-month proposal.
+
+## 15. Monitoring and early stopping
+
+Monthly and quarterly monitoring may detect protocol invalidation, data/ops
+incidents, or a predeclared severe-risk breach. It may not change MA200,
+frequency, threshold, slippage, benchmark, or change start date, exclude bad periods,
+restart after losses, or declare success because interim performance is good.
+There is **NO EARLY-SUCCESS RULE**. An early economic stop is permitted only for
+the severe-risk hard limits already registered (for example MaxDD below -60%),
+with incident evidence and no performance-based reset.
+
+## 16. Anti-overfit and change control
+
+Changing the strategy, MA200, close-to-next-open boundary, QLD/CASH mapping,
+tax treatment, benchmark, data source without acceptance, schedule role,
+threshold, or start boundary invalidates this protocol version. Such a change
+requires a new protocol identifier, commit, tag, decision table, and external
+audit. No optimizer, selector, historical backtest, Phase 9, or prospective
+parameter search is introduced here.
 
 ## 17. Paper-to-live boundary
 
-This draft authorizes no live capital and cannot automatically promote a model
-to live trading. A future stage named `SMALL_CAPITAL_LIVE_VALIDATION` may be
-considered only after prospective paper validation is externally/manual
-audited and accepted. That future stage requires its own frozen protocol and
-decision record.
+Paper PASS does not authorize normal live deployment. A separate future stage,
+`SMALL_CAPITAL_LIVE_VALIDATION`, may be considered only after paper artifacts
+and incidents are externally/manual audited and accepted. That stage needs its
+own frozen protocol, capital limits, broker/fill controls, and decision record.
+This remediation grants no live-capital authorization and does not design the
+live engine. This draft authorizes no live capital.
 
-## 18. Prospective Freeze Decisions
+## 18. Required prospective handoff package
 
-The companion `docs/paper_trading_protocol_decision_table.csv` records each
-decision, its Research v1 status, proposed rule, rationale, selection-bias risk,
-and status. Every unresolved decision is `PROPOSED_NOT_FROZEN`.
+After paper validation, an external/manual auditor must receive the immutable
+protocol and commit, complete observation/order/fill/NAV/tax/incident ledgers,
+source snapshots and revisions, raw and adjusted prices, calendar evidence,
+primary weekly paired-return analysis, all three shadow reports, drawdown and
+turnover reconciliations, threshold-breach evidence, and the final PASS/FAIL/
+INCONCLUSIVE or PROTOCOL_INVALID decision. No live decision is implied.
 
-## 19. Implementation boundary and required audit actions
+## 19. Decision table and implementation boundary
+
+`docs/paper_trading_protocol_decision_table.csv` is the companion contract. It
+uses the columns `decision_id,issue,current_draft_rule,remediated_proposal,
+rationale,threshold_derivation,selection_bias_control,statistical_role,status`.
+Every row is `PROPOSED_NOT_FROZEN`; nothing is frozen by this remediation.
 
 This task creates no daemon, scheduler, broker connector, order simulator,
-observation writer, or prospective report generator. Before any implementation
-or observation collection, audit the decision table, freeze a final protocol
-version, audit the implementation, perform a dry-run, and record a new start
-timestamp. No Phase 9 is created by this draft.
+observation writer, or prospective report generator. It does not collect
+official observations, activate a start timestamp, freeze the protocol, create
+`paper-validation-v1.0-final`, or start Phase 9.
+
+Design-status register (every item remains `PROPOSED_NOT_FROZEN`):
+
+- model boundary: `PROPOSED_NOT_FROZEN`;
+- primary schedule and shadows: `PROPOSED_NOT_FROZEN`;
+- start/session boundary: `PROPOSED_NOT_FROZEN`;
+- data source and revision policy: `PROPOSED_NOT_FROZEN`;
+- execution and stale-data policy: `PROPOSED_NOT_FROZEN`;
+- finite horizon and extension: `PROPOSED_NOT_FROZEN`;
+- information-adequacy rule: `PROPOSED_NOT_FROZEN`;
+- statistical method and multiplicity: `PROPOSED_NOT_FROZEN`;
+- risk, implementation, turnover, and tax guardrails: `PROPOSED_NOT_FROZEN`;
+- paper-to-live boundary: `PROPOSED_NOT_FROZEN`.
+
+PAPER TRADING PROTOCOL V1 DESIGN REMEDIATION — DRAFT ONLY
