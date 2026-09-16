@@ -143,3 +143,39 @@ INCONCLUSIVE apply to a valid protocol. Paper PASS remains subject to external
 manual audit and does not authorize live capital.
 
 All values and roles remain `PROPOSED_NOT_FROZEN` pending final protocol audit.
+
+## Final terminal-decision clarification
+
+The terminal function is deterministic and priority ordered. `protocol_valid ==
+FALSE` returns `PROTOCOL_INVALID`; any failed implementation, severe-risk,
+accounting, or turnover gate returns `PROSPECTIVE_VALIDATION_FAIL`; inadequate
+information or
+`MECHANISM_INFORMATION_LIMITED = (n_state_changes == 0 or
+n_completed_episodes == 0)` returns `PROSPECTIVE_VALIDATION_INCONCLUSIVE`.
+Only after those checks does return evidence apply. The primary return gate is
+exactly
+
+`ci95_one_sided_lower > 0 and cumulative_excess > 0`.
+
+The one-sided bound is strict, and a cumulative excess of exactly zero is not
+positive evidence. A two-sided HAC upper bound strictly below `-0.02` is the
+sole material-harm FAIL region. An upper bound in `[-0.02, 0)` is statistically
+negative but economically small under the proposed harm floor and is
+INCONCLUSIVE; equality at `-0.02` is not below the floor. Positive or negative
+point estimates whose two-sided interval crosses zero, and an exactly zero
+estimate, are INCONCLUSIVE. The full mutually exclusive classifier and exact
+variables are in `docs/PAPER_TRADING_OUTCOME_DECISION_SPEC.md` and its CSV
+decision table.
+
+Mechanism information is not a subjective crossing quota. The exact rule is
+`n_state_changes == 0 or n_completed_episodes == 0`; `n_adverse_observations`
+remains a reported diagnostic only. The paper result is a separate
+`PAPER_PROTOCOL_RESULT` from the unchanged Goal A/B/C
+`ORIGINAL_RESEARCH_GOAL_STATUS`, and
+`PAPER_PROTOCOL_PASS_DOES_NOT_IMPLY_ORIGINAL_GOAL_PASS`.
+
+The hypothetical 1.5% annualized volatility and AR(1) `phi = 0.25` in the
+power illustration are planning-only inputs. They are not used in PASS/FAIL,
+are not estimates of future volatility, and do not justify the 36-month horizon;
+actual prospective HAC uncertainty controls the decision. All values and roles
+remain `PROPOSED_NOT_FROZEN` pending final protocol audit.

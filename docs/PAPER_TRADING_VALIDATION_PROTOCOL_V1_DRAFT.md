@@ -141,24 +141,71 @@ lookback start at the evaluation start, evaluation start, and missing aligned
 targets. No pre-evaluation equity or trade is created. The first evaluation-day
 target uses only the previously available 200 complete observations.
 
-## 6. Observable fills and implementation diagnostics
+## 6. Paper-mode execution diagnostics
 
-The paper record separates the canonical model assumption from what the
-implementation actually observes:
+Paper validation does not execute a broker transaction. Therefore no quantity
+is called realized execution slippage. The canonical economic path always uses
+the immutable model assumption:
 
-| Field | Role |
-|---|---|
-| 0 bps commission, 5 bps slippage | `MODEL_ASSUMPTION`; frozen comparability input |
-| official next-open reference | observable market-open diagnostic |
-| simulated next-open fill | canonical paper path |
-| observed slippage, tracking difference, and latencies | `OBSERVED_IMPLEMENTATION_DIAGNOSTIC` |
+`MODEL_SLIPPAGE_BPS = 5`
 
-The baseline is never retuned after observations begin. The proposed
-implementation-tolerance guardrails are in the threshold registry: p95
-absolute observed slippage at or below 25 bps, p95 absolute tracking
-difference at or below 50 bps, signal-to-order latency at or below 5 minutes,
-and order-to-fill latency at or below 15 minutes. These diagnostics do not
-replace the 5-bps model assumption.
+This five-basis-point value is a `MODEL_ASSUMPTION`, not an observed execution
+result.
+
+`OBSERVED_SLIPPAGE_PROXY_BPS` is defined only when a reliable market-data
+quote or opening-auction record exists. For each eligible order `o`, record:
+
+- `P_ref_o`: official next-open reference price for the instrument and session;
+- `P_proxy_o`: same-timestamp executable-side quote, ask for a buy and bid for
+  a sell, or a valid opening-auction executable price with a documented source;
+- the exchange timestamp, acquisition timestamp, source, quote/auction flag,
+  and valid positive prices;
+- `side_o = +1` for a buy and `side_o = -1` for a sell.
+
+The signed proxy is
+
+`slippage_proxy_bps_o = 10000 * side_o * (P_proxy_o / P_ref_o - 1)`
+
+and the reported guardrail quantity is
+
+`OBSERVED_SLIPPAGE_PROXY_BPS_o = abs(slippage_proxy_bps_o)`.
+
+It is one value per eligible order, not a rebalance aggregate. The p95 is the
+nearest-rank empirical percentile: sort the `m` valid absolute values and take
+rank `ceil(0.95 * m)` (one-indexed), after at least **20** valid proxy
+observations. If a quote/auction is missing,
+delayed beyond the session rule, non-positive, invalid, or otherwise not
+reconstructable, that order has no proxy value and no synthetic price is
+created. If fewer than 20 valid proxy observations exist, the metric is
+`NOT_OBSERVABLE_IN_PAPER_MODE`. The paper report must show that status and may not claim realized slippage. Actual executable slippage is deferred to the
+future `SMALL_CAPITAL_LIVE_VALIDATION` stage.
+
+### Tracking difference is a separate metric
+
+`CANONICAL_FILL_TRACKING_DIFFERENCE_BPS` is not NAV reconciliation error. When
+the same order has valid `P_canonical_o` and `P_proxy_o`, define:
+
+`tracking_difference_bps_o = 10000 * side_o * (P_canonical_o / P_proxy_o - 1)`
+
+and report its absolute value for p95. This is canonical simulated fill versus
+the market-data execution proxy. A separate
+`NAV_RECONCILIATION_ERROR_USD = paper_nav - independently_reconstructed_nav`
+is an accounting identity checked in dollars; the two metrics are never
+combined. The tracking metric and NAV reconciliation are never combined.
+
+### Latency fields are paper-system diagnostics
+
+Record these timestamps and exact differences:
+
+- `signal_to_order_latency_seconds = order_created_at - signal_close_at`;
+- `order_generation_latency_seconds = order_recorded_at - decision_ready_at`;
+- `market_data_acquisition_latency_seconds = data_acquired_at - exchange_event_at`;
+- `simulated_fill_recording_latency_seconds = fill_recorded_at - intended_execution_at`.
+
+The existing 5-minute and 15-minute limits apply to paper-system timestamps
+only and are classified `PAPER_SYSTEM_OPERATIONAL_DIAGNOSTIC`. A simulated
+order-to-fill interval is not proof of achievable live execution. The baseline
+5-bps model assumption is never replaced by any of these diagnostics.
 
 ## 7. Data-source architecture and provenance
 
@@ -212,6 +259,11 @@ are daily strategy and QQQ returns on the same valid U.S. sessions. Record
 cumulative excess return, daily excess series, confidence interval, direction
 consistency, and an after-tax descriptive counterpart.
 
+The future report always shows strategy MaxDD, QQQ MaxDD on identical dates,
+the MaxDD difference, underwater duration, recovery duration, and separate
+`ORIGINAL_RESEARCH_GOAL_STATUS` fields for Goal A, Goal B, and Goal C. The
+paper result is a separate `PAPER_PROTOCOL_RESULT` field.
+
 Turnover preserves the audited definition: use contemporaneous open-before-trade
 equity (`pretrade_equity`), sum `abs(trade_notional) / pretrade_equity`, divide
 by calendar years, and exclude initial portfolio deployment and hypothetical
@@ -255,12 +307,33 @@ must show zero/low counts explicitly.
 
 ### Adequacy and finite extension
 
-At 36 months, information is adequate for a directional primary comparison only
-if there are at least 500 valid paired daily sessions, complete reconstructable
-records for the weekly primary, and enough observed state/episode information to
-interpret the mechanism. Absence of a state change or adverse transition is a
-valid reason for `PROSPECTIVE_VALIDATION_INCONCLUSIVE`, not a reason to force a
-trade or call PASS.
+At 36 months, information adequacy is deterministic:
+
+```text
+information_adequate = (
+    n_valid >= 500
+    and n_primary_scheduled >= 1
+    and is_finite(mean_excess_ann)
+    and is_finite(hac_se)
+    and is_finite(ci95_two_sided_lower)
+    and is_finite(ci95_two_sided_upper)
+    and is_finite(ci95_one_sided_lower)
+    and is_finite(cumulative_excess)
+)
+```
+
+Mechanism information is limited exactly when:
+
+```text
+MECHANISM_INFORMATION_LIMITED = (
+    n_state_changes == 0 or n_completed_episodes == 0
+)
+```
+
+`MECHANISM_INFORMATION_LIMITED = TRUE` deterministically produces INCONCLUSIVE
+after protocol and hard-gate checks. `n_adverse_observations` is reported as a
+risk diagnostic but is not a discretionary event quota. There is no operator
+judgment about whether the mechanism is “enough” to interpret.
 
 If and only if the 36-month result is `PROSPECTIVE_VALIDATION_INCONCLUSIVE`, one
 fixed **12-calendar-month extension** may be opened under the same start date,
@@ -270,6 +343,7 @@ parameter/threshold/frequency change, no reset, no deletion of the first 36
 months, and no repeated extension until PASS. The extension rule is
 `PROPOSED_NOT_FROZEN`; after 48 months the final result is PASS, FAIL, or
 INCONCLUSIVE under the same criteria.
+The permitted extension is exactly one fixed **12-calendar-month extension**.
 
 ## 11. Primary prospective question and outcome states
 
@@ -302,14 +376,31 @@ implementation guardrail fails. It is not relabeled as a protocol defect.
 ### `PROSPECTIVE_VALIDATION_INCONCLUSIVE`
 
 The protocol remains valid, but information is insufficient to distinguish PASS
-from FAIL at the core evaluation or after the one permitted extension.
+from FAIL at the core evaluation or after the one permitted extension. This is
+a valid reason for `PROSPECTIVE_VALIDATION_INCONCLUSIVE`, not an operator
+choice.
 
 ### `PROSPECTIVE_VALIDATION_PASS`
 
 PASS requires intact fidelity, reconstructable operations, adequate primary
 information, no failed hard guardrail, and evidence satisfying the predeclared
-paired-return, drawdown, implementation, turnover, and accounting rules. No
-shadow can independently trigger PASS.
+paired-return, drawdown, implementation, turnover, and accounting rules. The
+confirmatory return condition is strict:
+
+`PRIMARY_RETURN_PASS = (ci95_one_sided_lower > 0 and cumulative_excess > 0)`.
+
+A positive point estimate alone cannot PASS. A positive point estimate alone
+never produces PASS. No shadow can independently
+trigger PASS.
+
+The machine-readable priority table and pseudocode are in
+`docs/paper_trading_outcome_decision_table.csv` and
+`docs/PAPER_TRADING_OUTCOME_DECISION_SPEC.md`. They define every equality
+boundary and return exactly one `PAPER_PROTOCOL_RESULT`.
+
+The original objectives are a separate output family. The protocol always
+emits `ORIGINAL_RESEARCH_GOAL_STATUS` for Goal A, Goal B, and Goal C under
+their original frozen definitions. `PAPER_PROTOCOL_PASS_DOES_NOT_IMPLY_ORIGINAL_GOAL_PASS`.
 
 ## 12. Proposed economic and risk guardrails
 
@@ -319,15 +410,24 @@ rationale. None was tuned to a historical pass.
 
 ### Benchmark-relative evidence
 
-Use the weekly paired daily excess series. A positive cumulative excess return
-and positive mean excess direction are evidence in the frozen predicted
-direction. A two-sided 95% HAC interval that remains materially negative after
-the proposed `-2 percentage-point annualized` evidence floor is a prospective
-economic failure; a positive point estimate whose interval remains compatible
-with both zero and harmful degradation is INCONCLUSIVE. This avoids making a
-raw three-year CAGR the sole criterion and avoids requiring significance when
-the information level cannot support it. After-tax excess is descriptive and
-cannot be substituted for the primary pre-tax hypothesis.
+Use the weekly paired daily excess series and the deterministic function in the
+outcome specification. The exact return regions are:
+
+- **strong positive:** `ci95_one_sided_lower > 0` and
+  `cumulative_excess > 0` → PASS after information and hard gates;
+- **positive estimate with a zero-crossing two-sided interval** → INCONCLUSIVE;
+- **near-zero estimate** (`mean_excess_ann == 0`) → INCONCLUSIVE;
+- **negative estimate with an interval including zero** → INCONCLUSIVE;
+- **statistically negative but economically small**
+  (`ci95_two_sided_upper < 0` and `>= -0.02`) → INCONCLUSIVE;
+- **confidently below the material-harm floor**
+  (`ci95_two_sided_upper < -0.02`) → FAIL;
+- **inadequate information** → INCONCLUSIVE.
+
+Equality is explicit: a one-sided lower bound of exactly zero is not PASS; a
+two-sided upper bound of exactly `-0.02` is not below the harm floor and is not
+FAIL; a cumulative excess of exactly zero is not positive. After-tax excess is
+descriptive and cannot replace the primary pre-tax hypothesis.
 
 ### Drawdown
 
@@ -340,10 +440,17 @@ visible and unchanged:
 - Goal C: `MaxDD >= -50%`.
 
 Those are historical objectives and evidence fields, not a claim of dominance.
-For prospective governance, strategy MaxDD below **-60%** is a hard economic
-failure, and a strategy drawdown difference worse than **-10 percentage points**
-versus QQQ is a hard risk-evidence failure. These conservative limits do not
-make Goals A, B, or C easier and do not assert QQQ dominance.
+The prospective limits are explicitly
+`PAPER_SEVERE_RISK_GOVERNANCE_LIMIT`: strategy MaxDD below **-60%** is a hard
+paper failure, and a strategy drawdown difference worse than **-10 percentage
+points** versus QQQ is a hard paper failure. They are not
+`ORIGINAL_RESEARCH_OBJECTIVE` values. These limits do not make Goals A, B, or
+C easier and do not assert QQQ dominance.
+The severe-risk labels are not `ORIGINAL_RESEARCH_OBJECTIVE` values.
+
+The future report shows strategy MaxDD, QQQ MaxDD, MaxDD difference, Goal A risk
+status, Goal B risk status, and Goal C risk status beside the paper governance
+limits. `PAPER_PROTOCOL_PASS_DOES_NOT_IMPLY_ORIGINAL_GOAL_PASS`.
 
 ### Implementation, turnover, and accounting
 
@@ -387,6 +494,13 @@ secondary inferential family requires a new frozen multiplicity decision.
 The complete method, assumptions, and design-only power table are in
 `docs/PAPER_TRADING_PROTOCOL_V1_STATISTICAL_DESIGN.md`.
 
+The exact terminal decision function, including `n_valid`, `mean_excess_ann`,
+`hac_se`, both two-sided bounds, the one-sided lower bound,
+`cumulative_excess`, `information_adequate`, `protocol_valid`, every hard gate,
+and equality boundaries is in
+`docs/PAPER_TRADING_OUTCOME_DECISION_SPEC.md`. No operator may choose among
+PASS, FAIL, or INCONCLUSIVE after seeing the result.
+
 ## 14. Design-only power and information analysis
 
 The companion analysis uses hypothetical annualized excess effects of 0%, 2%,
@@ -396,7 +510,10 @@ standard deviation of 1.5%, and AR(1) serial correlation `phi = 0.25`. It uses
 are transparent design assumptions, not realized strategy estimates, and are
 not a backtest. The table covers 12, 24, and 36 months and the one permitted
 48-month extension. It demonstrates what the horizon can and cannot establish;
-it does not alter the 36-month proposal.
+it does not alter the 36-month proposal. The illustrative 1.5% volatility and
+AR(1) phi=.25 are **not used in PASS/FAIL**, are **not estimates of future
+strategy volatility**, and do **not justify the 36-month horizon by
+themselves**. Actual prospective HAC uncertainty controls the return inference.
 
 ## 15. Monitoring and early stopping
 
@@ -442,10 +559,19 @@ uses the columns `decision_id,issue,current_draft_rule,remediated_proposal,
 rationale,threshold_derivation,selection_bias_control,statistical_role,status`.
 Every row is `PROPOSED_NOT_FROZEN`; nothing is frozen by this remediation.
 
+The terminal outcome contract is separately machine-readable in
+`docs/paper_trading_outcome_decision_table.csv` and specified in
+`docs/PAPER_TRADING_OUTCOME_DECISION_SPEC.md`. The future reporting
+specification must emit both `PAPER_PROTOCOL_RESULT` and
+`ORIGINAL_RESEARCH_GOAL_STATUS`, including the two paper severe-risk limits
+and all Goal A/B/C fields.
+
 This task creates no daemon, scheduler, broker connector, order simulator,
 observation writer, or prospective report generator. It does not collect
 official observations, activate a start timestamp, freeze the protocol, create
 `paper-validation-v1.0-final`, or start Phase 9.
+This design does not collect official observations and does not activate a
+prospective start.
 
 Design-status register (every item remains `PROPOSED_NOT_FROZEN`):
 

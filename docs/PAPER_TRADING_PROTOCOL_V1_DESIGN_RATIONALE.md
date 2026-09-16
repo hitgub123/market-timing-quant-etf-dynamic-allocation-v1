@@ -198,3 +198,42 @@ controls. No live-capital permission is created here.
 
 All decisions in the companion table and threshold registry remain
 `PROPOSED_NOT_FROZEN` pending final protocol audit.
+
+## Final decision clarification
+
+The terminal decision is now mechanical. After `PROTOCOL_INVALID` and hard
+gate priority, inadequate information or
+`MECHANISM_INFORMATION_LIMITED = (n_state_changes == 0 or
+n_completed_episodes == 0)` produces INCONCLUSIVE. A valid, adequate,
+mechanism-informative path passes the return gate only when
+
+`ci95_one_sided_lower > 0 and cumulative_excess > 0`.
+
+A two-sided upper bound strictly below −2 percentage points annualized is FAIL.
+An upper bound in [−2pp, 0) is statistically negative but economically small
+under this proposal and is INCONCLUSIVE. All zero/equality boundaries are
+specified in `PAPER_TRADING_OUTCOME_DECISION_SPEC.md`; there is no subjective
+operator classification.
+
+Paper validation does not have broker execution. `MODEL_SLIPPAGE_BPS = 5` is
+the immutable economic assumption. When reliable bid/ask or opening-auction
+data exist, `OBSERVED_SLIPPAGE_PROXY_BPS` is the absolute, order-level,
+side-signed difference between the official next-open reference and the
+executable-side proxy. Its nearest-rank p95 requires 20 valid orders. Without
+that data the status is `NOT_OBSERVABLE_IN_PAPER_MODE`, not a fabricated zero
+or realized-slippage claim. Tracking difference is separately
+`CANONICAL_FILL_TRACKING_DIFFERENCE_BPS`; NAV reconciliation error remains a
+dollar accounting identity. Latency fields are
+`PAPER_SYSTEM_OPERATIONAL_DIAGNOSTIC`, not live-execution evidence.
+
+`PAPER_PROTOCOL_RESULT` and `ORIGINAL_RESEARCH_GOAL_STATUS` are separate
+outputs. The report always shows strategy/QQQ MaxDD, their difference, and Goal
+A/B/C statuses beside the paper severe-risk governance limits. A paper PASS
+does not imply an original goal passed:
+
+`PAPER_PROTOCOL_PASS_DOES_NOT_IMPLY_ORIGINAL_GOAL_PASS`
+
+The power illustration's 1.5% volatility and AR(1) phi=.25 remain hypothetical
+design inputs. They are not used in PASS/FAIL, are not estimates of future
+volatility, and do not justify the 36-month horizon. Future HAC uncertainty
+controls the inference.

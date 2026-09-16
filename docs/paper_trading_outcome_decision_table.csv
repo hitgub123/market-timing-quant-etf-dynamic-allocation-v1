@@ -1,0 +1,12 @@
+priority,protocol_valid,information_adequate,mechanism_information_limited,hard_gate_status,return_evidence_region,extension_available,outcome,rationale
+1,FALSE,ANY,ANY,ANY,ANY,ANY,PROTOCOL_INVALID,"Structural validity has priority over every economic or information classification."
+2,TRUE,ANY,ANY,FAIL,ANY,ANY,PROSPECTIVE_VALIDATION_FAIL,"A failed hard implementation, risk, accounting, or turnover gate is a valid-protocol failure."
+3,TRUE,FALSE,ANY,PASS,ANY,ANY,PROSPECTIVE_VALIDATION_INCONCLUSIVE,"Fewer than 500 valid paired sessions, missing finite return inputs, or no primary scheduled record prevents a directional conclusion."
+4,TRUE,TRUE,TRUE,PASS,ANY,ANY,PROSPECTIVE_VALIDATION_INCONCLUSIVE,"Zero actual target-state changes or zero completed episodes limits mechanism information; no arbitrary event quota is substituted."
+5,TRUE,TRUE,FALSE,PASS,HARMFUL_BELOW_FLOOR,ANY,PROSPECTIVE_VALIDATION_FAIL,"The two-sided HAC upper bound is strictly below -2 percentage points annualized."
+6,TRUE,TRUE,FALSE,PASS,STRONG_POSITIVE,ANY,PROSPECTIVE_VALIDATION_PASS,"The one-sided 95% HAC lower bound is strictly above zero and cumulative excess is strictly positive."
+7,TRUE,TRUE,FALSE,PASS,STATISTICALLY_NEGATIVE_ECONOMICALLY_SMALL,ANY,PROSPECTIVE_VALIDATION_INCONCLUSIVE,"The two-sided upper bound is below zero but at or above the -2pp harm floor; it is statistically negative but not a hard economic harm breach."
+8,TRUE,TRUE,FALSE,PASS,POSITIVE_ESTIMATE_CI_CROSSES_ZERO,ANY,PROSPECTIVE_VALIDATION_INCONCLUSIVE,"The positive point estimate is uncertain because the two-sided interval includes zero."
+9,TRUE,TRUE,FALSE,PASS,ESTIMATE_NEAR_ZERO,ANY,PROSPECTIVE_VALIDATION_INCONCLUSIVE,"The mean excess estimate is exactly zero; zero is not positive evidence."
+10,TRUE,TRUE,FALSE,PASS,NEGATIVE_ESTIMATE_CI_INCLUDES_ZERO,ANY,PROSPECTIVE_VALIDATION_INCONCLUSIVE,"The negative estimate is uncertain because the two-sided interval includes zero."
+11,TRUE,TRUE,FALSE,PASS,OTHER_UNCERTAIN,ANY,PROSPECTIVE_VALIDATION_INCONCLUSIVE,"Every remaining finite valid return region is uncertain and cannot be chosen subjectively."
