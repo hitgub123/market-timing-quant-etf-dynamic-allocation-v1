@@ -112,6 +112,58 @@ history, revisions, and a deterministic after-close publication SLA remain
 unresolved. No deterministic SLA was invented, so PRE_START operational
 latency observation remains required for any future candidate.
 
+## Massive Basic Free authenticated feasibility follow-up
+
+On 2026-09-26, a narrow authenticated follow-up tested the existing Massive
+Basic Free option without running a strategy, signal, backtest, or historical
+performance calculation. The credential was supplied only to an isolated
+collector process and was neither printed nor retained. The sanitized evidence
+is recorded in
+[`docs/paper_trading_massive_basic_free_feasibility.json`](../docs/paper_trading_massive_basic_free_feasibility.json).
+
+Authenticated daily aggregate requests returned 501 unique completed sessions
+for each of QQQ raw, QQQ split-adjusted, QLD raw, and QLD split-adjusted data,
+from 2024-09-26 through 2026-09-25. Every series included the expected last
+completed session, with no missing or duplicate sessions. This passes the
+200-observation depth requirement. The observed fields were open, high, low,
+close, volume, volume-weighted price, transaction count, and timestamp.
+
+Authenticated corporate-action requests also succeeded. QQQ returned zero
+split rows and 65 dividend rows; QLD returned six split rows and 34 dividend
+rows. Each of the eight raw HTTP response bodies was archived before parsing,
+read back byte-identically, and then removed with the isolated temporary
+directory. The evidence artifact records only byte counts and SHA-256 digests,
+not request credentials or authorization material.
+
+The account response did not expose an exact plan label or rate-limit headers.
+Its two-year/501-session capability is consistent with the documented Basic
+plan. Public documentation specifies 5 requests per minute; all eight
+authenticated requests succeeded when spaced by 13 seconds. This observation
+does not by itself accept the broader operational request-capacity envelope.
+
+The feasibility gate nevertheless fails on frozen-signal semantics. Massive
+documents `adjusted=true` as split adjustment and explicitly does not provide
+native dividend-adjusted aggregates. Reconstructing a dividend-adjusted close
+would require choices about event timing, reinvestment price, tax treatment,
+and cash-distribution handling. Those are modeling choices, not authenticated
+vendor facts, and they are absent from the frozen source contract. Exact
+semantic equivalence to the frozen dividend-adjusted MA200 input is therefore
+not proven and cannot be asserted without changing the protocol methodology.
+
+Basic's EOD description also does not establish a deterministic after-close
+publication SLA. PRE_START operational latency evidence would still be
+required if a semantically compatible option were later accepted. Licensing
+for authoritative operational use remains unresolved. No SLA, deadline, or
+license permission is invented.
+
+The mechanically correct option classification remains:
+
+`SOURCE_OPTION_NOT_VIABLE`
+
+Massive remains a reconciliation source only. The prior Alpha Vantage gate
+remains `SOURCE_ACCEPTANCE_FAIL`; this follow-up does not overwrite it, promote
+Massive, authorize a purchase, or start any prospective operation.
+
 ## Required next acceptance evidence
 
 The next acceptance must be run against exactly one externally chosen account
@@ -133,13 +185,15 @@ Phase 9.
 
 ## Test and integrity result
 
-Dedicated remediation tests verify the matrix classifications, failed-gate
-preservation, no-selection/no-performance boundary, source-role boundaries,
-official documentation references, and absence of engine/scheduler/Phase 9
-artifacts. The dedicated remediation suite passed **8 tests**. The combined
-remediation, source-acceptance, prospective-governance, and operational
-contract controls passed **137 tests**. The full pytest suite passed **553
-tests**. The source-acceptance secret-leak control remained passing; it scans
+Dedicated remediation and Massive Basic feasibility tests verify the matrix
+classifications, failed-gate preservation, authenticated history/corporate-
+action evidence, byte reconstruction, no-selection/no-performance boundary,
+source-role boundaries, official documentation references, and absence of
+engine/scheduler/Phase 9 artifacts. The dedicated Massive Basic feasibility
+suite passed **9 tests**. The combined remediation, source-acceptance,
+prospective-governance, and operational contract controls passed **146 tests**.
+The full pytest suite passed **562 tests**. The source-acceptance secret-leak
+control remained passing; it scans
 tracked files, Git diff, reports, generated metadata, acceptance output, and
 sanitized request metadata without exposing credentials.
 
