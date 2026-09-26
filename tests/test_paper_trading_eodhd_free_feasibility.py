@@ -14,7 +14,7 @@ EVIDENCE = ROOT / "docs/paper_trading_eodhd_free_feasibility.json"
 MATRIX = ROOT / "docs/paper_trading_source_remediation_matrix.csv"
 REPORT = ROOT / "reports/paper_trading_source_remediation_options_audit.md"
 ACCOUNT_ARTIFACT = ROOT / "docs/paper_trading_source_account_acceptance.json"
-BASELINE_COMMIT = "639157058cbacb2bfad8dca86d9c937b2a3850a3"
+BASELINE_COMMIT = "e94326ae3f4b765bcf895de4684328ee756e6bd1"
 RESEARCH_TAG = "2b2bf987f2e00540412d263a8ef39566af1d1e2a"
 RESEARCH_MANIFEST_SHA = "dcb8f9d79de93c61e0bd7d93b743b0356be9eb3b1467acf5db9a58563889d400"
 
@@ -122,7 +122,7 @@ def test_classification_is_ready_for_acceptance_but_not_promoted() -> None:
     assert data["scope_controls"]["source_promoted"] is False
     assert data["scope_controls"]["official_observation_started"] is False
     report = REPORT.read_text(encoding="utf-8")
-    assert "does not yet replace Alpha Vantage" in report
+    assert "formal EODHD account acceptance" in report
     assert "SOURCE_REMEDIATION_REQUIRED" in report
 
 
@@ -142,13 +142,13 @@ def test_no_strategy_performance_or_prospective_operation_was_started() -> None:
     assert not any("phase9" in path.name.lower() for path in (ROOT / "experiments").glob("*.py"))
 
 
-def test_prior_failed_gate_and_frozen_research_remain_unchanged() -> None:
+def test_prior_failed_gate_is_preserved_and_frozen_research_remains_unchanged() -> None:
     account = json.loads(ACCOUNT_ARTIFACT.read_text(encoding="utf-8"))
-    assert account["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
-    baseline = subprocess.check_output(
-        ["git", "show", f"{BASELINE_COMMIT}:docs/paper_trading_source_account_acceptance.json"], cwd=ROOT
-    )
-    assert baseline == ACCOUNT_ARTIFACT.read_bytes()
+    assert account["final_source_gate"] == "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
+    assert account["prior_alpha_vantage_acceptance"]["historical_gate"] == "SOURCE_ACCEPTANCE_FAIL"
+    assert subprocess.check_output(
+        ["git", "show", f"{BASELINE_COMMIT}:docs/paper_trading_eodhd_free_feasibility.json"], cwd=ROOT
+    ) == EVIDENCE.read_bytes()
     tagged = subprocess.check_output(
         ["git", "rev-parse", "research-v1.0-final^{commit}"], cwd=ROOT, text=True
     ).strip()

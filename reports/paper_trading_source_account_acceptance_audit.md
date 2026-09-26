@@ -1,95 +1,96 @@
-# Paper Trading Protocol v1 — Source Account Acceptance Audit
+# Paper Trading Protocol v1 — EODHD Free Source Account Acceptance Audit
 
 **Scope:** authoritative-source account/API capability acceptance
-**Prior account-gated commit:** `1cec7f42a6942043a9a227349762d8e033890f2e`
-**Date:** 2026-09-17
+**Resume commit:** `e94326ae3f4b765bcf895de4684328ee756e6bd1`
+**Date:** 2026-09-26
 
 ## A. Exact source-gate outcome
 
-`SOURCE_ACCEPTANCE_FAIL`
+`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
 
-Both temporary credential variables were present only inside the isolated
-acceptance process. Their values were never printed, logged, hashed, saved,
-serialized, or committed. No historical performance, backtest, optimization,
-signal evaluation, or paper-trading observation was performed.
+The EODHD Free account passed authenticated plan, endpoint, 200-observation,
+field, corporate-action, raw-byte reconstruction, 200-value reconstruction,
+rate-limit, and private-storage checks. It has not yet been observed publishing
+a new completed U.S. session after close, so the gate remains fail-closed.
 
-The gate fails because the authenticated Alpha Vantage account does not expose
-the premium adjusted endpoint or full raw daily history, and its compact raw
-daily response has only 100 rows, below the required 200-observation depth.
+The credential remained external to the repository and was read only in
+isolated processes. No historical performance, backtest, signal, optimization,
+paper-trading row, engine, scheduler, start timestamp, Final Freeze, or Phase 9
+artifact was created.
 
-## B. Alpha Vantage authenticated endpoint audit
+## B. Authenticated account and endpoints
 
-| Required capability | Result | Sanitized evidence |
-|---|---|---|
-| `TIME_SERIES_DAILY_ADJUSTED` QQQ | `FAIL_PREMIUM_ENDPOINT_RESTRICTION` | HTTP 200 premium restriction; 215 response bytes |
-| `TIME_SERIES_DAILY` QQQ, full | `FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION` | HTTP 200 full-outputsize premium restriction; 279 response bytes |
-| `TIME_SERIES_DAILY` QLD, full | `FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION` | HTTP 200 full-outputsize premium restriction; 279 response bytes |
-| `TIME_SERIES_DAILY` QQQ, compact | `PASS_COMPACT_ONLY` | 100 rows; fields `open`, `high`, `low`, `close`, `volume` |
-| `TIME_SERIES_DAILY` QLD, compact | `PASS_COMPACT_ONLY` | 100 rows; fields `open`, `high`, `low`, `close`, `volume` |
-| `SPLITS` QQQ / QLD | `PASS` | 1 / 6 rows; `effective_date`, `split_factor` |
-| `DIVIDENDS` QQQ / QLD | `PASS` | 88 / 34 rows; declaration, ex-dividend, record, payment, amount |
+The account endpoint reported subscription mode/type `free`, 20 calls per day,
+and a 1,200-request minute header. QQQ.US and QLD.US each returned 251 unique
+completed sessions from 2025-09-26 through 2026-09-25. Required raw OHLCV and
+`adjusted_close` fields were non-null and session dates contained no duplicates.
 
-The response messages explicitly identified premium entitlement and the free
-key's 1-request-per-second / 25-requests-per-day policy. No secret-bearing URL,
-header, or response body was retained.
+Authenticated per-ticker corporate-action responses returned five dividends
+for each ETF, no QQQ split, and one QLD split dated 2025-11-20. The free plan's
+one-year history restriction was explicitly returned and is recorded rather
+than inferred.
 
-## C. Rate-limit and publication evidence
+## C. Semantics and source transition
 
-The existing conservative demand calculation remains 74 scheduled-session
-units, 16 base requests per unit, 20 with the 25% safety margin, and 1,480
-requests across the conservative annual sum. Account-observable Alpha Vantage
-messages reported 1 request per second and 25 requests per day. No rate-limit
-headers were returned. Operational acceptance remains
-`RATE_LIMIT_NOT_READY`.
+Official EODHD documentation defines raw OHLC as as-traded and
+`adjusted_close` as split-and-dividend adjusted. This matches the required
+field semantics, but adjusted values are vendor-specific and may be recomputed
+after new dividends. The protocol therefore freezes the exact point-in-time
+EODHD bytes for each future decision and never combines adjusted values across
+vendors.
 
-No deterministic after-close publication SLA was established. No polling
-deadline was invented and no publication latency observation was run. The
-publication classification remains `UNRESOLVED` and the deadline remains
-`PUBLICATION_DEADLINE_NOT_READY`.
+EODHD Free becomes the proposed authoritative source because the user imposed
+a free-only operational constraint and it satisfies the required fields. No
+historical result was used. Massive Basic Free remains reconciliation-only.
+The prior Alpha Vantage `SOURCE_ACCEPTANCE_FAIL` is preserved as historical
+evidence and Alpha is removed as a prospective operational dependency.
 
-## D. Massive reconciliation audit
+## D. Rate-limit audit
 
-Massive authenticated day-aggregate calls for QQQ and QLD returned HTTP 200,
-response status `DELAYED`, 501 rows each, and fields `o`, `h`, `l`, `c`, `v`,
-`vw`, `t`, and `n`. The requested 2000-01-01 to 2026-09-17 range yielded rows
-corresponding to 2024-09-16 through 2026-09-15. No explicit plan error explained
-the older-history boundary; it is recorded as an observed limitation only.
-Massive remains reconciliation-only and was not promoted to authoritative
-adjusted-close status.
+The EODHD request shape combines raw and adjusted fields. The conservative
+budget is 14 base calls and 18 after the fixed 25% margin, including four polls,
+two retries, authoritative QQQ/QLD responses, four corporate-action responses,
+and two reconciliation responses. One acquisition is shared across frequency
+decisions on the same date. The 18-call budget is within the authenticated
+20-call daily limit, leaving two calls of headroom.
 
-## E. Raw snapshot reconstruction and provenance
+## E. Reconstruction and revisions
 
-Every authenticated response was written to an isolated temporary archive
-before parsing, read back, and verified byte-identical. Endpoint-specific raw
-byte lengths and SHA-256 hashes are recorded in
-`docs/paper_trading_source_account_acceptance.json`; no raw archive contains a
-credential and no official observation directory was written. The existing
-synthetic 200-observation reconstruction control remains unchanged and passes.
-No vendor revision ID was invented; a null `source_revision_id` remains valid.
+Seven authenticated endpoint responses were archived before parsing and
+reconstructed byte-identically. A separate authenticated QQQ control rebuilt
+the ordered final 200 adjusted closes exactly from the archived bytes. The
+window ran from 2025-12-09 through 2026-09-25. No MA, signal, or return was
+calculated.
 
-## F. Source-role and boundary audit
+No immutable vendor revision identifier was observed. The protocol-owned raw
+SHA-256 remains the snapshot identifier, `source_revision_id` may remain null,
+and later changes require append-only revision incidents.
 
-Alpha Vantage remains the proposed authoritative source by frozen role, but the
-tested account cannot support the required adjusted/full-history MA200 input.
-Massive is reconciliation-only. No values were averaged or substituted, and
-no strategy, cost, tax, schedule, statistic, threshold, or closed research
-artifact changed. No engine, scheduler, start timestamp, official observation,
-Final Freeze, or Phase 9 artifact was created.
+## F. Publication and remaining blocker
 
-## G. Secret-leak audit
+Official documentation states that major U.S. exchanges are updated within 15
+minutes after close. The exact account has not yet supplied a future-session
+latency sample. A narrow PRE_START observation must poll without computing a
+signal and record when the expected session first appears. Until that evidence
+is externally audited, the source is not ready for Final Freeze.
 
-The temporary credentials were injected only into the isolated process. The
-secret scan covers tracked files, Git diff, reports, generated metadata,
-acceptance output, and sanitized request metadata. No key value was printed or
-persisted. Result: `SECRET_LEAK_SCAN_PASS`.
+## G. Licensing and secrets
 
-## H. Tests
+Official terms allow private non-commercial storage, manipulation, and analysis
+by a non-professional user and prohibit redistribution. The secret scan covers
+tracked files, Git diff, reports, generated metadata, exception output, and
+sanitized request metadata. No credential value or secret-bearing URL was
+retained.
 
-The dedicated source-acceptance suite passed 21 tests. The source-acceptance
-plus prospective governance suites passed 161 tests. The full pytest suite
-passed 545 tests. The dedicated secret-leak test covers
-tracked files, Git diff, reports, generated metadata, acceptance output, and
-sanitized request metadata. This remains a pre-start source acceptance and is
-not Final Freeze.
+## H. Test result
+
+The dedicated source-account acceptance suite passed **21 tests**. The combined
+source, remediation, prospective-governance, and operational-contract controls
+passed **156 tests**. The full pytest suite passed **572 tests**. The staged
+secret-leak control passed after scanning tracked files, Git diff, reports,
+generated metadata, and sanitized request metadata. The source remains
+pre-start and no acceptance manifest is created.
+
+`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
 
 PAPER TRADING SOURCE ACCOUNT ACCEPTANCE COMPLETE — AWAITING EXTERNAL SOURCE AUDIT

@@ -1,131 +1,119 @@
 # Paper-Trading Protocol v1 — Authoritative Source Account Acceptance
 
-**Status:** `SOURCE_ACCEPTANCE_FAIL`
-**Scope:** pre-start account/API capability acceptance only; no historical
-performance, backtest, parameter selection, paper trading, engine, scheduler,
-official observation, 36-month clock, final freeze, or Phase 9 artifact.
+**Status:** `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+**Scope:** pre-start EODHD Free account/API capability acceptance only; no
+historical performance, backtest, signal, paper trading, engine, scheduler,
+official observation, prospective clock, Final Freeze, or Phase 9 artifact.
 
 ## 1. Gate outcome
 
-The acceptance was resumed from commit
-`1cec7f42a6942043a9a227349762d8e033890f2e` in one isolated process. Both
-credential variables were present for that process. Their values were not
-printed, logged, hashed, serialized, persisted, or written to any artifact.
+The acceptance resumed from commit
+`e94326ae3f4b765bcf895de4684328ee756e6bd1`. The EODHD credential was read
+only inside isolated processes from the user's external shell environment. Its
+value was never printed, logged, hashed, serialized, persisted, or written to
+an artifact.
 
-Authenticated endpoint checks were performed with sanitized request metadata and
-temporary raw-response archives. The account does not provide the critical
-authoritative capabilities required by the frozen protocol:
+Authenticated EODHD Free checks pass the account, field, history, corporate-
+action, rate-limit, personal-use storage, and raw-reconstruction requirements.
+The remaining gate is one account-observable PRE_START publication-latency
+check on a future completed U.S. session. Therefore the exact gate is:
 
-- `TIME_SERIES_DAILY_ADJUSTED` for QQQ returned an HTTP 200 premium-endpoint
-  restriction message;
-- `TIME_SERIES_DAILY` with `outputsize=full` for QQQ and QLD returned an HTTP
-  200 premium `outputsize=full` restriction message;
-- compact raw daily access returned only 100 rows for each symbol, below the
-  required 200-observation depth.
+`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
 
-SPLITS and DIVIDENDS were accessible, and Massive day aggregates were
-accessible for reconciliation, but those results cannot replace the frozen
-authoritative adjusted-close source. The mechanically correct source gate is:
+The historical Alpha Vantage `SOURCE_ACCEPTANCE_FAIL` remains preserved as
+prior evidence. It is no longer the proposed current authority under the
+free-source-only constraint.
 
-`SOURCE_ACCEPTANCE_FAIL`
+## 2. Authenticated EODHD Free evidence
 
-No historical performance or strategy result was calculated.
-
-## 2. Authenticated Alpha Vantage evidence
-
-All requests used JSON responses. Exact response bytes were archived in an
-isolated temporary directory before parsing, re-read, and verified byte
-identical. Only hashes, lengths, sanitized parameters, field names, counts,
-and sanitized vendor messages are recorded here.
-
-| Endpoint/check | Observed result | Evidence |
+| Capability | Result | Sanitized evidence |
 |---|---|---|
-| `TIME_SERIES_DAILY_ADJUSTED` QQQ, `outputsize=full` | `FAIL_PREMIUM_ENDPOINT_RESTRICTION` | HTTP 200; vendor said the endpoint is premium; no time-series rows |
-| `TIME_SERIES_DAILY` QQQ, `outputsize=full` | `FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION` | HTTP 200; vendor said `outputsize=full` is premium |
-| `TIME_SERIES_DAILY` QLD, `outputsize=full` | `FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION` | HTTP 200; same premium restriction |
-| `TIME_SERIES_DAILY` QQQ, `outputsize=compact` | `PASS_COMPACT_ONLY` | 100 rows, 2026-04-23 through 2026-09-15; fields `open`, `high`, `low`, `close`, `volume` |
-| `TIME_SERIES_DAILY` QLD, `outputsize=compact` | `PASS_COMPACT_ONLY` | 100 rows, 2026-04-23 through 2026-09-15; fields `open`, `high`, `low`, `close`, `volume` |
-| `SPLITS` QQQ | `PASS` | 1 row; `effective_date`, `split_factor` |
-| `SPLITS` QLD | `PASS` | 6 rows; `effective_date`, `split_factor` |
-| `DIVIDENDS` QQQ | `PASS` | 88 rows; declaration, ex-dividend, record, payment, and amount fields |
-| `DIVIDENDS` QLD | `PASS` | 34 rows; declaration, ex-dividend, record, payment, and amount fields |
+| Account plan | `PASS` | Authenticated `free` mode/type; 20 calls/day; 1,200 requests/minute header |
+| QQQ.US EOD | `PASS` | 251 unique sessions; raw OHLCV and adjusted close; no required nulls or duplicates |
+| QLD.US EOD | `PASS` | 251 unique sessions; raw OHLCV and adjusted close; no required nulls or duplicates |
+| QQQ.US dividends/splits | `PASS` | Five dividends and zero splits in the tested one-year interval |
+| QLD.US dividends/splits | `PASS` | Five dividends and one split in the tested one-year interval |
+| 200-observation depth | `PASS` | 251 completed sessions per symbol |
+| Exact raw-byte reconstruction | `PASS` | Seven endpoint responses reconstructed byte-identically |
+| Exact adjusted-close-window reconstruction | `PASS` | The final 200 QQQ adjusted closes reproduced exactly from the archived bytes |
 
-The raw daily endpoint is therefore authenticated but not usable for the
-required 200-observation MA window under this account. The adjusted endpoint
-is not entitled at all.
+The free-plan warning explicitly limits history to one year. This is sufficient
+for the frozen 200-session MA input but leaves only about 51 sessions of
+warm-up margin, so every point-in-time source snapshot is mandatory.
 
-## 3. Account/plan and rate-limit evidence
+## 3. Field and adjustment semantics
 
-The vendor returned the following account-observable messages, with no secret
-material retained:
+EODHD documents the response `close` and OHLC fields as as-traded values and
+`adjusted_close` as adjusted for both splits and dividends. Historical adjusted
+closes are recomputed following new dividends. Accordingly:
 
-- adjusted endpoint: premium plan required;
-- full raw daily history: `outputsize=full` is a premium feature;
-- free-key request policy: one request per second and 25 requests per day.
+- the MA200 input is the exact EODHD QQQ.US `adjusted_close` captured in the
+  decision's immutable source snapshot;
+- execution/reference OHLC remains raw;
+- a later vendor revision creates an append-only revision incident;
+- EODHD and another vendor are never spliced, averaged, or selected according
+  to a resulting signal; and
+- numerical identity with the former proposed vendor is not claimed.
 
-No rate-limit response headers were exposed. The observed limits are recorded
-as evidence, not as accepted operational headroom. The existing conservative
-envelope remains 16 base requests per scheduled session, 20 with its safety
-margin, and 1,480 requests for the conservative annual sum. The rate-limit gate
-remains `RATE_LIMIT_NOT_READY`.
+The source-data-only feasibility comparison found expected cross-vendor
+adjustment differences. No signal or historical strategy result was evaluated.
 
-## 4. Massive reconciliation evidence
+## 4. Rate-limit acceptance
 
-Massive day aggregates were queried for QQQ and QLD with `adjusted=false` over
-the requested 2000-01-01 through 2026-09-17 range. Both authenticated requests
-returned HTTP 200, response status `DELAYED`, 501 rows, and fields `o`, `h`,
-`l`, `c`, `v`, `vw`, `t`, and `n`. The observed rows ran from timestamps
-corresponding to 2024-09-16 through 2026-09-15; the requested older range was
-not returned. No explicit plan-error message identified the reason for that
-history boundary, so the limitation is recorded as observed rather than
-invented. Massive remains strictly
-`RECONCILIATION_MARKET_DATA_SOURCE`; it is not promoted to the authoritative adjusted-close source and no quote/execution proxy was claimed.
+The authenticated account reports 20 calls per day. EODHD combines raw OHLCV
+and adjusted close in one EOD response, reducing the conservative source
+budget to 14 base calls and 18 calls after the fixed 25% margin. This includes
+four publication polls, two fixed retries, both authoritative EOD responses,
+four corporate-action responses, and two Massive reconciliation responses.
+All frequency decisions on the same calendar date share the same immutable
+source acquisition. The rate gate is therefore
+`RATE_LIMIT_ACCEPTANCE_PASS_18_LE_20` with two calls of daily headroom.
 
-## 5. Raw-response snapshot and reconstruction
+## 5. Publication timing
 
-The authenticated run archived each exact response before parsing and
-reconstructed every archived byte sequence successfully. The machine-readable
-artifact records the endpoint-specific SHA-256 hashes and byte lengths. The
-temporary archive contained no credentials and was not placed in the official
-observation directory. The pre-existing synthetic 200-value reconstruction
-control also remains unchanged and passing.
+Official EODHD documentation states that major U.S. exchanges are updated
+within 15 minutes after market close. This supplies a documented candidate
+publication boundary, but the account has not yet been observed across a real
+future completed session. The PRE_START observation must record sanitized poll
+times, response hashes, expected session date, first availability time, and
+rate headers without calculating a signal.
 
-No vendor revision identifier was invented. `source_revision_id = null` remains
-valid when the vendor does not supply an immutable revision ID; the protocol
-snapshot hash remains the provenance identifier.
+Until that observation passes, publication status remains
+`PENDING_PRE_START_ACCOUNT_LATENCY_OBSERVATION`. No official observation or
+prospective start may be created.
 
-## 6. Publication timing
+## 6. Raw-response and revision provenance
 
-No deterministic after-close publication SLA was established by the account
-responses or public documentation. No polling deadline was invented and no
-latency samples were used to select a favorable outcome. Publication remains
-`UNRESOLVED` with `PUBLICATION_DEADLINE_NOT_READY`; no official observation can
-start from this acceptance.
+Every authenticated response was archived before parsing in an isolated
+temporary directory, read back byte-identically, and removed after the
+collector exited. An additional QQQ reconstruction control reproduced the
+same ordered 200 `(date, adjusted_close)` records. The raw snapshot ID is the
+SHA-256 of the exact response bytes. EODHD supplied no immutable revision ID,
+so `source_revision_id = null` remains valid and no vendor identifier is
+invented.
 
-## 7. Source roles and boundaries
+EODHD's terms permit a non-professional user to store, manipulate, and analyze
+data for private non-commercial use. Redistribution is not authorized by this
+acceptance.
 
-Alpha Vantage remains the proposed authoritative source by protocol role, but
-the authenticated account failed the critical adjusted/full-history and
-200-observation requirements. Massive remains reconciliation-only. No source
-values were averaged, substituted, or used to improve a signal. No strategy,
-cost, tax, schedule, statistic, threshold, or closed research artifact was
-changed.
+## 7. Source roles
 
-## 8. Secret-leak and freeze boundary
+EODHD Free is now the proposed `AUTHORITATIVE_MARKET_DATA_SOURCE`, pending
+external audit and the latency check. Massive Basic Free remains strictly the
+`RECONCILIATION_MARKET_DATA_SOURCE`; its split-only adjusted aggregates cannot
+replace EODHD adjusted close. Alpha Vantage is retained only as historical
+failed-account evidence and is not an operational dependency.
 
-The temporary credentials were supplied only to the isolated process. They are
-absent from request metadata, raw-response archives, JSON, reports, tests, and
-Git diff. The secret-leak scan is required to remain
-`SECRET_LEAK_SCAN_PASS`.
+## 8. Freeze boundary
 
 No engine, scheduler, official observation directory, prospective start
 timestamp, acceptance manifest, Final Freeze, or Phase 9 artifact was created.
+No strategy, MA200, schedule, cost, tax, metric, statistical method, threshold,
+or closed research artifact changed.
 
 ## 9. Final source gate
 
-`SOURCE_ACCEPTANCE_FAIL`
+`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
 
-This failure is due to account/plan capability limitations, not a strategy or
-historical-performance result. A later run may re-audit the source only after
-an account with the required adjusted/full-history entitlement and acceptable
-operational limits is supplied.
+Only the narrow PRE_START latency control and its external audit may advance
+this source gate. It cannot be advanced from documentation alone.

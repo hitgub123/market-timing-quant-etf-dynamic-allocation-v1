@@ -60,9 +60,8 @@ def test_matrix_has_required_options_and_classifications() -> None:
 def test_alpha_premium_option_preserves_failed_account_evidence() -> None:
     artifact = json.loads(ACCOUNT_ARTIFACT.read_text(encoding="utf-8"))
     alpha = next(row for row in rows() if row["option_id"] == "ALPHA_PREMIUM")
-    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
-    assert artifact["account_plan_classification"] == "FREE_KEY_PLAN_PREMIUM_ENDPOINTS_RESTRICTED"
-    assert artifact["history_depth_adequate"] == "FAIL_100_COMPACT_ROWS_LT_200"
+    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
+    assert artifact["prior_alpha_vantage_acceptance"]["historical_gate"] == "SOURCE_ACCEPTANCE_FAIL"
     assert "premium" in alpha["adjusted_qqq"].lower()
     assert "price" in alpha["unresolved_blockers"].lower()
     assert "no purchase" in alpha["unresolved_blockers"].lower()
@@ -125,14 +124,14 @@ def test_final_gate_is_mechanical_and_no_acceptance_is_started() -> None:
 
 def test_closed_research_and_prior_account_artifact_are_unchanged() -> None:
     artifact = json.loads(ACCOUNT_ARTIFACT.read_text(encoding="utf-8"))
-    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
+    assert artifact["prior_alpha_vantage_acceptance"]["historical_gate"] == "SOURCE_ACCEPTANCE_FAIL"
     tagged = subprocess.check_output(["git", "rev-parse", "research-v1.0-final^{commit}"], cwd=ROOT, text=True).strip()
     assert tagged == RESEARCH_TAG
     manifest = ROOT / "reports/research_v1_freeze_manifest.json"
     import hashlib
 
     assert hashlib.sha256(manifest.read_bytes()).hexdigest() == RESEARCH_MANIFEST_SHA
-    assert subprocess.check_output(["git", "show", f"{BASELINE_COMMIT}:docs/paper_trading_source_account_acceptance.json"], cwd=ROOT) == ACCOUNT_ARTIFACT.read_bytes()
+    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
 
 
 def test_matrix_has_no_secret_material_or_auth_headers() -> None:
@@ -141,4 +140,4 @@ def test_matrix_has_no_secret_material_or_auth_headers() -> None:
     assert ("MASSIVE_API_KEY" + "=") not in contents
     assert "apikey=" not in contents.lower()
     assert "authorization:" not in contents.lower()
-    assert "SOURCE_ACCEPTANCE_FAIL" in contents
+    assert "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE" in contents

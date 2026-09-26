@@ -108,7 +108,7 @@ def test_data_source_roles_and_unverified_capabilities_are_explicit() -> None:
 
 def test_authoritative_source_documents_adjusted_and_raw_fields() -> None:
     text = _text(DOCS / "PAPER_TRADING_DATA_SOURCE_SPEC.md")
-    for phrase in ("TIME_SERIES_DAILY_ADJUSTED", "TIME_SERIES_DAILY", "adjusted close", "raw OHLC", "SPLITS", "DIVIDENDS"):
+    for phrase in ("/api/eod", "/api/splits", "/api/div", "adjusted close", "raw OHLC"):
         assert phrase in text
     assert "dividend-adjusted close not claimed" in text or "dividend adjustment is not currently provided" in text
 

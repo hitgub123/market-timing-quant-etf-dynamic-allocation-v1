@@ -163,9 +163,10 @@ The mechanically correct option classification remains:
 
 `SOURCE_OPTION_NOT_VIABLE`
 
-Massive remains a reconciliation source only. The prior Alpha Vantage gate
-remains `SOURCE_ACCEPTANCE_FAIL`; this follow-up does not overwrite it, promote
-Massive, authorize a purchase, or start any prospective operation.
+Massive remains a reconciliation source only. The Alpha Vantage
+`SOURCE_ACCEPTANCE_FAIL` remains preserved as historical evidence; this
+follow-up did not promote Massive, authorize a purchase, or start any
+prospective operation.
 
 ## EODHD Free authenticated feasibility audit
 
@@ -225,10 +226,11 @@ The mechanically correct feasibility classification is:
 
 `SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST`
 
-This classification does not yet replace Alpha Vantage in the proposed source
-role. It authorizes only the next formal account-acceptance and external-audit
-step. The prior `SOURCE_ACCEPTANCE_FAIL` and current
-`SOURCE_REMEDIATION_REQUIRED` gates remain unchanged until that step passes.
+This classification authorized the formal EODHD account acceptance subsequently
+recorded in the source-account acceptance artifacts. That acceptance updates
+the proposed authority to EODHD but remains
+`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`; it does not start a
+prospective operation.
 
 ## Required next acceptance evidence
 

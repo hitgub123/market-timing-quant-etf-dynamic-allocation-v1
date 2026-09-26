@@ -1,14 +1,8 @@
-"""Pre-start authenticated source-account acceptance tests.
-
-The live vendor calls were performed once in an isolated process. These tests
-validate only the sanitized, non-secret evidence artifact and retain synthetic
-controls for provenance and deterministic reconstruction. They never call a
-vendor and never contain credential values.
-"""
+"""Pre-start authenticated EODHD Free source-account acceptance tests."""
 
 from __future__ import annotations
 
-from decimal import Decimal
+import csv
 import hashlib
 import json
 from pathlib import Path
@@ -19,13 +13,14 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 ARTIFACT = DOCS / "paper_trading_source_account_acceptance.json"
-RUN_COMMIT = "1cec7f42a6942043a9a227349762d8e033890f2e"
+RESUME_COMMIT = "e94326ae3f4b765bcf895de4684328ee756e6bd1"
 FREEZE_COMMIT = "c75af4cf196419c6a27fbddcb10aaad966148b89"
 RESEARCH_TAG = "2b2bf987f2e00540412d263a8ef39566af1d1e2a"
 RESEARCH_MANIFEST_SHA = "dcb8f9d79de93c61e0bd7d93b743b0356be9eb3b1467acf5db9a58563889d400"
+PENDING_GATE = "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
 
 
-def load_artifact() -> dict[str, object]:
+def load_artifact() -> dict:
     return json.loads(ARTIFACT.read_text(encoding="utf-8"))
 
 
@@ -33,209 +28,169 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def synthetic_raw_response() -> bytes:
-    rows = [{"session_index": index, "adjusted_close": f"{100 + index / 100:.8f}"} for index in range(200)]
-    return json.dumps(
-        {"fixture": "SYNTHETIC_QQQ_ADJUSTED_WINDOW_V1", "rows": rows},
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-
-
-def test_account_gate_records_authenticated_fail_closed_result() -> None:
+def test_account_gate_is_pending_only_operational_latency() -> None:
     artifact = load_artifact()
     assert artifact["no_api_requests_made"] is False
     assert artifact["historical_performance_used"] is False
-    assert artifact["credentials"]["available"] is True
-    assert artifact["credentials"]["values_stored"] is False
-    assert artifact["credentials"]["result"] == "ACCOUNT_CREDENTIALS_PRESENT"
-    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
+    assert artifact["official_prospective_rows_created"] is False
+    assert artifact["final_source_gate"] == PENDING_GATE
+    assert artifact["publication_latency_observation_status"] == "NOT_RUN_MARKET_CLOSED_NO_OFFICIAL_OBSERVATION"
 
 
-def test_account_enabled_rerun_records_presence_without_values() -> None:
+def test_credential_presence_is_recorded_without_value() -> None:
+    credentials = load_artifact()["credentials"]
+    assert credentials["available"] is True
+    assert credentials["result"] == "ACCOUNT_CREDENTIALS_PRESENT"
+    assert credentials["names_checked"] == ["EODHD_API_KEY"]
+    assert credentials["values_printed"] is False
+    assert credentials["values_stored"] is False
+    assert load_artifact()["rerun_from_commit"] == RESUME_COMMIT
+
+
+def test_prior_alpha_failure_is_preserved_as_historical_evidence() -> None:
+    prior = load_artifact()["prior_alpha_vantage_acceptance"]
+    assert prior["historical_gate"] == "SOURCE_ACCEPTANCE_FAIL"
+    assert prior["preserved_as_historical_evidence"] is True
+    assert prior["current_authoritative_role"] is False
+    assert prior["historical_artifact_commit"] == "639157058cbacb2bfad8dca86d9c937b2a3850a3"
+
+
+def test_authenticated_account_is_free_with_exact_limits() -> None:
     artifact = load_artifact()
-    rerun = artifact["account_enabled_rerun"]
-    assert artifact["rerun_from_commit"] == RUN_COMMIT
-    presence = rerun["credential_presence_check"]
-    assert presence["ALPHA_VANTAGE_API_KEY"]["present"] is True
-    assert presence["MASSIVE_API_KEY"]["present"] is True
-    assert presence["ALPHA_VANTAGE_API_KEY"]["value_exposed"] is False
-    assert presence["MASSIVE_API_KEY"]["value_exposed"] is False
-    assert presence["ALPHA_VANTAGE_API_KEY"]["value_stored"] is False
-    assert presence["MASSIVE_API_KEY"]["value_stored"] is False
-    assert rerun["authenticated_requests_status"] == "COMPLETED_WITH_CAPABILITY_LIMITATIONS"
-    assert rerun["sanitized_request_metadata_created"] is True
-    assert rerun["result"] == "SOURCE_ACCEPTANCE_FAIL"
+    account = artifact["authenticated_endpoint_evidence"]["account"]
+    assert artifact["account_plan_classification"] == "AUTHENTICATED_FREE_PLAN"
+    assert account["access"] == "PASS"
+    assert account["subscription_mode"] == account["subscription_type"] == "free"
+    assert account["daily_rate_limit"] == 20
+    assert account["minute_rate_limit_header"] == 1200
+    assert "limited by one year" in account["free_history_warning"]
 
 
-def test_authenticated_endpoint_capabilities_and_history_depth_are_explicit() -> None:
+def test_qqq_and_qld_eod_fields_and_history_depth_pass() -> None:
     artifact = load_artifact()
-    alpha = artifact["authenticated_endpoint_evidence"]["alpha_vantage"]
-    assert alpha["TIME_SERIES_DAILY_ADJUSTED_QQQ"]["access"] == "FAIL_PREMIUM_ENDPOINT_RESTRICTION"
-    assert alpha["TIME_SERIES_DAILY_QQQ_FULL"]["access"] == "FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION"
-    assert alpha["TIME_SERIES_DAILY_QLD_FULL"]["access"] == "FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION"
-    for symbol in ("QQQ", "QLD"):
-        compact = alpha[f"TIME_SERIES_DAILY_{symbol}_COMPACT"]
-        assert compact["access"] == "PASS_COMPACT_ONLY"
-        assert compact["row_count"] == 100
-        assert compact["row_count"] < 200
-        assert compact["field_semantics"] == ["1. open", "2. high", "3. low", "4. close", "5. volume"]
-    assert artifact["history_depth_adequate"] == "FAIL_100_COMPACT_ROWS_LT_200"
+    assert artifact["history_depth_adequate"] == "PASS_251_ROWS_GE_200"
+    expected_fields = ["date", "open", "high", "low", "close", "adjusted_close", "volume"]
+    for name in ("EOD_QQQ_US", "EOD_QLD_US"):
+        endpoint = artifact["authenticated_endpoint_evidence"][name]
+        assert endpoint["access"] == "PASS"
+        assert endpoint["row_count"] == endpoint["unique_session_count"] == 251
+        assert endpoint["duplicate_session_count"] == 0
+        assert endpoint["first_date"] == "2025-09-26"
+        assert endpoint["last_date"] == "2026-09-25"
+        assert endpoint["field_semantics"] == expected_fields
+        assert endpoint["required_field_null_count"] == 0
 
 
-def test_corporate_action_access_and_field_semantics_are_explicit() -> None:
-    alpha = load_artifact()["authenticated_endpoint_evidence"]["alpha_vantage"]
-    assert alpha["SPLITS_QQQ"]["access"] == "PASS"
-    assert alpha["SPLITS_QLD"]["access"] == "PASS"
-    assert alpha["DIVIDENDS_QQQ"]["access"] == "PASS"
-    assert alpha["DIVIDENDS_QLD"]["access"] == "PASS"
-    assert alpha["SPLITS_QQQ"]["row_count"] == 1
-    assert alpha["SPLITS_QLD"]["row_count"] == 6
-    assert alpha["DIVIDENDS_QQQ"]["row_count"] == 88
-    assert alpha["DIVIDENDS_QLD"]["row_count"] == 34
-    assert alpha["DIVIDENDS_QQQ"]["field_semantics"] == [
-        "amount",
-        "declaration_date",
-        "ex_dividend_date",
-        "payment_date",
-        "record_date",
-    ]
+def test_corporate_action_access_and_fields_pass() -> None:
+    endpoints = load_artifact()["authenticated_endpoint_evidence"]
+    assert endpoints["DIVIDENDS_QQQ_US"]["row_count"] == 5
+    assert endpoints["DIVIDENDS_QLD_US"]["row_count"] == 5
+    assert endpoints["SPLITS_QQQ_US"]["row_count"] == 0
+    assert endpoints["SPLITS_QLD_US"]["row_count"] == 1
+    assert endpoints["SPLITS_QLD_US"]["field_semantics"] == ["date", "split"]
+    assert "unadjustedValue" in endpoints["DIVIDENDS_QQQ_US"]["field_semantics"]
 
 
-def test_authenticated_raw_snapshots_are_reconstructed_without_credentials() -> None:
-    artifact = load_artifact()
-    alpha = artifact["authenticated_endpoint_evidence"]["alpha_vantage"]
-    massive = artifact["authenticated_endpoint_evidence"]["massive"]
-    for endpoint in (*alpha.values(), *massive.values()):
+def test_all_authenticated_endpoint_bytes_reconstructed() -> None:
+    endpoints = load_artifact()["authenticated_endpoint_evidence"]
+    assert len(endpoints) == 7
+    for endpoint in endpoints.values():
+        assert endpoint["http_status"] == 200
         assert endpoint["raw_archive_reconstruction"] == "PASS"
         assert endpoint["raw_byte_length"] > 0
         assert re.fullmatch(r"[a-f0-9]{64}", endpoint["raw_sha256"])
+
+
+def test_authenticated_200_value_window_reconstruction_passes() -> None:
+    artifact = load_artifact()
     snapshot = artifact["snapshot_reconstruction"]
-    assert snapshot["authenticated_archive_mode"] == "EPHEMERAL_ISOLATED_TEMPORARY_DIRECTORY"
-    assert snapshot["authenticated_raw_bytes_archived_before_parse"] is True
-    assert snapshot["authenticated_raw_bytes_reconstructed"] is True
-    assert snapshot["authenticated_archive_contains_credentials"] is False
-
-
-def test_account_and_rate_limit_messages_are_sanitized() -> None:
-    artifact = load_artifact()
-    assert artifact["account_plan_classification"] == "FREE_KEY_PLAN_PREMIUM_ENDPOINTS_RESTRICTED"
-    assert artifact["rate_limit_status"] == "OBSERVED_25_PER_DAY_1_REQUEST_PER_SECOND"
-    assert artifact["rate_limit_evidence"]["per_second_burst"] == "1 request per second"
-    assert artifact["rate_limit_evidence"]["daily_limit"] == "25 requests per day"
-    text = json.dumps(artifact, sort_keys=True).lower()
-    assert "apikey=" not in text
-    assert "authorization:" not in text
-
-
-def test_massive_is_reconciliation_only_and_authenticated_access_is_recorded() -> None:
-    artifact = load_artifact()
-    assert artifact["reconciliation_source_role"] == "RECONCILIATION_MARKET_DATA_SOURCE"
-    assert artifact["reconciliation_source_status"] == "AUTHENTICATED_ACCESS_PASS_DELAYED_501_ROWS"
-    assert artifact["execution_proxy_status"] == "NOT_OBSERVABLE_IN_PAPER_MODE"
-    massive = artifact["authenticated_endpoint_evidence"]["massive"]
-    for symbol in ("QQQ", "QLD"):
-        entry = massive[f"DAY_AGGREGATES_{symbol}"]
-        assert entry["access"] == "PASS"
-        assert entry["http_status"] == 200
-        assert entry["response_status"] == "DELAYED"
-        assert entry["row_count"] == 501
-        assert entry["requested_from"] == "2000-01-01"
-        assert entry["requested_to"] == "2026-09-17"
-    docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
-    assert "not promoted to the authoritative adjusted-close source" in docs
-
-
-def test_public_documentation_references_are_primary_vendor_sources() -> None:
-    artifact = load_artifact()
-    assert artifact["official_documentation"]["alpha_vantage"] == "https://www.alphavantage.co/documentation/"
-    assert artifact["official_documentation"]["massive_stocks_overview"] == "https://polygon.io/docs/rest/stocks/overview"
-    docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
-    for endpoint in ("TIME_SERIES_DAILY_ADJUSTED", "TIME_SERIES_DAILY", "SPLITS", "DIVIDENDS"):
-        assert endpoint in docs
-
-
-def test_synthetic_snapshot_is_archived_before_parse_and_exactly_reconstructs_200_values(tmp_path: Path) -> None:
-    raw = synthetic_raw_response()
-    expected_hash = sha256(raw)
-    archived = tmp_path / "synthetic_raw_response.json"
-    archived.write_bytes(raw)
-    parsed_once = json.loads(raw.decode("utf-8"))
-    del parsed_once
-    reconstructed_bytes = archived.read_bytes()
-    parsed_twice = json.loads(reconstructed_bytes.decode("utf-8"))
-    values = [Decimal(row["adjusted_close"]) for row in parsed_twice["rows"]]
-    assert reconstructed_bytes == raw
-    assert len(values) == 200
-    assert expected_hash == load_artifact()["snapshot_reconstruction"]["raw_response_sha256"]
-    assert f"sha256:{expected_hash}" == load_artifact()["snapshot_reconstruction"]["source_snapshot_id"]
-
-
-def test_synthetic_ma_reconstruction_is_deterministic_and_not_performance_analysis() -> None:
-    rows = json.loads(synthetic_raw_response().decode("utf-8"))["rows"]
-    values = [Decimal(row["adjusted_close"]) for row in rows]
-    ma = sum(values) / Decimal(len(values))
-    signal = "ABOVE_MA" if values[-1] > ma else "AT_OR_BELOW_MA"
-    assert ma == Decimal("100.995")
-    assert signal == "ABOVE_MA"
-    snapshot = load_artifact()["snapshot_reconstruction"]
+    assert artifact["snapshot_reconstruction_status"] == "AUTHENTICATED_200_VALUE_RECONSTRUCTION_PASS"
+    assert snapshot["available_adjusted_close_count"] == 251
     assert snapshot["completed_adjusted_close_count"] == 200
     assert snapshot["reconstructed_adjusted_close_count"] == 200
-    assert Decimal(str(snapshot["test_only_ma200"])) == ma
-    assert snapshot["test_only_signal_classification"] == signal
-    assert load_artifact()["historical_performance_used"] is False
+    assert snapshot["window_first_date"] == "2025-12-09"
+    assert snapshot["window_last_date"] == "2026-09-25"
+    assert snapshot["byte_reconstruction"] == "PASS"
+    assert snapshot["window_reconstruction"] == "PASS"
+    assert re.fullmatch(r"[a-f0-9]{64}", snapshot["window_values_sha256"])
+    assert snapshot["source_snapshot_id"] == f"sha256:{snapshot['raw_response_sha256']}"
 
 
-def test_snapshot_fixture_is_nonofficial_and_has_no_prospective_directory() -> None:
-    snapshot = load_artifact()["snapshot_reconstruction"]
-    assert snapshot["fixture_status"] == "SYNTHETIC_TEST_FIXTURE"
-    assert snapshot["official_directory_written"] is False
-    assert not (ROOT / "paper").exists()
-    assert not (ROOT / "prospective_validation_v1").exists()
+def test_adjustment_semantics_are_frozen_without_cross_vendor_identity_claim() -> None:
+    semantics = load_artifact()["adjustment_semantics"]
+    assert semantics["raw_ohlc"] == "as traded"
+    assert semantics["adjusted_close"] == "split and dividend adjusted"
+    assert semantics["historical_recomputation_after_dividends"] is True
+    assert semantics["point_in_time_snapshot_required"] is True
+    assert semantics["cross_vendor_numeric_identity_claimed"] is False
+    assert semantics["cross_vendor_splicing_or_averaging_allowed"] is False
+
+
+def test_publication_gate_does_not_invent_observed_latency() -> None:
+    artifact = load_artifact()
+    assert artifact["publication_sla_classification"] == "DOCUMENTED_MAJOR_US_EXCHANGES_WITHIN_15_MINUTES"
+    assert artifact["publication_deadline_status"] == "PENDING_PRE_START_ACCOUNT_LATENCY_OBSERVATION"
+    assert artifact["final_source_gate"] == PENDING_GATE
+    docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
+    assert "has not yet been observed" in docs
+    assert "must not calculate MA200 or a signal" in (DOCS / "PAPER_TRADING_SOURCE_FREEZE_READINESS.md").read_text(encoding="utf-8")
+
+
+def test_rate_budget_arithmetic_and_daily_headroom() -> None:
+    budget = load_artifact()["expected_request_budget"]
+    sessions = budget["scheduled_decision_sessions_upper_bound"]
+    assert sessions["conservative_sum"] == 74 == sum(sessions[k] for k in ("weekly", "monthly", "bimonthly", "quarterly"))
+    per_date = budget["per_source_acquisition_date_requests"]
+    components = [k for k in per_date if k not in {"base_requests", "safety_margin_fraction", "budget_with_safety_margin"}]
+    assert per_date["base_requests"] == sum(per_date[k] for k in components) == 14
+    assert per_date["budget_with_safety_margin"] == 18
+    assert budget["annual_expected_requests_with_margin"] == 74 * 18
+    assert budget["daily_account_limit"] == 20
+    assert budget["daily_headroom_requests"] == 2
+    assert budget["status"] == "RATE_LIMIT_ACCEPTANCE_PASS"
+
+
+def test_massive_remains_reconciliation_only() -> None:
+    artifact = load_artifact()
+    assert artifact["reconciliation_source"] == "Massive Basic Free"
+    assert artifact["reconciliation_source_role"] == "RECONCILIATION_MARKET_DATA_SOURCE"
+    assert artifact["reconciliation_source_status"] == "AUTHENTICATED_ACCESS_PASS_501_ROWS"
+    assert artifact["execution_proxy_status"] == "NOT_OBSERVABLE_IN_PAPER_MODE"
+
+
+def test_active_source_contract_names_eodhd_authority() -> None:
+    artifact = load_artifact()
+    assert artifact["authoritative_source"] == "EODHD Free"
+    assert artifact["source_role_update_status"] == "PROPOSED_EODHD_AUTHORITY_PENDING_EXTERNAL_AUDIT"
+    with (DOCS / "paper_trading_data_source_decision.csv").open(newline="", encoding="utf-8") as handle:
+        authority = next(row for row in csv.DictReader(handle) if row["data_role"] == "AUTHORITATIVE_MARKET_DATA_SOURCE")
+    assert authority["vendor"] == "EODHD Free"
+    assert authority["freeze_status"] == "PROPOSED_NOT_FROZEN"
+    registry = (DOCS / "paper_trading_operational_decision_registry.csv").read_text(encoding="utf-8")
+    assert "Use EODHD Free" in registry
+
+
+def test_source_disagreement_never_averages_or_substitutes() -> None:
+    assert load_artifact()["source_disagreement_fixture_status"] == "PASS"
+    text = (DOCS / "PAPER_TRADING_DATA_SOURCE_SPEC.md").read_text(encoding="utf-8")
+    assert "No vendor values are averaged" in text
+    assert "cannot silently replace" in text
 
 
 def test_source_revision_null_is_supported_without_invented_vendor_id() -> None:
     schema = json.loads((ROOT / "schemas/paper_trading/paper_observations.schema.json").read_text(encoding="utf-8"))
     assert schema["properties"]["source_revision_id"]["type"] == ["string", "null"]
     assert load_artifact()["source_revision_id_null_supported"] == "PASS_BY_SCHEMA_AND_AUTHENTICATED_RESPONSES"
-    text = (DOCS / "PAPER_TRADING_SOURCE_FREEZE_READINESS.md").read_text(encoding="utf-8")
-    assert "no vendor ID is invented" in text
+    readiness = (DOCS / "PAPER_TRADING_SOURCE_FREEZE_READINESS.md").read_text(encoding="utf-8")
+    assert "no vendor ID invented" in readiness
 
 
-def test_publication_status_is_unresolved_without_fabricated_sla() -> None:
-    artifact = load_artifact()
-    assert artifact["publication_sla_classification"] == "UNRESOLVED"
-    assert artifact["publication_deadline_status"] == "PUBLICATION_DEADLINE_NOT_READY"
-    docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
-    assert "No deterministic after-close publication SLA was established" in docs
-    assert "No polling deadline was invented" in docs
-
-
-def test_rate_budget_calculation_is_deterministic_and_performance_blind() -> None:
-    budget = load_artifact()["expected_request_budget"]
-    sessions = budget["scheduled_decision_sessions_upper_bound"]
-    assert sessions["conservative_sum"] == sum(sessions[key] for key in ("weekly", "monthly", "bimonthly", "quarterly"))
-    per_session = budget["per_scheduled_session_requests"]
-    request_fields = [key for key in per_session if key not in {"base_requests", "safety_margin_fraction", "budget_with_safety_margin"}]
-    assert per_session["base_requests"] == sum(per_session[key] for key in request_fields)
-    assert per_session["budget_with_safety_margin"] == 20
-    assert budget["annual_expected_requests_with_margin"] == sessions["conservative_sum"] * per_session["budget_with_safety_margin"]
-    assert budget["status"] == "RATE_LIMIT_NOT_READY"
-    assert "performance" not in budget["planning_basis"].lower() or "no prices" in budget["planning_basis"].lower()
-
-
-def test_source_disagreement_fixture_never_averages_or_substitutes() -> None:
-    authoritative = Decimal("100.00")
-    reconciliation = Decimal("99.00")
-    incident_code = "SOURCE_DISAGREEMENT"
-    chosen = authoritative
-    assert incident_code == "SOURCE_DISAGREEMENT"
-    assert chosen == authoritative
-    assert chosen != (authoritative + reconciliation) / 2
-    assert load_artifact()["source_disagreement_fixture_status"] == "PASS"
-    text = (DOCS / "PAPER_TRADING_DATA_SOURCE_SPEC.md").read_text(encoding="utf-8")
-    assert "No vendor values are averaged" in text
-    assert "cannot silently replace" in text
+def test_official_documentation_references_are_primary_vendor_sources() -> None:
+    docs = load_artifact()["official_documentation"]
+    assert docs["eod_endpoint"] == "https://eodhd.com/financial-apis/api-for-historical-data-and-volumes"
+    assert docs["rate_limits"] == "https://eodhd.com/financial-apis/api-limits"
+    assert docs["terms"] == "https://eodhd.com/financial-apis/terms-conditions"
+    assert docs["data_sources"] == "https://eodhd.com/financial-apis/our-data-sources-and-data-partners"
 
 
 def test_secret_leak_scan_passes_without_printing_or_storing_values() -> None:
@@ -245,7 +200,8 @@ def test_secret_leak_scan_passes_without_printing_or_storing_values() -> None:
         ROOT / "reports/paper_trading_source_account_acceptance_audit.md",
         ROOT / "tests/test_paper_trading_source_acceptance.py",
     ]
-    prohibited = re.compile(r"(?:ALPHA_VANTAGE_API_KEY|MASSIVE_API_KEY|POLYGON_API_KEY)\s*[=:]\s*[^\s,}]+")
+    names = "(?:ALPHA_VANTAGE_API_KEY|MASSIVE_API_KEY|POLYGON_API_KEY|EODHD_API_KEY)"
+    prohibited = re.compile(names + r"\s*[=:]\s*[^\s,}\]]+")
     for path in paths:
         assert not prohibited.search(path.read_text(encoding="utf-8")), path
     tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT).split(b"\0")
@@ -256,30 +212,19 @@ def test_secret_leak_scan_passes_without_printing_or_storing_values() -> None:
         if not path.is_file():
             continue
         content = path.read_bytes()
-        if b"\0" in content:
-            continue
-        assert not prohibited.search(content.decode("utf-8", errors="ignore")), path
+        if b"\0" not in content:
+            assert not prohibited.search(content.decode("utf-8", errors="ignore")), path
     diff = subprocess.check_output(["git", "diff", "--binary"], cwd=ROOT)
     assert not prohibited.search(diff.decode("utf-8", errors="ignore"))
     assert load_artifact()["secret_leak_scan_status"] == "SECRET_LEAK_SCAN_PASS"
 
 
-def test_no_historical_strategy_metrics_or_performance_selection_in_artifacts() -> None:
+def test_no_historical_strategy_metrics_or_performance_selection() -> None:
     artifact_text = ARTIFACT.read_text(encoding="utf-8")
     report_text = (ROOT / "reports/paper_trading_source_account_acceptance_audit.md").read_text(encoding="utf-8")
     assert load_artifact()["historical_performance_used"] is False
     for text in (artifact_text, report_text):
         assert not re.search(r"\b(?:cagr|sharpe|sortino|max_drawdown|ending_value|total_return)\b", text, re.IGNORECASE)
-        assert "backtest" not in text.lower() or "no historical performance" in text.lower()
-
-
-def test_source_role_and_account_gate_remain_fail_closed() -> None:
-    artifact = load_artifact()
-    assert artifact["authoritative_source"] == "Alpha Vantage"
-    assert artifact["account_plan_classification"] == "FREE_KEY_PLAN_PREMIUM_ENDPOINTS_RESTRICTED"
-    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
-    assert artifact["adjusted_daily_access"] == "ACCOUNT_PLAN_RESTRICTION_PREMIUM_REQUIRED"
-    assert artifact["raw_daily_access"] == "COMPACT_ACCESS_FULL_OUTPUTSIZE_RESTRICTED"
 
 
 def test_no_engine_scheduler_start_phase9_or_acceptance_manifest() -> None:
@@ -288,6 +233,8 @@ def test_no_engine_scheduler_start_phase9_or_acceptance_manifest() -> None:
     assert manifest["freeze_scope"]["paper_observations_present"] is False
     assert manifest["freeze_scope"]["paper_trading_engine_implemented"] is False
     assert not (ROOT / "paper_validation_v1_acceptance_manifest.json").exists()
+    assert not (ROOT / "paper").exists()
+    assert not (ROOT / "prospective_validation_v1").exists()
     assert not any("phase9" in path.name.lower() for path in (ROOT / "experiments").glob("*.py"))
 
 
@@ -308,10 +255,9 @@ def test_research_v1_freeze_and_closed_design_integrity_unchanged() -> None:
         assert (ROOT / relative).read_bytes() == subprocess.check_output(["git", "show", f"{FREEZE_COMMIT}:{relative}"], cwd=ROOT)
 
 
-def test_source_acceptance_artifacts_exist_and_final_status_is_fail_closed() -> None:
+def test_acceptance_artifacts_end_with_pending_gate_and_external_audit_line() -> None:
     assert (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").is_file()
     assert ARTIFACT.is_file()
-    assert (ROOT / "reports/paper_trading_source_account_acceptance_audit.md").is_file()
     report = (ROOT / "reports/paper_trading_source_account_acceptance_audit.md").read_text(encoding="utf-8")
-    assert "SOURCE_ACCEPTANCE_FAIL" in report
+    assert PENDING_GATE in report
     assert report.rstrip().endswith("PAPER TRADING SOURCE ACCOUNT ACCEPTANCE COMPLETE — AWAITING EXTERNAL SOURCE AUDIT")

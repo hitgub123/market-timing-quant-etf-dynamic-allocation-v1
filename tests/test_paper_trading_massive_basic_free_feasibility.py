@@ -14,7 +14,7 @@ EVIDENCE = ROOT / "docs/paper_trading_massive_basic_free_feasibility.json"
 MATRIX = ROOT / "docs/paper_trading_source_remediation_matrix.csv"
 REPORT = ROOT / "reports/paper_trading_source_remediation_options_audit.md"
 ACCOUNT_ARTIFACT = ROOT / "docs/paper_trading_source_account_acceptance.json"
-BASELINE_COMMIT = "a3e32e4ffbf3ad8a17097c216d27748a7366b680"
+BASELINE_COMMIT = "639157058cbacb2bfad8dca86d9c937b2a3850a3"
 RESEARCH_TAG = "2b2bf987f2e00540412d263a8ef39566af1d1e2a"
 RESEARCH_MANIFEST_SHA = "dcb8f9d79de93c61e0bd7d93b743b0356be9eb3b1467acf5db9a58563889d400"
 
@@ -126,13 +126,13 @@ def test_dividend_adjusted_semantic_equivalence_fails_closed() -> None:
     assert "reconciliation-only" in basic["unresolved_blockers"]
 
 
-def test_prior_alpha_gate_and_frozen_research_are_byte_identical() -> None:
+def test_prior_alpha_gate_is_preserved_and_frozen_research_is_identical() -> None:
     account = json.loads(ACCOUNT_ARTIFACT.read_text(encoding="utf-8"))
-    assert account["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
-    baseline = subprocess.check_output(
-        ["git", "show", f"{BASELINE_COMMIT}:docs/paper_trading_source_account_acceptance.json"], cwd=ROOT
-    )
-    assert baseline == ACCOUNT_ARTIFACT.read_bytes()
+    assert account["final_source_gate"] == "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
+    assert account["prior_alpha_vantage_acceptance"]["historical_gate"] == "SOURCE_ACCEPTANCE_FAIL"
+    assert subprocess.check_output(
+        ["git", "show", f"{BASELINE_COMMIT}:docs/paper_trading_massive_basic_free_feasibility.json"], cwd=ROOT
+    ) == EVIDENCE.read_bytes()
     tagged = subprocess.check_output(
         ["git", "rev-parse", "research-v1.0-final^{commit}"], cwd=ROOT, text=True
     ).strip()
@@ -145,7 +145,7 @@ def test_report_preserves_source_roles_and_no_operational_start() -> None:
     text = REPORT.read_text(encoding="utf-8")
     assert "Massive remains a reconciliation source only" in text
     assert "SOURCE_OPTION_NOT_VIABLE" in text
-    assert "SOURCE_ACCEPTANCE_FAIL" in text
+    assert "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE" in text
     assert "no deterministic after-close" in text.lower()
     assert not (ROOT / "paper_validation_v1_acceptance_manifest.json").exists()
     assert not (ROOT / "paper").exists()

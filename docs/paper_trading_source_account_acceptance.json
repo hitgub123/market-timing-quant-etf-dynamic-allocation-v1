@@ -1,66 +1,44 @@
 {
   "artifact": "paper_trading_source_account_acceptance",
-  "artifact_version": "1.1",
-  "verified_at": "2026-09-17",
-  "rerun_from_commit": "1cec7f42a6942043a9a227349762d8e033890f2e",
-  "acceptance_scope": "pre-start account and API capability acceptance only",
+  "artifact_version": "2.0",
+  "verified_at": "2026-09-26",
+  "rerun_from_commit": "e94326ae3f4b765bcf895de4684328ee756e6bd1",
+  "acceptance_scope": "pre-start EODHD Free account and API capability acceptance only",
   "no_api_requests_made": false,
   "historical_performance_used": false,
   "official_prospective_rows_created": false,
   "credentials": {
-    "mechanism": "temporary environment variables supplied only to the isolated acceptance process",
-    "names_checked": [
-      "ALPHA_VANTAGE_API_KEY",
-      "MASSIVE_API_KEY"
-    ],
+    "mechanism": "external shell environment read only inside isolated acceptance processes",
+    "names_checked": ["EODHD_API_KEY"],
     "available": true,
     "result": "ACCOUNT_CREDENTIALS_PRESENT",
+    "values_printed": false,
     "values_stored": false
   },
-  "account_enabled_rerun": {
-    "attempted_at": "2026-09-17",
-    "credential_presence_check": {
-      "ALPHA_VANTAGE_API_KEY": {
-        "present": true,
-        "value_exposed": false,
-        "value_stored": false
-      },
-      "MASSIVE_API_KEY": {
-        "present": true,
-        "value_exposed": false,
-        "value_stored": false
-      }
-    },
-    "authenticated_requests_status": "COMPLETED_WITH_CAPABILITY_LIMITATIONS",
-    "sanitized_request_metadata_created": true,
-    "exception_output_captured": false,
-    "account_dependent_fields_updated": true,
-    "result": "SOURCE_ACCEPTANCE_FAIL"
+  "prior_alpha_vantage_acceptance": {
+    "historical_gate": "SOURCE_ACCEPTANCE_FAIL",
+    "reason": "free account restricted adjusted/full daily endpoints and returned only 100 compact rows",
+    "historical_artifact_commit": "639157058cbacb2bfad8dca86d9c937b2a3850a3",
+    "preserved_as_historical_evidence": true,
+    "current_authoritative_role": false
   },
-  "authoritative_source": "Alpha Vantage",
-  "account_plan_classification": "FREE_KEY_PLAN_PREMIUM_ENDPOINTS_RESTRICTED",
-  "adjusted_daily_access": "ACCOUNT_PLAN_RESTRICTION_PREMIUM_REQUIRED",
-  "raw_daily_access": "COMPACT_ACCESS_FULL_OUTPUTSIZE_RESTRICTED",
-  "corporate_action_access": "SPLITS_DIVIDENDS_AUTHENTICATED_PASS",
-  "history_depth_adequate": "FAIL_100_COMPACT_ROWS_LT_200",
-  "publication_sla_classification": "UNRESOLVED",
-  "publication_deadline_status": "PUBLICATION_DEADLINE_NOT_READY",
-  "rate_limit_status": "OBSERVED_25_PER_DAY_1_REQUEST_PER_SECOND",
-  "rate_limit_gate": "RATE_LIMIT_NOT_READY",
+  "authoritative_source": "EODHD Free",
+  "account_plan_classification": "AUTHENTICATED_FREE_PLAN",
+  "adjusted_daily_access": "PASS_SPLIT_AND_DIVIDEND_ADJUSTED_CLOSE",
+  "raw_daily_access": "PASS_RAW_OHLCV_ONE_YEAR",
+  "corporate_action_access": "PASS_SPLITS_AND_DIVIDENDS",
+  "history_depth_adequate": "PASS_251_ROWS_GE_200",
+  "publication_sla_classification": "DOCUMENTED_MAJOR_US_EXCHANGES_WITHIN_15_MINUTES",
+  "publication_deadline_status": "PENDING_PRE_START_ACCOUNT_LATENCY_OBSERVATION",
+  "publication_latency_observation_status": "NOT_RUN_MARKET_CLOSED_NO_OFFICIAL_OBSERVATION",
+  "rate_limit_status": "AUTHENTICATED_20_CALLS_PER_DAY_1200_REQUESTS_PER_MINUTE",
+  "rate_limit_gate": "RATE_LIMIT_ACCEPTANCE_PASS_18_LE_20",
   "expected_request_budget": {
-    "planning_basis": "Conservative 12-month operational demand; no prices or performance metrics",
-    "scheduled_decision_sessions_upper_bound": {
-      "weekly": 52,
-      "monthly": 12,
-      "bimonthly": 6,
-      "quarterly": 4,
-      "conservative_sum": 74
-    },
-    "per_scheduled_session_requests": {
-      "scheduled_close_control": 1,
-      "adjusted_daily_qqq": 1,
-      "raw_daily_qqq": 1,
-      "raw_daily_qld": 1,
+    "planning_basis": "Conservative operational source demand only; no prices, signals, or performance metrics",
+    "scheduled_decision_sessions_upper_bound": {"weekly": 52, "monthly": 12, "bimonthly": 6, "quarterly": 4, "conservative_sum": 74},
+    "per_source_acquisition_date_requests": {
+      "authoritative_eod_qqq": 1,
+      "authoritative_eod_qld": 1,
       "splits_qqq": 1,
       "dividends_qqq": 1,
       "splits_qld": 1,
@@ -69,235 +47,67 @@
       "reconciliation_qld": 1,
       "publication_polls": 4,
       "fixed_retry_attempts": 2,
-      "base_requests": 16,
+      "base_requests": 14,
       "safety_margin_fraction": 0.25,
-      "budget_with_safety_margin": 20
+      "budget_with_safety_margin": 18
     },
-    "annual_expected_requests_with_margin": 1480,
-    "account_limit_comparison": "OBSERVED_25_PER_DAY_AND_1_REQUEST_PER_SECOND; OPERATIONAL_HEADROOM_NOT_ACCEPTED",
-    "status": "RATE_LIMIT_NOT_READY"
+    "annual_expected_requests_with_margin": 1332,
+    "daily_account_limit": 20,
+    "daily_headroom_requests": 2,
+    "sharing_rule": "one immutable source acquisition is shared by all frequency decisions on the same calendar date",
+    "status": "RATE_LIMIT_ACCEPTANCE_PASS"
   },
   "authenticated_endpoint_evidence": {
-    "alpha_vantage": {
-      "TIME_SERIES_DAILY_ADJUSTED_QQQ": {
-        "access": "FAIL_PREMIUM_ENDPOINT_RESTRICTION",
-        "http_status": 200,
-        "message_classification": "PREMIUM_REQUIRED",
-        "message": "This is a premium endpoint; subscribe to a premium plan to unlock it.",
-        "request_parameters": {
-          "function": "TIME_SERIES_DAILY_ADJUSTED",
-          "symbol": "QQQ",
-          "outputsize": "full",
-          "datatype": "json"
-        },
-        "raw_byte_length": 215,
-        "raw_sha256": "6c7d1922049dcee885744c064435f1e08908552ae382e670f538f765b422aa5d",
-        "raw_archive_reconstruction": "PASS"
-      },
-      "TIME_SERIES_DAILY_QQQ_FULL": {
-        "access": "FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION",
-        "http_status": 200,
-        "message_classification": "FULL_OUTPUTSIZE_PREMIUM_REQUIRED",
-        "message": "The outputsize=full parameter is a premium feature for the TIME_SERIES_DAILY endpoint.",
-        "request_parameters": {
-          "function": "TIME_SERIES_DAILY",
-          "symbol": "QQQ",
-          "outputsize": "full",
-          "datatype": "json"
-        },
-        "raw_byte_length": 279,
-        "raw_sha256": "37aaccd80b9e6babd46c5275fa4692477b19eb2354b0773e78c8c473b7a87e5f",
-        "raw_archive_reconstruction": "PASS"
-      },
-      "TIME_SERIES_DAILY_QLD_FULL": {
-        "access": "FAIL_FULL_OUTPUTSIZE_PREMIUM_RESTRICTION",
-        "http_status": 200,
-        "message_classification": "FULL_OUTPUTSIZE_PREMIUM_REQUIRED",
-        "message": "The outputsize=full parameter is a premium feature for the TIME_SERIES_DAILY endpoint.",
-        "request_parameters": {
-          "function": "TIME_SERIES_DAILY",
-          "symbol": "QLD",
-          "outputsize": "full",
-          "datatype": "json"
-        },
-        "raw_byte_length": 279,
-        "raw_sha256": "37aaccd80b9e6babd46c5275fa4692477b19eb2354b0773e78c8c473b7a87e5f",
-        "raw_archive_reconstruction": "PASS"
-      },
-      "TIME_SERIES_DAILY_QQQ_COMPACT": {
-        "access": "PASS_COMPACT_ONLY",
-        "http_status": 200,
-        "row_count": 100,
-        "first_date": "2026-04-23",
-        "last_date": "2026-09-15",
-        "field_semantics": [
-          "1. open",
-          "2. high",
-          "3. low",
-          "4. close",
-          "5. volume"
-        ],
-        "raw_byte_length": 21387,
-        "raw_sha256": "f8839185ad8ca77a1ab3a2db05c2498c527b9170f69390d119a9a03c43da44d8",
-        "raw_archive_reconstruction": "PASS"
-      },
-      "TIME_SERIES_DAILY_QLD_COMPACT": {
-        "access": "PASS_COMPACT_ONLY",
-        "http_status": 200,
-        "row_count": 100,
-        "first_date": "2026-04-23",
-        "last_date": "2026-09-15",
-        "field_semantics": [
-          "1. open",
-          "2. high",
-          "3. low",
-          "4. close",
-          "5. volume"
-        ],
-        "raw_byte_length": 20894,
-        "raw_sha256": "8a9638131b43ad1c934494d6337856b08b8cef09fd9e4d3c158ebf68fe17efc5",
-        "raw_archive_reconstruction": "PASS"
-      },
-      "SPLITS_QQQ": {
-        "access": "PASS",
-        "http_status": 200,
-        "row_count": 1,
-        "field_semantics": [
-          "effective_date",
-          "split_factor"
-        ],
-        "raw_byte_length": 145,
-        "raw_sha256": "2c1b4fe92c271d30650d18aa54f4468cb7955fd7ec30af372c6b8003cbc1abb5",
-        "raw_archive_reconstruction": "PASS"
-      },
-      "SPLITS_QLD": {
-        "access": "PASS",
-        "http_status": 200,
-        "row_count": 6,
-        "field_semantics": [
-          "effective_date",
-          "split_factor"
-        ],
-        "raw_byte_length": 655,
-        "raw_sha256": "4051e20ae4b2b9afda080e3695b3d2527a11fcff518fd855204b55424b518c6f",
-        "raw_archive_reconstruction": "PASS"
-      },
-      "DIVIDENDS_QQQ": {
-        "access": "PASS",
-        "http_status": 200,
-        "row_count": 88,
-        "field_semantics": [
-          "amount",
-          "declaration_date",
-          "ex_dividend_date",
-          "payment_date",
-          "record_date"
-        ],
-        "raw_byte_length": 18958,
-        "raw_sha256": "bb6d4329a29c07ced75ea4bf678eda8b5337f39686fef796a9d4ea172bd4508c",
-        "raw_archive_reconstruction": "PASS"
-      },
-      "DIVIDENDS_QLD": {
-        "access": "PASS",
-        "http_status": 200,
-        "row_count": 34,
-        "field_semantics": [
-          "amount",
-          "declaration_date",
-          "ex_dividend_date",
-          "payment_date",
-          "record_date"
-        ],
-        "raw_byte_length": 7449,
-        "raw_sha256": "31ce1718f8452c258ed3df42e5aeca88a0dcfd5c8f92b1b2f320cd861b235194",
-        "raw_archive_reconstruction": "PASS"
-      }
-    },
-    "massive": {
-      "DAY_AGGREGATES_QQQ": {
-        "access": "PASS",
-        "http_status": 200,
-        "response_status": "DELAYED",
-        "row_count": 501,
-        "first_timestamp_ms": 1726459200000,
-        "last_timestamp_ms": 1789444800000,
-        "requested_from": "2000-01-01",
-        "requested_to": "2026-09-17",
-        "field_semantics": [
-          "c",
-          "h",
-          "l",
-          "n",
-          "o",
-          "t",
-          "v",
-          "vw"
-        ],
-        "raw_byte_length": 54535,
-        "raw_sha256": "1bf35a30dc42b821f8ef159e670045c05eebf64b676205478f0193285d0573e4",
-        "raw_archive_reconstruction": "PASS"
-      },
-      "DAY_AGGREGATES_QLD": {
-        "access": "PASS",
-        "http_status": 200,
-        "response_status": "DELAYED",
-        "row_count": 501,
-        "first_timestamp_ms": 1726459200000,
-        "last_timestamp_ms": 1789444800000,
-        "requested_from": "2000-01-01",
-        "requested_to": "2026-09-17",
-        "field_semantics": [
-          "c",
-          "h",
-          "l",
-          "n",
-          "o",
-          "t",
-          "v",
-          "vw"
-        ],
-        "raw_byte_length": 52251,
-        "raw_sha256": "0e23a80325aed7ccb0accb5fdbe722fb95c4e9e2f12761685042eb8879131cae",
-        "raw_archive_reconstruction": "PASS"
-      }
-    }
+    "account": {"access": "PASS", "http_status": 200, "subscription_mode": "free", "subscription_type": "free", "daily_rate_limit": 20, "minute_rate_limit_header": 1200, "free_history_warning": "Data is limited by one year as you have free subscription", "raw_byte_length": 299, "raw_sha256": "eff8fb1b164ab0f2471aeb35cb18b26c2b2ecb0bb43c000482066ec5b6e32280", "raw_archive_reconstruction": "PASS"},
+    "EOD_QQQ_US": {"access": "PASS", "http_status": 200, "row_count": 251, "unique_session_count": 251, "first_date": "2025-09-26", "last_date": "2026-09-25", "duplicate_session_count": 0, "field_semantics": ["date", "open", "high", "low", "close", "adjusted_close", "volume"], "required_field_null_count": 0, "raw_byte_length": 30527, "raw_sha256": "cdc3eebfbce6963704354e6b1fb0869bb2b6831a8e746611d37a2622933e8888", "raw_archive_reconstruction": "PASS"},
+    "EOD_QLD_US": {"access": "PASS", "http_status": 200, "row_count": 251, "unique_session_count": 251, "first_date": "2025-09-26", "last_date": "2026-09-25", "duplicate_session_count": 0, "field_semantics": ["date", "open", "high", "low", "close", "adjusted_close", "volume"], "required_field_null_count": 0, "raw_byte_length": 29195, "raw_sha256": "834ec10b05411352b53d09d7341bbc58fb8090aabc2b0976872e61c9b84b706d", "raw_archive_reconstruction": "PASS"},
+    "DIVIDENDS_QQQ_US": {"access": "PASS", "http_status": 200, "row_count": 5, "field_semantics": ["currency", "date", "declarationDate", "paymentDate", "period", "recordDate", "unadjustedValue", "value"], "raw_byte_length": 931, "raw_sha256": "9542228cc17d43e39955e6fc96bbe7f2a39f6f857f1827ef292b63835da6caf8", "raw_archive_reconstruction": "PASS"},
+    "DIVIDENDS_QLD_US": {"access": "PASS", "http_status": 200, "row_count": 5, "field_semantics": ["currency", "date", "declarationDate", "paymentDate", "period", "recordDate", "unadjustedValue", "value"], "raw_byte_length": 890, "raw_sha256": "6a088e31025d4c4492f44ea8b3c5cfd6fc397abf78fcf2525039ec10254a45db", "raw_archive_reconstruction": "PASS"},
+    "SPLITS_QQQ_US": {"access": "PASS", "http_status": 200, "row_count": 0, "field_semantics": [], "raw_byte_length": 2, "raw_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945", "raw_archive_reconstruction": "PASS"},
+    "SPLITS_QLD_US": {"access": "PASS", "http_status": 200, "row_count": 1, "field_semantics": ["date", "split"], "raw_byte_length": 52, "raw_sha256": "57bafab5722741e150044dd83ee4d4478bfa8def8a7fc2b3f145fd471d48e32b", "raw_archive_reconstruction": "PASS"}
   },
-  "rate_limit_evidence": {
-    "source": "sanitized Alpha Vantage Information responses",
-    "per_second_burst": "1 request per second",
-    "daily_limit": "25 requests per day",
-    "response_rate_limit_headers": [],
-    "account_limit_status": "OBSERVED_BUT_NOT_FREEZE_ACCEPTED"
+  "adjustment_semantics": {
+    "raw_ohlc": "as traded",
+    "adjusted_close": "split and dividend adjusted",
+    "historical_recomputation_after_dividends": true,
+    "point_in_time_snapshot_required": true,
+    "cross_vendor_numeric_identity_claimed": false,
+    "cross_vendor_splicing_or_averaging_allowed": false
   },
-  "snapshot_reconstruction_status": "AUTHENTICATED_EPHEMERAL_RAW_RECONSTRUCTION_PASS",
+  "snapshot_reconstruction_status": "AUTHENTICATED_200_VALUE_RECONSTRUCTION_PASS",
   "snapshot_reconstruction": {
-    "fixture_status": "SYNTHETIC_TEST_FIXTURE",
-    "fixture_id": "SYNTHETIC_QQQ_ADJUSTED_WINDOW_V1",
-    "raw_response_sha256": "a2f55c424e36e55149262a517ae1ad23fbac4d32cad257b977b3d8cff61a2dc8",
-    "source_snapshot_id": "sha256:a2f55c424e36e55149262a517ae1ad23fbac4d32cad257b977b3d8cff61a2dc8",
+    "source": "authenticated EODHD QQQ.US EOD response",
+    "source_snapshot_id": "sha256:cdc3eebfbce6963704354e6b1fb0869bb2b6831a8e746611d37a2622933e8888",
+    "raw_response_sha256": "cdc3eebfbce6963704354e6b1fb0869bb2b6831a8e746611d37a2622933e8888",
+    "raw_byte_length": 30527,
+    "available_adjusted_close_count": 251,
     "completed_adjusted_close_count": 200,
     "reconstructed_adjusted_close_count": 200,
-    "test_only_ma200": 100.995,
-    "test_only_signal_classification": "ABOVE_MA",
+    "window_first_date": "2025-12-09",
+    "window_last_date": "2026-09-25",
+    "window_values_sha256": "7fa8ecd2ff20a4dc3d965a3dbcc0af55986764b8c3989487af925f420fe266f0",
     "byte_reconstruction": "PASS",
+    "window_reconstruction": "PASS",
     "official_directory_written": false,
     "authenticated_archive_mode": "EPHEMERAL_ISOLATED_TEMPORARY_DIRECTORY",
     "authenticated_raw_bytes_archived_before_parse": true,
-    "authenticated_raw_bytes_reconstructed": true,
     "authenticated_archive_contains_credentials": false
   },
-  "vendor_revision_capability": "UNVERIFIED_CAPABILITY",
+  "vendor_revision_capability": "NO_IMMUTABLE_VENDOR_REVISION_ID_OBSERVED",
   "source_revision_id_null_supported": "PASS_BY_SCHEMA_AND_AUTHENTICATED_RESPONSES",
-  "reconciliation_source": "Massive",
+  "reconciliation_source": "Massive Basic Free",
   "reconciliation_source_role": "RECONCILIATION_MARKET_DATA_SOURCE",
-  "reconciliation_source_status": "AUTHENTICATED_ACCESS_PASS_DELAYED_501_ROWS",
+  "reconciliation_source_status": "AUTHENTICATED_ACCESS_PASS_501_ROWS",
   "execution_proxy_status": "NOT_OBSERVABLE_IN_PAPER_MODE",
   "source_disagreement_fixture_status": "PASS",
   "secret_leak_scan_status": "SECRET_LEAK_SCAN_PASS",
-  "publication_latency_observation_status": "NOT_RUN_NO_DETERMINISTIC_SLA",
-  "final_source_gate": "SOURCE_ACCEPTANCE_FAIL",
+  "source_role_update_status": "PROPOSED_EODHD_AUTHORITY_PENDING_EXTERNAL_AUDIT",
+  "final_source_gate": "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE",
   "official_documentation": {
-    "alpha_vantage": "https://www.alphavantage.co/documentation/",
-    "massive_stocks_overview": "https://polygon.io/docs/rest/stocks/overview"
+    "eod_endpoint": "https://eodhd.com/financial-apis/api-for-historical-data-and-volumes",
+    "rate_limits": "https://eodhd.com/financial-apis/api-limits",
+    "terms": "https://eodhd.com/financial-apis/terms-conditions",
+    "data_sources": "https://eodhd.com/financial-apis/our-data-sources-and-data-partners",
+    "massive_adjustment_policy": "https://massive.com/knowledge-base/article/is-massives-stock-data-adjusted-for-splits-or-dividends"
   }
 }

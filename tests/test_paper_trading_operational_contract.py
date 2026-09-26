@@ -269,7 +269,7 @@ def test_source_snapshot_hash_reconstructs_point_in_time_window() -> None:
     observation_schema = json.loads((SCHEMAS / "paper_observations.schema.json").read_text(encoding="utf-8"))
     assert observation_schema["properties"]["source_snapshot_id"]["pattern"] == r"^sha256:[a-f0-9]{64}$"
     readiness = text(DOCS / "PAPER_TRADING_SOURCE_FREEZE_READINESS.md")
-    for phrase in ("exact 200 adjusted closes", "source_snapshot_id", "vendor revision ID is optional", "never invents it"):
+    for phrase in ("ordered final 200", "source_snapshot_id", "no vendor ID invented"):
         assert phrase in readiness
 
 
@@ -370,11 +370,11 @@ def test_calendar_fixtures_pass_with_pinned_calendar() -> None:
 def test_vendor_capabilities_have_explicit_readiness_and_source_is_not_ready() -> None:
     source = text(DOCS / "PAPER_TRADING_DATA_SOURCE_SPEC.md")
     readiness = text(DOCS / "PAPER_TRADING_SOURCE_FREEZE_READINESS.md")
-    for classification in ("VERIFIED_WITH_ACCOUNT_DEPENDENCY", "UNVERIFIED_CAPABILITY", "NOT_OBSERVABLE_IN_PAPER_MODE"):
+    for classification in ("VERIFIED_WITH_ACCOUNT", "PENDING_OPERATIONAL_LATENCY_EVIDENCE", "NOT_OBSERVABLE_IN_PAPER_MODE"):
         assert classification in source or classification in readiness
     assert "SOURCE_NOT_READY_FOR_FINAL_FREEZE" in readiness
-    assert "no vendor ID is invented" in readiness.lower() or "never invents it" in readiness
-    assert "TIME_SERIES_DAILY_ADJUSTED" in source and "TIME_SERIES_DAILY" in source
+    assert "no vendor id invented" in readiness.lower() or "never invents it" in readiness
+    assert "/api/eod" in source and "/api/splits" in source and "/api/div" in source
 
 
 def test_no_design_thresholds_or_closed_artifacts_changed() -> None:

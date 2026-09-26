@@ -1,81 +1,85 @@
 # Paper-Trading Source Freeze Readiness
 
 **Status:** `SOURCE_NOT_READY_FOR_FINAL_FREEZE`
-**Scope:** operational capability audit only; temporary vendor credentials were
-used only inside an isolated acceptance process, no historical performance was
-inspected, and no official observation was created.
+**Source gate:** `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+**Scope:** operational capability audit only; no historical performance,
+signal, or official observation was created.
 
 ## Decision
 
-Alpha Vantage remains the proposed authoritative source for the adjusted QQQ
-close and raw QQQ/QLD fields. The selection is unchanged. The account-enabled
-acceptance authenticated the endpoints and observed that the adjusted endpoint
-and full raw history require a premium plan; compact raw history returned only
-100 observations. Therefore the account cannot provide the required 200-row
-authoritative MA200 input, and the final freeze gate remains explicitly
-`SOURCE_NOT_READY_FOR_FINAL_FREEZE`.
+EODHD Free is the proposed authoritative source for adjusted QQQ close and raw
+QQQ/QLD fields. The choice is based only on the user's free-source constraint
+and authenticated field capability, not a historical strategy outcome. The
+account passed the required endpoint, 200-session, corporate-action, raw-byte,
+200-value reconstruction, private-storage, and rate-limit controls.
 
-Massive remains reconciliation-only and its split-only adjustment policy is
-not promoted to authoritative adjusted-close status. Its optional quote role
-is also account/entitlement dependent. No backup source may silently replace
-Alpha Vantage after observing which value is favorable.
+The only remaining source blocker is a PRE_START account-observable
+publication-latency check on a future completed U.S. session. Consequently the
+source is not ready for Final Freeze and no official observation may start.
+
+Massive Basic Free remains reconciliation-only. Its split-only adjustment
+cannot replace the authoritative EODHD adjusted close. The historical Alpha
+Vantage free-account failure remains in Git history and the acceptance artifact
+but is no longer an operational dependency.
 
 ## Capability register
 
-| Capability | Classification | Freeze evidence still required |
+| Capability | Classification | Evidence or remaining condition |
 |---|---|---|
-| Alpha Vantage `TIME_SERIES_DAILY_ADJUSTED` for QQQ | `ACCOUNT_PLAN_RESTRICTION` | Authenticated HTTP 200 response states the endpoint is premium |
-| Alpha Vantage raw daily QQQ/QLD | `ACCOUNT_PLAN_RESTRICTION` | Full output is premium; compact response is 100 rows, below 200 |
-| Alpha Vantage `SPLITS`/`DIVIDENDS` | `VERIFIED_WITH_ACCOUNT` | Authenticated endpoint access and response field semantics |
-| Daily after-close publication SLA | `UNVERIFIED_CAPABILITY` | Account-specific publication timing and a versioned polling deadline |
-| Immutable vendor revision ID/SLA | `UNVERIFIED_CAPABILITY` | Vendor evidence if available; otherwise leave vendor ID null |
-| Rate limits and licensing | `OBSERVED_NOT_ACCEPTED` | Account message reports 1 request/second and 25 requests/day; operational headroom remains unaccepted |
-| Raw-byte archiving | `VERIFIED_BY_AUTHENTICATED_RUN` | Exact response bytes were hashed before parsing and sanitized request metadata was retained |
-| Protocol snapshot reconstruction | `VERIFIED_BY_AUTHENTICATED_RUN` | Every authenticated raw response was reconstructed byte-identically; authoritative 200-row input was unavailable |
-| Massive raw OHLC reconciliation | `VERIFIED_WITH_ACCOUNT` | Authenticated day aggregates returned 501 delayed rows for each symbol |
-| Massive quote/executable-side proxy | `UNVERIFIED_CAPABILITY` | Entitlement and timestamp/side semantics; otherwise `NOT_OBSERVABLE_IN_PAPER_MODE` |
+| EODHD Free account/plan | `VERIFIED_WITH_ACCOUNT` | Authenticated free mode/type and one-year warning |
+| EODHD QQQ.US/QLD.US raw OHLCV | `VERIFIED_WITH_ACCOUNT` | 251 complete unique sessions per symbol |
+| EODHD QQQ.US adjusted close | `VERIFIED_WITH_ACCOUNT` | 251 non-null split-and-dividend-adjusted values |
+| EODHD splits/dividends | `VERIFIED_WITH_ACCOUNT` | Both per-ticker endpoint families authenticated |
+| Minimum 200-value reconstruction | `VERIFIED_WITH_ACCOUNT` | Ordered final 200 QQQ adjusted closes rebuilt exactly from archived bytes |
+| Daily/minute limits | `VERIFIED_WITH_ACCOUNT` | 20 calls/day and 1,200 requests/minute observed; 18-call envelope passes |
+| Private data storage | `VERIFIED_BY_PUBLIC_TERMS` | Non-professional private non-commercial storage and analysis permitted |
+| Daily after-close publication | `PENDING_OPERATIONAL_LATENCY_EVIDENCE` | Documentation says major U.S. exchanges update within 15 minutes; intended account sample required |
+| Immutable vendor revision ID | `NULL_ALLOWED` | Protocol raw snapshot hash is authoritative; no vendor ID invented |
+| Massive raw reconciliation | `VERIFIED_WITH_ACCOUNT` | 501 completed raw/split-adjusted sessions per symbol |
+| Massive execution proxy | `NOT_OBSERVABLE_IN_PAPER_MODE` | No quote entitlement is required for the canonical 5-bps model |
 
 ## Point-in-time source snapshot
 
-At each scheduled decision, the authoritative raw response used for the
-MA200 input is archived before parsing. The account-enabled acceptance proved
-this behavior on every authenticated response in an isolated temporary
-archive. `source_raw_hash` is SHA-256 over the exact bytes received before
-decompression/parsing. `source_snapshot_id` is `sha256:<source_raw_hash>`; if
-several responses are required, it is the SHA-256 of a canonical sorted
-manifest containing each raw hash, endpoint, sanitized request parameters, and
-session date. This protocol-owned ID is the immutable provenance key. The vendor revision ID is optional and remains null if the vendor does not provide one; no vendor ID is invented and the protocol never invents it.
+At each scheduled decision, the exact EODHD raw response used for the MA200
+input must be archived before parsing. `source_raw_hash` is SHA-256 over those
+exact bytes. `source_snapshot_id` is `sha256:<source_raw_hash>` or the SHA-256
+of a canonical sorted manifest when several raw objects are required.
 
-The acceptance test must prove that the snapshot can reproduce the exact 200 adjusted closes
-seen at decision time, the raw hashes, the computed MA200, and
-the signal. A later vendor revision creates an append-only revision record and
-cannot mutate the accepted decision.
+The authenticated acceptance reconstructed the exact response bytes and the
+ordered final 200 `(date, adjusted_close)` values. EODHD adjusted history may
+change after a later dividend; the original snapshot remains immutable and any
+new response is an append-only revision record. A lost or overwritten original
+snapshot invalidates the affected evidence boundary.
 
-## Stale-data gate
+## Latency gate
 
-Publication delay (`data_available_at`) and acquisition delay
-(`data_acquired_at`) are separate metadata. A completed-session close acquired
-16 minutes after close is not stale solely because a fixed 15-minute timer
-elapsed. `STALE` means wrong session key, duplicate prior-session data while
-the expected session is absent, or expiry of a predeclared vendor-compatible
-publication deadline. Alpha Vantage's deadline is not yet verified; therefore
-the fixed 15-minute rule is classified `STALE_SEMANTICS_UNVERIFIED` and cannot
-authorize an official signal.
+The PRE_START latency check is not an official paper-trading observation and
+must not calculate MA200 or a signal. On the next suitable completed U.S.
+session it records:
+
+1. canonical expected session date and exchange close time;
+2. sanitized poll timestamps and fixed request ordinal;
+3. HTTP status, safe rate headers, response byte hash, and returned last date;
+4. first timestamp at which the expected completed session appears; and
+5. whether availability was within the documented 15-minute boundary.
+
+The check must stay within the accepted four-poll budget, archive each raw
+response before parsing, and stop without creating an official observation.
+Failure or ambiguity leaves the source gate pending or failed; it never creates
+a favorable substitute deadline.
 
 ## Freeze checklist
 
 Before an external Operational Freeze Audit can authorize a start, the auditor
 must record:
 
-1. authenticated endpoint and plan evidence for all authoritative fields;
-2. after-close publication/rate-limit evidence and the deterministic polling
-   deadline;
-3. sanitized raw-response archive and snapshot reconstruction fixture;
-4. revision behavior, correction procedure, and source-page hashes;
-5. reconciliation entitlement and disagreement handling;
-6. no-secret logs and immutable archive permissions.
+1. a passing PRE_START publication-latency evidence artifact;
+2. the exact EODHD source adapter and snapshot reconstruction tests;
+3. reconciliation and disagreement handling;
+4. no-secret logs and immutable archive permissions;
+5. updated environment and dry-run acceptance; and
+6. the later final acceptance manifest binding all approved hashes.
 
-Until a source account with the required adjusted/full-history entitlement is
-verified and every critical item is accepted, the status remains
-`SOURCE_NOT_READY_FOR_FINAL_FREEZE`. This document does not create an
-acceptance manifest, scheduler, engine, or prospective observation.
+Until the latency evidence and external audit pass, status remains
+`SOURCE_NOT_READY_FOR_FINAL_FREEZE`. This document does not create an engine,
+scheduler, acceptance manifest, prospective start, or official observation.
