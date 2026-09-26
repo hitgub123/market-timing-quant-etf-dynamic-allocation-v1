@@ -136,6 +136,20 @@ def test_publication_gate_does_not_invent_observed_latency() -> None:
     assert "must not calculate MA200 or a signal" in (DOCS / "PAPER_TRADING_SOURCE_FREEZE_READINESS.md").read_text(encoding="utf-8")
 
 
+def test_prestart_latency_observer_is_ready_but_not_run() -> None:
+    observer = load_artifact()["prestart_latency_observer"]
+    assert observer["status"] == "READY_FOR_MANUAL_ONE_SHOT_EXECUTION"
+    assert observer["live_latency_requests_made"] is False
+    assert observer["validate_only_status"] == "PASS"
+    assert observer["expected_session"] == "2026-09-28"
+    assert observer["exchange_close_at"] == "2026-09-28T20:00:00Z"
+    assert observer["japan_close_at"] == "2026-09-29T05:00:00+09:00"
+    assert observer["poll_offsets_seconds"] == [0, 300, 600, 900]
+    assert observer["max_poll_count"] == 4
+    for relative in (observer["script"], observer["schema"], observer["runbook"]):
+        assert (ROOT / relative).is_file()
+
+
 def test_rate_budget_arithmetic_and_daily_headroom() -> None:
     budget = load_artifact()["expected_request_budget"]
     sessions = budget["scheduled_decision_sessions_upper_bound"]

@@ -68,6 +68,11 @@ response before parsing, and stop without creating an official observation.
 Failure or ambiguity leaves the source gate pending or failed; it never creates
 a favorable substitute deadline.
 
+The exact one-shot procedure, archive boundary, and mechanical classifications
+are frozen in `PAPER_TRADING_EODHD_PRESTART_LATENCY_RUNBOOK.md`; the sanitized
+artifact contract is
+`schemas/source_acceptance/eodhd_prestart_latency_evidence.schema.json`.
+
 ## Freeze checklist
 
 Before an external Operational Freeze Audit can authorize a start, the auditor

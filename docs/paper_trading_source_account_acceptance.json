@@ -102,6 +102,20 @@
   "source_disagreement_fixture_status": "PASS",
   "secret_leak_scan_status": "SECRET_LEAK_SCAN_PASS",
   "source_role_update_status": "PROPOSED_EODHD_AUTHORITY_PENDING_EXTERNAL_AUDIT",
+  "prestart_latency_observer": {
+    "status": "READY_FOR_MANUAL_ONE_SHOT_EXECUTION",
+    "live_latency_requests_made": false,
+    "validate_only_status": "PASS",
+    "expected_session": "2026-09-28",
+    "exchange_close_at": "2026-09-28T20:00:00Z",
+    "japan_close_at": "2026-09-29T05:00:00+09:00",
+    "poll_offsets_seconds": [0, 300, 600, 900],
+    "max_poll_count": 4,
+    "script": "scripts/eodhd_prestart_latency_observer.py",
+    "schema": "schemas/source_acceptance/eodhd_prestart_latency_evidence.schema.json",
+    "runbook": "docs/PAPER_TRADING_EODHD_PRESTART_LATENCY_RUNBOOK.md",
+    "default_archive_outside_repository": "~/.local/share/market-timing-quant/prestart-latency/2026-09-28"
+  },
   "final_source_gate": "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE",
   "official_documentation": {
     "eod_endpoint": "https://eodhd.com/financial-apis/api-for-historical-data-and-volumes",

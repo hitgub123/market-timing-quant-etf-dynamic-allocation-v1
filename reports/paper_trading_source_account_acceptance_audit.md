@@ -84,12 +84,22 @@ retained.
 
 ## H. Test result
 
-The dedicated source-account acceptance suite passed **21 tests**. The combined
-source, remediation, prospective-governance, and operational-contract controls
-passed **156 tests**. The full pytest suite passed **572 tests**. The staged
+The dedicated PRE_START observer suite passed **21 tests**, and the dedicated
+source-account acceptance suite passed **22 tests**. The combined source,
+remediation, prospective-governance, and operational-contract controls passed
+**178 tests**. The full pytest suite passed **594 tests**. The staged
 secret-leak control passed after scanning tracked files, Git diff, reports,
 generated metadata, and sanitized request metadata. The source remains
 pre-start and no acceptance manifest is created.
+
+## I. PRE_START observer preparation
+
+The manually triggered one-shot observer, sanitized evidence schema, and
+runbook are ready for the 2026-09-28 U.S. session. A real-environment
+`--validate-only` preflight confirmed credential presence, the external archive
+boundary, the expected session, UTC close time, and the four-poll limit without
+making a vendor request or creating an evidence directory. Live latency
+evidence remains absent and the source gate therefore remains pending.
 
 `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
 

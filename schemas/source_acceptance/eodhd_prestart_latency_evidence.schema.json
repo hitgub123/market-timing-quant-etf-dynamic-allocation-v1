@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "eodhd_prestart_latency_evidence.schema.json",
+  "title": "EODHD PRE_START publication latency evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact", "schema_version", "fixture_status", "expected_session",
+    "ticker", "exchange_close_at", "documented_deadline_at",
+    "observer_started_at", "poll_offsets_seconds", "max_poll_count",
+    "credential_present", "credential_value_stored", "sanitized_request",
+    "scope_controls", "polls", "first_available_at", "latency_seconds",
+    "final_status"
+  ],
+  "properties": {
+    "artifact": {"const": "eodhd_prestart_latency_evidence"},
+    "schema_version": {"const": "1.0"},
+    "fixture_status": {"const": "PRE_START_NONOFFICIAL_SOURCE_EVIDENCE"},
+    "expected_session": {"type": "string", "format": "date"},
+    "ticker": {"const": "QQQ.US"},
+    "exchange_close_at": {"type": "string", "format": "date-time"},
+    "documented_deadline_at": {"type": "string", "format": "date-time"},
+    "observer_started_at": {"type": "string", "format": "date-time"},
+    "poll_offsets_seconds": {"const": [0, 300, 600, 900]},
+    "max_poll_count": {"const": 4},
+    "credential_present": {"const": true},
+    "credential_value_stored": {"const": false},
+    "sanitized_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "endpoint_path", "parameters"],
+      "properties": {
+        "method": {"const": "GET"},
+        "endpoint_path": {"const": "/api/eod/QQQ.US"},
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["from", "to", "fmt"],
+          "properties": {
+            "from": {"type": "string", "format": "date"},
+            "to": {"type": "string", "format": "date"},
+            "fmt": {"const": "json"}
+          }
+        }
+      }
+    },
+    "scope_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["moving_average_calculated", "signal_calculated", "performance_calculated", "official_observation_created", "engine_or_scheduler_started"],
+      "properties": {
+        "moving_average_calculated": {"const": false},
+        "signal_calculated": {"const": false},
+        "performance_calculated": {"const": false},
+        "official_observation_created": {"const": false},
+        "engine_or_scheduler_started": {"const": false}
+      }
+    },
+    "polls": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ordinal", "scheduled_at", "request_started_at", "response_received_at", "http_status", "safe_headers", "raw_filename", "raw_byte_length", "raw_sha256", "raw_archive_reconstruction", "returned_last_date", "returned_row_count", "body_classification"],
+        "properties": {
+          "ordinal": {"type": "integer", "minimum": 1, "maximum": 4},
+          "scheduled_at": {"type": "string", "format": "date-time"},
+          "request_started_at": {"type": "string", "format": "date-time"},
+          "response_received_at": {"type": "string", "format": "date-time"},
+          "http_status": {"type": ["integer", "null"]},
+          "safe_headers": {"type": "object"},
+          "raw_filename": {"type": ["string", "null"], "pattern": "^poll_[0-9]{2}\\.raw$"},
+          "raw_byte_length": {"type": "integer", "minimum": 0},
+          "raw_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "raw_archive_reconstruction": {"enum": ["PASS", "FAIL", "NOT_AVAILABLE"]},
+          "returned_last_date": {"type": ["string", "null"]},
+          "returned_row_count": {"type": "integer", "minimum": 0},
+          "body_classification": {"type": "string"},
+          "error_type": {"type": "string"}
+        }
+      }
+    },
+    "first_available_at": {"type": ["string", "null"], "format": "date-time"},
+    "latency_seconds": {"type": ["number", "null"]},
+    "final_status": {"enum": ["IN_PROGRESS", "PASS_WITHIN_DOCUMENTED_WINDOW", "FAIL_AVAILABLE_AFTER_DOCUMENTED_WINDOW", "FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE"]}
+  }
+}
