@@ -1,0 +1,169 @@
+{
+  "artifact": "eodhd_free_authenticated_feasibility_evidence",
+  "artifact_version": "1.0",
+  "verified_at": "2026-09-26T05:33:42.347972+00:00",
+  "evidence_classes": {
+    "authenticated_vendor_evidence": true,
+    "public_documentation_evidence": true,
+    "frozen_reference_data_comparison": true,
+    "synthetic_fixture_evidence": false
+  },
+  "credential_controls": {
+    "credential_present": true,
+    "credential_value_stored": false,
+    "credential_value_logged": false,
+    "sanitized_request_urls_only": true,
+    "collector": "isolated process"
+  },
+  "account": {
+    "http_status": 200,
+    "subscription_mode": "free",
+    "subscription_type": "free",
+    "daily_rate_limit": 20,
+    "extra_limit_observed": 500,
+    "observed_api_requests_after_collection": 7,
+    "observed_api_requests_date": "2026-09-26",
+    "minute_rate_limit_header": 1200,
+    "minute_rate_limit_remaining_after_collection": 1191,
+    "free_history_warning": "Data is limited by one year as you have free subscription",
+    "raw_byte_length": 299,
+    "raw_sha256": "eff8fb1b164ab0f2471aeb35cb18b26c2b2ecb0bb43c000482066ec5b6e32280",
+    "raw_archive_reconstruction": "PASS"
+  },
+  "daily_eod": {
+    "QQQ.US": {
+      "http_status": 200,
+      "row_count": 251,
+      "unique_session_count": 251,
+      "duplicate_session_count": 0,
+      "first_session": "2025-09-26",
+      "last_session": "2026-09-25",
+      "latest_completed_session_present": true,
+      "required_fields": ["date", "open", "high", "low", "close", "adjusted_close", "volume"],
+      "required_field_null_counts": {"date": 0, "open": 0, "high": 0, "low": 0, "close": 0, "adjusted_close": 0, "volume": 0},
+      "adjusted_close_differs_from_close_count": 246,
+      "raw_byte_length": 30527,
+      "raw_sha256": "cdc3eebfbce6963704354e6b1fb0869bb2b6831a8e746611d37a2622933e8888",
+      "raw_archive_reconstruction": "PASS"
+    },
+    "QLD.US": {
+      "http_status": 200,
+      "row_count": 251,
+      "unique_session_count": 251,
+      "duplicate_session_count": 0,
+      "first_session": "2025-09-26",
+      "last_session": "2026-09-25",
+      "latest_completed_session_present": true,
+      "required_fields": ["date", "open", "high", "low", "close", "adjusted_close", "volume"],
+      "required_field_null_counts": {"date": 0, "open": 0, "high": 0, "low": 0, "close": 0, "adjusted_close": 0, "volume": 0},
+      "adjusted_close_differs_from_close_count": 248,
+      "raw_byte_length": 29195,
+      "raw_sha256": "834ec10b05411352b53d09d7341bbc58fb8090aabc2b0976872e61c9b84b706d",
+      "raw_archive_reconstruction": "PASS"
+    }
+  },
+  "corporate_actions": {
+    "QQQ.US_dividends": {
+      "http_status": 200,
+      "row_count": 5,
+      "first_event_date": "2025-09-22",
+      "last_event_date": "2026-09-21",
+      "fields": ["currency", "date", "declarationDate", "paymentDate", "period", "recordDate", "unadjustedValue", "value"],
+      "raw_byte_length": 931,
+      "raw_sha256": "9542228cc17d43e39955e6fc96bbe7f2a39f6f857f1827ef292b63835da6caf8",
+      "raw_archive_reconstruction": "PASS"
+    },
+    "QLD.US_dividends": {
+      "http_status": 200,
+      "row_count": 5,
+      "first_event_date": "2025-09-24",
+      "last_event_date": "2026-09-23",
+      "fields": ["currency", "date", "declarationDate", "paymentDate", "period", "recordDate", "unadjustedValue", "value"],
+      "raw_byte_length": 890,
+      "raw_sha256": "6a088e31025d4c4492f44ea8b3c5cfd6fc397abf78fcf2525039ec10254a45db",
+      "raw_archive_reconstruction": "PASS"
+    },
+    "QQQ.US_splits": {
+      "http_status": 200,
+      "row_count": 0,
+      "fields": [],
+      "raw_byte_length": 2,
+      "raw_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "raw_archive_reconstruction": "PASS"
+    },
+    "QLD.US_splits": {
+      "http_status": 200,
+      "row_count": 1,
+      "first_event_date": "2025-11-20",
+      "last_event_date": "2025-11-20",
+      "fields": ["date", "split"],
+      "raw_byte_length": 52,
+      "raw_sha256": "57bafab5722741e150044dd83ee4d4478bfa8def8a7fc2b3f145fd471d48e32b",
+      "raw_archive_reconstruction": "PASS"
+    }
+  },
+  "provenance": {
+    "raw_response_archived_before_parse": true,
+    "raw_response_reconstructed_byte_identically": true,
+    "raw_archive_storage": "isolated temporary directory",
+    "raw_archive_deleted_after_collector_exit": true,
+    "personal_use_storage_documented_as_permitted": true,
+    "redistribution_permitted": false
+  },
+  "history_depth": {
+    "required_completed_sessions": 200,
+    "observed_completed_sessions_per_symbol": 251,
+    "gate": "PASS_251_GE_200"
+  },
+  "adjustment_semantics": {
+    "vendor_documentation": "adjusted_close is adjusted for splits and dividends; raw OHLC fields remain as traded",
+    "historical_adjusted_close_recomputed_after_new_dividends": true,
+    "point_in_time_raw_snapshot_required": true,
+    "compatible_with_frozen_adjusted_close_field_semantics": true,
+    "exact_cross_vendor_numerical_identity_required": false
+  },
+  "frozen_reference_comparison": {
+    "purpose": "field-semantic diagnostic only; no signal or performance calculation",
+    "QQQ.US": {
+      "overlap_rows": 240,
+      "overlap_first": "2025-09-26",
+      "overlap_last": "2026-09-10",
+      "raw_close_within_0_0001_count": 240,
+      "adjusted_close_exact_count": 0,
+      "adjusted_close_median_absolute_difference": 0.6519484863281377,
+      "adjusted_close_max_relative_difference": 0.0010462941851105897
+    },
+    "QLD.US": {
+      "overlap_rows": 233,
+      "overlap_first": "2025-09-26",
+      "overlap_last": "2026-08-31",
+      "raw_close_within_0_0001_count": 194,
+      "adjusted_close_exact_count": 0,
+      "adjusted_close_median_absolute_difference": 0.020090283203131776,
+      "adjusted_close_max_relative_difference": 0.0002767650845282704,
+      "raw_close_comparison_note": "39 pre-split observations use different split normalization; no execution or performance conclusion was drawn"
+    },
+    "classification": "DOCUMENTED_SEMANTIC_MATCH_WITH_EXPECTED_VENDOR_NUMERICAL_DIFFERENCES"
+  },
+  "publication_timing": {
+    "official_documentation": "major US exchanges NYSE and NASDAQ are updated within 15 minutes after market close",
+    "authenticated_latency_observation_completed": false,
+    "classification": "DOCUMENTED_SLA_REQUIRES_PRE_START_ACCOUNT_OBSERVATION"
+  },
+  "scope_controls": {
+    "historical_performance_calculated": false,
+    "backtest_run": false,
+    "signal_calculated": false,
+    "strategy_or_protocol_changed": false,
+    "source_promoted": false,
+    "official_observation_started": false
+  },
+  "official_documentation": {
+    "eod_endpoint": "https://eodhd.com/financial-apis/api-for-historical-data-and-volumes",
+    "rate_limits": "https://eodhd.com/financial-apis/api-limits",
+    "terms": "https://eodhd.com/financial-apis/terms-conditions",
+    "data_sources": "https://eodhd.com/financial-apis/our-data-sources-and-data-partners"
+  },
+  "prior_source_gate": "SOURCE_ACCEPTANCE_FAIL",
+  "final_classification": "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST"
+}

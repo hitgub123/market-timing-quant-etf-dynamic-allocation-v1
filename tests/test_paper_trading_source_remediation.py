@@ -35,13 +35,14 @@ def report_text() -> str:
 
 def test_matrix_has_required_options_and_classifications() -> None:
     entries = rows()
-    assert len(entries) == 6
+    assert len(entries) == 7
     assert {row["option_id"] for row in entries} == {
         "ALPHA_PREMIUM",
         "MASSIVE_BASIC",
         "MASSIVE_STARTER",
         "MASSIVE_DEVELOPER",
         "MASSIVE_ADVANCED",
+        "EODHD_FREE",
         "ALTERNATIVE_UNINVESTIGATED",
     }
     allowed = {
@@ -51,7 +52,7 @@ def test_matrix_has_required_options_and_classifications() -> None:
         "SOURCE_OPTION_INSUFFICIENT_EVIDENCE",
     }
     assert {row["classification"] for row in entries} <= allowed
-    assert all(row["classification"] != "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST" for row in entries)
+    assert sum(row["classification"] == "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST" for row in entries) == 1
     assert sum(row["classification"] == "SOURCE_OPTION_POTENTIALLY_VIABLE" for row in entries) == 4
     assert sum(row["classification"] == "SOURCE_OPTION_NOT_VIABLE" for row in entries) == 1
 
@@ -89,7 +90,7 @@ def test_remediation_is_not_a_parameter_or_performance_selection() -> None:
     assert "no backtest" in text
     assert "no strategy code" in text
     assert "signal ranking" in text
-    assert "no option is mechanically ready" in text
+    assert "eodhd free is mechanically" in text
     assert not re.search(r"\b(?:best|winner|optimal|selected)\s+(?:source|vendor|plan)\b", text)
     for row in rows():
         assert "historical" not in row["classification"].lower()

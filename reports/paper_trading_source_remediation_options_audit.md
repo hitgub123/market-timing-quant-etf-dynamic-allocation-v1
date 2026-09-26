@@ -24,21 +24,23 @@ The prior gate is intentionally not overwritten.
 
 ## Decision summary
 
-No option is mechanically ready for the next account acceptance test. Alpha
-Vantage premium and the paid Massive plans are `SOURCE_OPTION_POTENTIALLY_VIABLE`,
-but each has account-dependent blockers. Massive Basic is not viable as the
-authoritative frozen adjusted-close source because its documented aggregate
-adjustment is split-only and its dividend treatment is a separate modeling
-choice. A broad alternative-vendor search was not opened while these two paths
-remain potentially viable.
+EODHD Free is mechanically `SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST` after an
+authenticated, performance-blind feasibility run. Alpha Vantage premium and
+the paid Massive plans remain `SOURCE_OPTION_POTENTIALLY_VIABLE`, but they are
+outside the user-imposed free-only constraint. Massive Basic remains not viable
+as the authoritative frozen adjusted-close source because its documented
+aggregate adjustment is split-only and its dividend treatment is a separate
+modeling choice. No historical strategy outcome was used to identify EODHD;
+the selection criterion was the externally imposed zero-cost constraint plus
+the frozen operational field requirements.
 
 The resulting mechanical status is:
 
 `SOURCE_REMEDIATION_REQUIRED`
 
-The next action is an external decision about which potentially viable option
-to submit to a fresh source-account acceptance. No plan was purchased and no
-source was promoted.
+The next action is a formal EODHD Free source-account acceptance and external
+source audit. No plan was purchased and no source was promoted by this
+feasibility audit.
 
 ## Remediation matrix
 
@@ -51,6 +53,7 @@ Classifications are capability classifications, not historical-result claims.
 | Alpha Vantage minimum premium entitlement | `SOURCE_OPTION_POTENTIALLY_VIABLE` | Public documentation describes 25+ years of daily adjusted/full history, but the tested free account was premium-restricted and exact plan entitlement, limits, price, publication, and revision behavior remain unaccepted. |
 | Massive Stocks Basic Free | `SOURCE_OPTION_NOT_VIABLE` | Authenticated raw access and >200 observed rows are useful for reconciliation, but aggregate adjustment is split-only and is not the frozen adjusted-close signal. |
 | Massive Starter / Developer / Advanced | `SOURCE_OPTION_POTENTIALLY_VIABLE` | Paid plans list sufficient history and call capacity, and corporate-action factors are documented; a deterministic, predeclared split-plus-dividend reconstruction still requires an acceptance test and must prove frozen-signal semantic compatibility without discretionary choices. |
+| EODHD Free | `SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST` | Authenticated free access returned 251 QQQ/QLD sessions with raw OHLCV, split-and-dividend-adjusted close, splits, dividends, explicit rate limits, and byte-reconstructable responses. Formal acceptance and pre-start latency observation remain. |
 | Alternative vendors | `SOURCE_OPTION_INSUFFICIENT_EVIDENCE` | Not investigated; broad search is outside this remediation scope while A/B remain potentially viable. |
 
 ## A. Alpha Vantage premium path
@@ -164,6 +167,69 @@ Massive remains a reconciliation source only. The prior Alpha Vantage gate
 remains `SOURCE_ACCEPTANCE_FAIL`; this follow-up does not overwrite it, promote
 Massive, authorize a purchase, or start any prospective operation.
 
+## EODHD Free authenticated feasibility audit
+
+On 2026-09-26, the user imposed a free-source-only constraint and supplied an
+EODHD Free account through the approved external credential mechanism. A
+narrow authenticated collector used the credential only in process; it did
+not print, persist, hash, serialize, or place the credential in request
+metadata. The sanitized evidence is recorded in
+[`docs/paper_trading_eodhd_free_feasibility.json`](../docs/paper_trading_eodhd_free_feasibility.json).
+
+The authenticated account endpoint reported `free` subscription mode and type,
+20 calls per day, and a 1,200-request minute header. The EOD responses also
+returned the explicit one-year free-history warning. After the collection, the
+account reported seven metered calls for 2026-09-26; the account endpoint itself
+is not metered. No paid entitlement or purchase was used.
+
+QQQ.US and QLD.US each returned 251 unique completed sessions from 2025-09-26
+through 2026-09-25, including the expected latest completed session and no
+duplicates. Every row contained non-null date, raw open/high/low/close, volume,
+and `adjusted_close`. This passes the exact minimum of 200 completed sessions.
+The adjusted field differed from the raw close on 246 QQQ rows and 248 QLD
+rows, confirming that it was not merely a duplicate raw field.
+
+The free account also authenticated the per-ticker corporate-action endpoints.
+The tested interval returned five QQQ dividends, five QLD dividends, no QQQ
+split, and one QLD split dated 2025-11-20. Every one of the seven initial HTTP
+responses was written to an isolated temporary file before parsing, read back
+byte-identically, and removed when the collector exited. Only sanitized sizes,
+hashes, fields, counts, dates, and safe headers were retained.
+
+EODHD's official EOD documentation defines raw OHLC as as-traded and
+`adjusted_close` as adjusted for both splits and dividends. It also states that
+historical adjusted closes are recomputed after new dividends. This is
+compatible with the frozen adjusted-close *field semantics*, provided every
+decision preserves its exact point-in-time raw response rather than silently
+patching later vendor revisions. Official terms permit a non-professional user
+to store, manipulate, and analyze data for private non-commercial purposes;
+redistribution remains prohibited.
+
+A source-data-only comparison against the frozen reference files was performed
+without calculating a signal, return, or strategy result. QQQ raw close matched
+within 0.0001 on all 240 overlapping rows. EODHD adjusted closes were not
+numerically identical to the frozen reference vendor: QQQ's maximum relative
+difference was approximately 0.105%, and QLD's approximately 0.028%. That is
+recorded as a cross-vendor adjustment/rounding difference, not optimized away.
+The acceptance must freeze one vendor prospectively; it must never splice or
+average adjusted values across vendors. QLD raw-close differences before its
+2025 split reflect different split normalization and do not alter this
+feasibility classification.
+
+Official documentation says NYSE and NASDAQ EOD data are updated within 15
+minutes after market close. A PRE_START account-observable latency run is still
+required before operational acceptance; the documentation claim is not treated
+as proof that this particular account delivered each future session on time.
+
+The mechanically correct feasibility classification is:
+
+`SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST`
+
+This classification does not yet replace Alpha Vantage in the proposed source
+role. It authorizes only the next formal account-acceptance and external-audit
+step. The prior `SOURCE_ACCEPTANCE_FAIL` and current
+`SOURCE_REMEDIATION_REQUIRED` gates remain unchanged until that step passes.
+
 ## Required next acceptance evidence
 
 The next acceptance must be run against exactly one externally chosen account
@@ -185,14 +251,14 @@ Phase 9.
 
 ## Test and integrity result
 
-Dedicated remediation and Massive Basic feasibility tests verify the matrix
+Dedicated remediation, Massive Basic, and EODHD Free feasibility tests verify the matrix
 classifications, failed-gate preservation, authenticated history/corporate-
 action evidence, byte reconstruction, no-selection/no-performance boundary,
 source-role boundaries, official documentation references, and absence of
-engine/scheduler/Phase 9 artifacts. The dedicated Massive Basic feasibility
-suite passed **9 tests**. The combined remediation, source-acceptance,
-prospective-governance, and operational contract controls passed **146 tests**.
-The full pytest suite passed **562 tests**. The source-acceptance secret-leak
+engine/scheduler/Phase 9 artifacts. The dedicated EODHD Free feasibility
+suite passed **10 tests**. The combined remediation, source-acceptance,
+prospective-governance, and operational contract controls passed **156 tests**.
+The full pytest suite passed **572 tests**. The source-acceptance secret-leak
 control remained passing; it scans
 tracked files, Git diff, reports, generated metadata, acceptance output, and
 sanitized request metadata without exposing credentials.
