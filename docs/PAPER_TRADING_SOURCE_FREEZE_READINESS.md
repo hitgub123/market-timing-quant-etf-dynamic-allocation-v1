@@ -1,21 +1,19 @@
 # Paper-Trading Source Freeze Readiness
 
 **Status:** `SOURCE_NOT_READY_FOR_FINAL_FREEZE`
-**Source gate:** `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+**Source gate:** `SOURCE_ACCEPTANCE_FAIL`
 **Scope:** operational capability audit only; no historical performance,
 signal, or official observation was created.
 
 ## Decision
 
-EODHD Free is the proposed authoritative source for adjusted QQQ close and raw
-QQQ/QLD fields. The choice is based only on the user's free-source constraint
-and authenticated field capability, not a historical strategy outcome. The
-account passed the required endpoint, 200-session, corporate-action, raw-byte,
-200-value reconstruction, private-storage, and rate-limit controls.
-
-The only remaining source blocker is a PRE_START account-observable
-publication-latency check on a future completed U.S. session. Consequently the
-source is not ready for Final Freeze and no official observation may start.
+EODHD Free passed the required endpoint, 200-session, corporate-action,
+raw-byte, 200-value reconstruction, private-storage, and rate-limit controls.
+It then failed the PRE_START account-observable publication-latency gate for
+the 2026-10-01 U.S. session: the expected QQQ.US row was absent at close and
+at +5, +10, and +15 minutes. Consequently EODHD Free is not accepted as the
+authoritative source, the source is not ready for Final Freeze, and no official
+observation may start.
 
 Massive Basic Free remains reconciliation-only. Its split-only adjustment
 cannot replace the authoritative EODHD adjusted close. The historical Alpha
@@ -33,7 +31,7 @@ but is no longer an operational dependency.
 | Minimum 200-value reconstruction | `VERIFIED_WITH_ACCOUNT` | Ordered final 200 QQQ adjusted closes rebuilt exactly from archived bytes |
 | Daily/minute limits | `VERIFIED_WITH_ACCOUNT` | 20 calls/day and 1,200 requests/minute observed; 18-call envelope passes |
 | Private data storage | `VERIFIED_BY_PUBLIC_TERMS` | Non-professional private non-commercial storage and analysis permitted |
-| Daily after-close publication | `PENDING_OPERATIONAL_LATENCY_EVIDENCE` | Documentation says major U.S. exchanges update within 15 minutes; intended account sample required |
+| Daily after-close publication | `FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE` | Four HTTP-200 responses through +15 minutes contained no expected-session row |
 | Immutable vendor revision ID | `NULL_ALLOWED` | Protocol raw snapshot hash is authoritative; no vendor ID invented |
 | Massive raw reconciliation | `VERIFIED_WITH_ACCOUNT` | 501 completed raw/split-adjusted sessions per symbol |
 | Massive execution proxy | `NOT_OBSERVABLE_IN_PAPER_MODE` | No quote entitlement is required for the canonical 5-bps model |
@@ -85,6 +83,6 @@ must record:
 5. updated environment and dry-run acceptance; and
 6. the later final acceptance manifest binding all approved hashes.
 
-Until the latency evidence and external audit pass, status remains
+Following the failed latency evidence, status remains
 `SOURCE_NOT_READY_FOR_FINAL_FREEZE`. This document does not create an engine,
 scheduler, acceptance manifest, prospective start, or official observation.

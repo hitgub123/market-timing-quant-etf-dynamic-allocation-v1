@@ -2,16 +2,17 @@
 
 **Scope:** authoritative-source account/API capability acceptance
 **Resume commit:** `e94326ae3f4b765bcf895de4684328ee756e6bd1`
-**Date:** 2026-09-26
+**Date:** 2026-10-02
 
 ## A. Exact source-gate outcome
 
-`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+`SOURCE_ACCEPTANCE_FAIL`
 
 The EODHD Free account passed authenticated plan, endpoint, 200-observation,
 field, corporate-action, raw-byte reconstruction, 200-value reconstruction,
-rate-limit, and private-storage checks. It has not yet been observed publishing
-a new completed U.S. session after close, so the gate remains fail-closed.
+rate-limit, and private-storage checks. It failed the frozen publication-
+latency gate because the 2026-10-01 QQQ.US row was unavailable at all four
+polls through the documented +15-minute deadline.
 
 The credential remained external to the repository and was read only in
 isolated processes. No historical performance, backtest, signal, optimization,
@@ -69,10 +70,12 @@ and later changes require append-only revision incidents.
 ## F. Publication and remaining blocker
 
 Official documentation states that major U.S. exchanges are updated within 15
-minutes after close. The exact account has not yet supplied a future-session
-latency sample. A narrow PRE_START observation must poll without computing a
-signal and record when the expected session first appears. Until that evidence
-is externally audited, the source is not ready for Final Freeze.
+minutes after close. The exact account was observed for the future 2026-10-01
+session. Requests began at close, +5, +10, and +15 minutes; all returned HTTP
+200, but each body was an empty two-byte JSON array and the expected session
+never appeared. The mechanical result is
+`FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE`. The source is not ready for Final
+Freeze.
 
 ## G. Licensing and secrets
 
@@ -85,22 +88,26 @@ retained.
 ## H. Test result
 
 The dedicated PRE_START observer suite passed **21 tests**, and the dedicated
-source-account acceptance suite passed **22 tests**. The combined source,
+source-account acceptance suite passed **23 tests**. The combined source,
 remediation, prospective-governance, and operational-contract controls passed
-**178 tests**. The full pytest suite passed **594 tests**. The staged
+**179 tests**. The full pytest suite passed **595 tests**. The staged
 secret-leak control passed after scanning tracked files, Git diff, reports,
 generated metadata, and sanitized request metadata. The source remains
 pre-start and no acceptance manifest is created.
 
-## I. PRE_START observer preparation
+## I. PRE_START observer result
 
-The manually triggered one-shot observer, sanitized evidence schema, and
-runbook are ready for the 2026-09-28 U.S. session. A real-environment
-`--validate-only` preflight confirmed credential presence, the external archive
-boundary, the expected session, UTC close time, and the four-poll limit without
-making a vendor request or creating an evidence directory. Live latency
-evidence remains absent and the source gate therefore remains pending.
+The one-shot observer started at `2026-10-01T19:59:55.543893Z`, before the
+exchange close. It used the frozen offsets `0`, `300`, `600`, and `900` seconds
+and made exactly four requests. Every raw response was archived before parsing,
+re-read byte-identically, and retained outside Git with mode 600 under a
+mode-700 directory. The sanitized evidence is
+`reports/eodhd_prestart_latency_evidence.json`. No MA, signal, performance,
+official observation, engine, or scheduler was created. The result cannot be
+changed by extending the observed deadline or rerunning the same session.
+The sanitized evidence SHA-256 is
+`c23839b3e3a8624eeacb4bb210d45f98b92819fa4f6c188fdcda20b6b1c5dab4`.
 
-`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+`SOURCE_ACCEPTANCE_FAIL`
 
 PAPER TRADING SOURCE ACCOUNT ACCEPTANCE COMPLETE — AWAITING EXTERNAL SOURCE AUDIT

@@ -144,7 +144,7 @@ def test_no_strategy_performance_or_prospective_operation_was_started() -> None:
 
 def test_prior_failed_gate_is_preserved_and_frozen_research_remains_unchanged() -> None:
     account = json.loads(ACCOUNT_ARTIFACT.read_text(encoding="utf-8"))
-    assert account["final_source_gate"] == "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
+    assert account["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
     assert account["prior_alpha_vantage_acceptance"]["historical_gate"] == "SOURCE_ACCEPTANCE_FAIL"
     assert subprocess.check_output(
         ["git", "show", f"{BASELINE_COMMIT}:docs/paper_trading_eodhd_free_feasibility.json"], cwd=ROOT

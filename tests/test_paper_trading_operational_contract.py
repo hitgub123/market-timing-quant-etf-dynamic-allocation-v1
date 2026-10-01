@@ -370,7 +370,7 @@ def test_calendar_fixtures_pass_with_pinned_calendar() -> None:
 def test_vendor_capabilities_have_explicit_readiness_and_source_is_not_ready() -> None:
     source = text(DOCS / "PAPER_TRADING_DATA_SOURCE_SPEC.md")
     readiness = text(DOCS / "PAPER_TRADING_SOURCE_FREEZE_READINESS.md")
-    for classification in ("VERIFIED_WITH_ACCOUNT", "PENDING_OPERATIONAL_LATENCY_EVIDENCE", "NOT_OBSERVABLE_IN_PAPER_MODE"):
+    for classification in ("VERIFIED_WITH_ACCOUNT", "FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE", "NOT_OBSERVABLE_IN_PAPER_MODE"):
         assert classification in source or classification in readiness
     assert "SOURCE_NOT_READY_FOR_FINAL_FREEZE" in readiness
     assert "no vendor id invented" in readiness.lower() or "never invents it" in readiness

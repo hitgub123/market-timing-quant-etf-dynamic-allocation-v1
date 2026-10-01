@@ -60,7 +60,7 @@ def test_matrix_has_required_options_and_classifications() -> None:
 def test_alpha_premium_option_preserves_failed_account_evidence() -> None:
     artifact = json.loads(ACCOUNT_ARTIFACT.read_text(encoding="utf-8"))
     alpha = next(row for row in rows() if row["option_id"] == "ALPHA_PREMIUM")
-    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
+    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
     assert artifact["prior_alpha_vantage_acceptance"]["historical_gate"] == "SOURCE_ACCEPTANCE_FAIL"
     assert "premium" in alpha["adjusted_qqq"].lower()
     assert "price" in alpha["unresolved_blockers"].lower()
@@ -131,7 +131,7 @@ def test_closed_research_and_prior_account_artifact_are_unchanged() -> None:
     import hashlib
 
     assert hashlib.sha256(manifest.read_bytes()).hexdigest() == RESEARCH_MANIFEST_SHA
-    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
+    assert artifact["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
 
 
 def test_matrix_has_no_secret_material_or_auth_headers() -> None:

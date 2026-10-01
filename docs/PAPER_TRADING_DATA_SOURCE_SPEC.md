@@ -150,9 +150,10 @@ An observation is mechanically `STALE` only when one of these conditions holds:
 
 Publication delay and acquisition delay are recorded separately and do not by
 themselves invalidate a close. EODHD documents that major U.S. exchanges are
-updated within 15 minutes after close, but the intended Free account has not
-yet completed the required PRE_START latency observation. The deadline is
-therefore `PENDING_PRE_START_ACCOUNT_LATENCY_OBSERVATION` and is not freeze-ready. Any
+updated within 15 minutes after close. The intended Free account completed the
+required PRE_START observation for 2026-10-01, but the expected QQQ.US row was
+absent at close, +5, +10, and +15 minutes. The deadline status is therefore
+`FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE` and is not freeze-ready. Any
 future change to that grace is classified `OPERATIONAL_SOURCE_COMPATIBILITY_REMEDIATION`,
 not statistical or economic redesign. The
 proposed deterministic replacement is a vendor-compatible deadline recorded
@@ -195,7 +196,7 @@ synthetic price.
 | EODHD splits/dividends | `VERIFIED_WITH_ACCOUNT` | Authenticated per-ticker endpoints returned typed event fields. |
 | EODHD daily event timestamp | `UNVERIFIED_CAPABILITY` | Daily response is date-keyed; calendar-derived event time is used instead. |
 | EODHD historical revision guarantees | `COMPENSATING_CONTROL_VERIFIED` | Adjusted history may be recomputed; exact raw snapshots and the correction ledger preserve point-in-time decisions. |
-| EODHD after-close publication SLA | `PENDING_OPERATIONAL_LATENCY_EVIDENCE` | Documentation says major U.S. exchanges update within 15 minutes; account observation is still required. |
+| EODHD after-close publication SLA | `FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE` | The 2026-10-01 account observation returned no expected-session row in four polls through +15 minutes. |
 | EODHD response/request revision identifier | `NULL_ALLOWED` | No immutable vendor ID is required; protocol snapshot hash is authoritative. |
 | Massive raw daily OHLCV | `VERIFIED_BY_PUBLIC_DOCS` | Day-aggregate documentation and flat-file archive. |
 | Massive UTC timestamps | `VERIFIED_BY_PUBLIC_DOCS` | Stocks overview documents UTC timestamp semantics. |

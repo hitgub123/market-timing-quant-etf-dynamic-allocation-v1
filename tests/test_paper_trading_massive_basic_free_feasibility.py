@@ -128,7 +128,7 @@ def test_dividend_adjusted_semantic_equivalence_fails_closed() -> None:
 
 def test_prior_alpha_gate_is_preserved_and_frozen_research_is_identical() -> None:
     account = json.loads(ACCOUNT_ARTIFACT.read_text(encoding="utf-8"))
-    assert account["final_source_gate"] == "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
+    assert account["final_source_gate"] == "SOURCE_ACCEPTANCE_FAIL"
     assert account["prior_alpha_vantage_acceptance"]["historical_gate"] == "SOURCE_ACCEPTANCE_FAIL"
     assert subprocess.check_output(
         ["git", "show", f"{BASELINE_COMMIT}:docs/paper_trading_massive_basic_free_feasibility.json"], cwd=ROOT

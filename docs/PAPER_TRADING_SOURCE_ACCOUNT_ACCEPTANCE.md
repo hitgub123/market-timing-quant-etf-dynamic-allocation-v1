@@ -1,6 +1,6 @@
 # Paper-Trading Protocol v1 — Authoritative Source Account Acceptance
 
-**Status:** `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+**Status:** `SOURCE_ACCEPTANCE_FAIL`
 **Scope:** pre-start EODHD Free account/API capability acceptance only; no
 historical performance, backtest, signal, paper trading, engine, scheduler,
 official observation, prospective clock, Final Freeze, or Phase 9 artifact.
@@ -15,10 +15,12 @@ an artifact.
 
 Authenticated EODHD Free checks pass the account, field, history, corporate-
 action, rate-limit, personal-use storage, and raw-reconstruction requirements.
-The remaining gate is one account-observable PRE_START publication-latency
-check on a future completed U.S. session. Therefore the exact gate is:
+The PRE_START publication-latency observation for the 2026-10-01 U.S. session
+made all four frozen requests at close, +5, +10, and +15 minutes. Each returned
+HTTP 200 and an empty two-byte JSON array, so the expected completed session
+was not available by the documented deadline. Therefore the exact gate is:
 
-`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+`SOURCE_ACCEPTANCE_FAIL`
 
 The historical Alpha Vantage `SOURCE_ACCEPTANCE_FAIL` remains preserved as
 prior evidence. It is no longer the proposed current authority under the
@@ -72,15 +74,13 @@ source acquisition. The rate gate is therefore
 ## 5. Publication timing
 
 Official EODHD documentation states that major U.S. exchanges are updated
-within 15 minutes after market close. This supplies a documented candidate
-publication boundary, but the account has not yet been observed across a real
-future completed session. The PRE_START observation must record sanitized poll
-times, response hashes, expected session date, first availability time, and
-rate headers without calculating a signal.
-
-Until that observation passes, publication status remains
-`PENDING_PRE_START_ACCOUNT_LATENCY_OBSERVATION`. No official observation or
-prospective start may be created.
+within 15 minutes after market close. The account-observable PRE_START test did
+not satisfy that boundary: QQQ.US for 2026-10-01 was absent from all four
+responses through `2026-10-01T20:15:00Z`. Publication status is therefore
+`FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE`. The sanitized evidence is in
+`reports/eodhd_prestart_latency_evidence.json`; exact raw bytes remain in the
+external mode-700 archive and reconstructed byte-identically. No official
+observation or prospective start was created.
 
 ## 6. Raw-response and revision provenance
 
@@ -98,8 +98,8 @@ acceptance.
 
 ## 7. Source roles
 
-EODHD Free is now the proposed `AUTHORITATIVE_MARKET_DATA_SOURCE`, pending
-external audit and the latency check. Massive Basic Free remains strictly the
+EODHD Free is not accepted as `AUTHORITATIVE_MARKET_DATA_SOURCE` because it
+failed the frozen latency gate. Massive Basic Free remains strictly the
 `RECONCILIATION_MARKET_DATA_SOURCE`; its split-only adjusted aggregates cannot
 replace EODHD adjusted close. Alpha Vantage is retained only as historical
 failed-account evidence and is not an operational dependency.
@@ -113,7 +113,9 @@ or closed research artifact changed.
 
 ## 9. Final source gate
 
-`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+`SOURCE_ACCEPTANCE_FAIL`
 
-Only the narrow PRE_START latency control and its external audit may advance
-this source gate. It cannot be advanced from documentation alone.
+The failed observation cannot be converted to PASS by extending the deadline
+or rerunning the same session. Any next source-remediation action requires a
+separate, prospectively specified decision; this document does not authorize
+one.

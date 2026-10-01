@@ -225,7 +225,7 @@ def test_schema_and_runbook_freeze_required_contract() -> None:
     assert schema["properties"]["credential_value_stored"]["const"] is False
     assert schema["properties"]["polls"]["maxItems"] == 4
     runbook = RUNBOOK.read_text(encoding="utf-8")
-    assert "2026-09-29 05:00:00 JST" in runbook
+    assert "2026-10-02 05:00:00 JST" in runbook
     assert "05:00`, `05:05`, `05:10`, `05:15" in runbook
     assert "It does not" in runbook and "calculate MA200" in runbook
 

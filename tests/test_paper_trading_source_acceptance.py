@@ -13,11 +13,12 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 ARTIFACT = DOCS / "paper_trading_source_account_acceptance.json"
+LATENCY_EVIDENCE = ROOT / "reports/eodhd_prestart_latency_evidence.json"
 RESUME_COMMIT = "e94326ae3f4b765bcf895de4684328ee756e6bd1"
 FREEZE_COMMIT = "c75af4cf196419c6a27fbddcb10aaad966148b89"
 RESEARCH_TAG = "2b2bf987f2e00540412d263a8ef39566af1d1e2a"
 RESEARCH_MANIFEST_SHA = "dcb8f9d79de93c61e0bd7d93b743b0356be9eb3b1467acf5db9a58563889d400"
-PENDING_GATE = "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
+FAIL_GATE = "SOURCE_ACCEPTANCE_FAIL"
 
 
 def load_artifact() -> dict:
@@ -28,13 +29,13 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def test_account_gate_is_pending_only_operational_latency() -> None:
+def test_account_gate_fails_on_operational_latency() -> None:
     artifact = load_artifact()
     assert artifact["no_api_requests_made"] is False
     assert artifact["historical_performance_used"] is False
     assert artifact["official_prospective_rows_created"] is False
-    assert artifact["final_source_gate"] == PENDING_GATE
-    assert artifact["publication_latency_observation_status"] == "NOT_RUN_MARKET_CLOSED_NO_OFFICIAL_OBSERVATION"
+    assert artifact["final_source_gate"] == FAIL_GATE
+    assert artifact["publication_latency_observation_status"] == "FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE"
 
 
 def test_credential_presence_is_recorded_without_value() -> None:
@@ -126,28 +127,56 @@ def test_adjustment_semantics_are_frozen_without_cross_vendor_identity_claim() -
     assert semantics["cross_vendor_splicing_or_averaging_allowed"] is False
 
 
-def test_publication_gate_does_not_invent_observed_latency() -> None:
+def test_publication_gate_records_failed_observed_latency_without_invention() -> None:
     artifact = load_artifact()
     assert artifact["publication_sla_classification"] == "DOCUMENTED_MAJOR_US_EXCHANGES_WITHIN_15_MINUTES"
-    assert artifact["publication_deadline_status"] == "PENDING_PRE_START_ACCOUNT_LATENCY_OBSERVATION"
-    assert artifact["final_source_gate"] == PENDING_GATE
+    assert artifact["publication_deadline_status"] == "FAIL_EXPECTED_SESSION_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE"
+    assert artifact["final_source_gate"] == FAIL_GATE
     docs = (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").read_text(encoding="utf-8")
-    assert "has not yet been observed" in docs
+    assert "was not available by the documented deadline" in docs
     assert "must not calculate MA200 or a signal" in (DOCS / "PAPER_TRADING_SOURCE_FREEZE_READINESS.md").read_text(encoding="utf-8")
 
 
-def test_prestart_latency_observer_is_ready_but_not_run() -> None:
+def test_prestart_latency_observer_records_exact_failed_run() -> None:
     observer = load_artifact()["prestart_latency_observer"]
-    assert observer["status"] == "READY_FOR_MANUAL_ONE_SHOT_EXECUTION"
-    assert observer["live_latency_requests_made"] is False
+    assert observer["status"] == "COMPLETED_FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE"
+    assert observer["live_latency_requests_made"] is True
     assert observer["validate_only_status"] == "PASS"
-    assert observer["expected_session"] == "2026-09-28"
-    assert observer["exchange_close_at"] == "2026-09-28T20:00:00Z"
-    assert observer["japan_close_at"] == "2026-09-29T05:00:00+09:00"
+    assert observer["expected_session"] == "2026-10-01"
+    assert observer["exchange_close_at"] == "2026-10-01T20:00:00Z"
+    assert observer["japan_close_at"] == "2026-10-02T05:00:00+09:00"
     assert observer["poll_offsets_seconds"] == [0, 300, 600, 900]
-    assert observer["max_poll_count"] == 4
-    for relative in (observer["script"], observer["schema"], observer["runbook"]):
+    assert observer["max_poll_count"] == observer["actual_poll_count"] == 4
+    assert observer["http_status_counts"] == {"200": 4}
+    assert observer["expected_session_row_counts"] == [0, 0, 0, 0]
+    assert observer["raw_archive_reconstruction"] == "PASS_ALL_4"
+    assert observer["first_available_at"] is observer["latency_seconds"] is None
+    assert observer["final_status"] == "FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE"
+    assert observer["raw_files_committed"] is False
+    assert observer["sanitized_evidence_sha256"] == sha256(LATENCY_EVIDENCE.read_bytes())
+    for relative in (observer["script"], observer["schema"], observer["runbook"], observer["sanitized_evidence"]):
         assert (ROOT / relative).is_file()
+
+
+def test_committed_latency_evidence_matches_mechanical_failure_contract() -> None:
+    evidence = json.loads(LATENCY_EVIDENCE.read_text(encoding="utf-8"))
+    assert evidence["fixture_status"] == "PRE_START_NONOFFICIAL_SOURCE_EVIDENCE"
+    assert evidence["expected_session"] == "2026-10-01"
+    assert evidence["poll_offsets_seconds"] == [0, 300, 600, 900]
+    assert evidence["max_poll_count"] == len(evidence["polls"]) == 4
+    assert evidence["first_available_at"] is evidence["latency_seconds"] is None
+    assert evidence["final_status"] == "FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE"
+    assert evidence["credential_present"] is True
+    assert evidence["credential_value_stored"] is False
+    for ordinal, poll in enumerate(evidence["polls"], start=1):
+        assert poll["ordinal"] == ordinal
+        assert poll["http_status"] == 200
+        assert poll["returned_row_count"] == 0
+        assert poll["returned_last_date"] is None
+        assert poll["raw_archive_reconstruction"] == "PASS"
+        assert poll["raw_byte_length"] == 2
+        assert re.fullmatch(r"[a-f0-9]{64}", poll["raw_sha256"])
+    assert all(value is False for value in evidence["scope_controls"].values())
 
 
 def test_rate_budget_arithmetic_and_daily_headroom() -> None:
@@ -175,11 +204,12 @@ def test_massive_remains_reconciliation_only() -> None:
 def test_active_source_contract_names_eodhd_authority() -> None:
     artifact = load_artifact()
     assert artifact["authoritative_source"] == "EODHD Free"
-    assert artifact["source_role_update_status"] == "PROPOSED_EODHD_AUTHORITY_PENDING_EXTERNAL_AUDIT"
+    assert artifact["source_role_update_status"] == "EODHD_AUTHORITY_REJECTED_BY_OPERATIONAL_LATENCY_GATE"
     with (DOCS / "paper_trading_data_source_decision.csv").open(newline="", encoding="utf-8") as handle:
         authority = next(row for row in csv.DictReader(handle) if row["data_role"] == "AUTHORITATIVE_MARKET_DATA_SOURCE")
     assert authority["vendor"] == "EODHD Free"
     assert authority["freeze_status"] == "PROPOSED_NOT_FROZEN"
+    assert authority["verified_status"] == "AUTHENTICATED_CAPABILITY_PASS_OPERATIONAL_LATENCY_FAIL"
     registry = (DOCS / "paper_trading_operational_decision_registry.csv").read_text(encoding="utf-8")
     assert "Use EODHD Free" in registry
 
@@ -212,6 +242,7 @@ def test_secret_leak_scan_passes_without_printing_or_storing_values() -> None:
         DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md",
         DOCS / "paper_trading_source_account_acceptance.json",
         ROOT / "reports/paper_trading_source_account_acceptance_audit.md",
+        LATENCY_EVIDENCE,
         ROOT / "tests/test_paper_trading_source_acceptance.py",
     ]
     names = "(?:ALPHA_VANTAGE_API_KEY|MASSIVE_API_KEY|POLYGON_API_KEY|EODHD_API_KEY)"
@@ -269,9 +300,9 @@ def test_research_v1_freeze_and_closed_design_integrity_unchanged() -> None:
         assert (ROOT / relative).read_bytes() == subprocess.check_output(["git", "show", f"{FREEZE_COMMIT}:{relative}"], cwd=ROOT)
 
 
-def test_acceptance_artifacts_end_with_pending_gate_and_external_audit_line() -> None:
+def test_acceptance_artifacts_end_with_failed_gate_and_external_audit_line() -> None:
     assert (DOCS / "PAPER_TRADING_SOURCE_ACCOUNT_ACCEPTANCE.md").is_file()
     assert ARTIFACT.is_file()
     report = (ROOT / "reports/paper_trading_source_account_acceptance_audit.md").read_text(encoding="utf-8")
-    assert PENDING_GATE in report
+    assert FAIL_GATE in report
     assert report.rstrip().endswith("PAPER TRADING SOURCE ACCOUNT ACCEPTANCE COMPLETE — AWAITING EXTERNAL SOURCE AUDIT")

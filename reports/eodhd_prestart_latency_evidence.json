@@ -1,0 +1,115 @@
+{
+  "artifact": "eodhd_prestart_latency_evidence",
+  "schema_version": "1.0",
+  "fixture_status": "PRE_START_NONOFFICIAL_SOURCE_EVIDENCE",
+  "ticker": "QQQ.US",
+  "expected_session": "2026-10-01",
+  "exchange_close_at": "2026-10-01T20:00:00Z",
+  "documented_deadline_at": "2026-10-01T20:15:00Z",
+  "observer_started_at": "2026-10-01T19:59:55.543893Z",
+  "poll_offsets_seconds": [0, 300, 600, 900],
+  "max_poll_count": 4,
+  "credential_present": true,
+  "credential_value_stored": false,
+  "sanitized_request": {
+    "method": "GET",
+    "endpoint_path": "/api/eod/QQQ.US",
+    "parameters": {
+      "from": "2026-10-01",
+      "to": "2026-10-01",
+      "fmt": "json"
+    }
+  },
+  "polls": [
+    {
+      "ordinal": 1,
+      "scheduled_at": "2026-10-01T20:00:00Z",
+      "request_started_at": "2026-10-01T20:00:00.000417Z",
+      "response_received_at": "2026-10-01T20:00:01.060810Z",
+      "http_status": 200,
+      "safe_headers": {
+        "Content-Type": "application/json",
+        "Date": "Thu, 01 Oct 2026 19:59:58 GMT",
+        "X-RateLimit-Limit": "1200",
+        "X-RateLimit-Remaining": "1199"
+      },
+      "raw_byte_length": 2,
+      "raw_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "raw_filename": "poll_01.raw",
+      "raw_archive_reconstruction": "PASS",
+      "body_classification": "EXPECTED_SESSION_NOT_AVAILABLE",
+      "returned_row_count": 0,
+      "returned_last_date": null
+    },
+    {
+      "ordinal": 2,
+      "scheduled_at": "2026-10-01T20:05:00Z",
+      "request_started_at": "2026-10-01T20:05:00.000579Z",
+      "response_received_at": "2026-10-01T20:05:00.912679Z",
+      "http_status": 200,
+      "safe_headers": {
+        "Content-Type": "application/json",
+        "Date": "Thu, 01 Oct 2026 20:04:57 GMT",
+        "X-RateLimit-Limit": "1200",
+        "X-RateLimit-Remaining": "1199"
+      },
+      "raw_byte_length": 2,
+      "raw_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "raw_filename": "poll_02.raw",
+      "raw_archive_reconstruction": "PASS",
+      "body_classification": "EXPECTED_SESSION_NOT_AVAILABLE",
+      "returned_row_count": 0,
+      "returned_last_date": null
+    },
+    {
+      "ordinal": 3,
+      "scheduled_at": "2026-10-01T20:10:00Z",
+      "request_started_at": "2026-10-01T20:10:00.000216Z",
+      "response_received_at": "2026-10-01T20:10:01.002202Z",
+      "http_status": 200,
+      "safe_headers": {
+        "Content-Type": "application/json",
+        "Date": "Thu, 01 Oct 2026 20:09:57 GMT",
+        "X-RateLimit-Limit": "1200",
+        "X-RateLimit-Remaining": "1199"
+      },
+      "raw_byte_length": 2,
+      "raw_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "raw_filename": "poll_03.raw",
+      "raw_archive_reconstruction": "PASS",
+      "body_classification": "EXPECTED_SESSION_NOT_AVAILABLE",
+      "returned_row_count": 0,
+      "returned_last_date": null
+    },
+    {
+      "ordinal": 4,
+      "scheduled_at": "2026-10-01T20:15:00Z",
+      "request_started_at": "2026-10-01T20:15:00.000305Z",
+      "response_received_at": "2026-10-01T20:15:00.754100Z",
+      "http_status": 200,
+      "safe_headers": {
+        "Content-Type": "application/json",
+        "Date": "Thu, 01 Oct 2026 20:14:57 GMT",
+        "X-RateLimit-Limit": "1200",
+        "X-RateLimit-Remaining": "1199"
+      },
+      "raw_byte_length": 2,
+      "raw_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "raw_filename": "poll_04.raw",
+      "raw_archive_reconstruction": "PASS",
+      "body_classification": "EXPECTED_SESSION_NOT_AVAILABLE",
+      "returned_row_count": 0,
+      "returned_last_date": null
+    }
+  ],
+  "first_available_at": null,
+  "latency_seconds": null,
+  "final_status": "FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE",
+  "scope_controls": {
+    "moving_average_calculated": false,
+    "signal_calculated": false,
+    "performance_calculated": false,
+    "official_observation_created": false,
+    "engine_or_scheduler_started": false
+  }
+}

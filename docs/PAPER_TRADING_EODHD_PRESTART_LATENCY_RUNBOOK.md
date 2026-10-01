@@ -1,6 +1,6 @@
 # EODHD Free PRE_START Publication-Latency Runbook
 
-**Status:** `READY_FOR_MANUAL_ONE_SHOT_EXECUTION`
+**Status:** `COMPLETED_FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE`
 **Classification:** nonofficial source-operability evidence only
 
 ## Boundary
@@ -15,28 +15,25 @@ started manually before the expected exchange close. It refuses to start more
 than 60 seconds after the close, makes at most four requests, and uses the
 frozen offsets 0, 300, 600, and 900 seconds.
 
-## Scheduled control for 2026-09-28
+## Executed control for 2026-10-01
 
-- Expected U.S. session: `2026-09-28`
-- Exchange close: `2026-09-28T20:00:00Z`
-- Japan close time: `2026-09-29 05:00:00 JST`
+- Expected U.S. session: `2026-10-01`
+- Exchange close: `2026-10-01T20:00:00Z`
+- Japan close time: `2026-10-02 05:00:00 JST`
 - Poll targets in Japan: `05:00`, `05:05`, `05:10`, `05:15`
-- Documented deadline: `2026-09-28T20:15:00Z`
+- Documented deadline: `2026-10-01T20:15:00Z`
 
-The operator should open the existing Codex task by 04:55 JST and request:
-
-`开始 EODHD PRE_START 延迟观测`
-
-No credential is pasted into chat or passed on the command line. The isolated
-launcher supplies the external credential to the observer process. The script
-prints only credential presence, the planned session/times, the final status,
-poll count, and evidence path.
+The operator requested `开始 EODHD PRE_START 延迟观测` before the exchange
+close. No credential was pasted into chat or passed on the command line. The
+isolated launcher supplied the external credential to the observer process.
+The script printed only credential presence, planned session/times, final
+status, poll count, and evidence path.
 
 ## Raw archive boundary
 
 The default archive is outside Git:
 
-`~/.local/share/market-timing-quant/prestart-latency/2026-09-28/`
+`~/.local/share/market-timing-quant/prestart-latency/2026-10-01/`
 
 The directory is created with mode 700 and raw responses/evidence with mode
 600. The observer refuses an archive path inside the repository and refuses to
@@ -57,7 +54,7 @@ The key, authorization material, and secret-bearing URL are never stored.
 
 | Condition | Result |
 |---|---|
-| A valid `2026-09-28` QQQ.US row first appears from a request started no later than the documented deadline | `PASS_WITHIN_DOCUMENTED_WINDOW` |
+| A valid `2026-10-01` QQQ.US row first appears from a request started no later than the documented deadline | `PASS_WITHIN_DOCUMENTED_WINDOW` |
 | A valid row is observed only after the documented deadline | `FAIL_AVAILABLE_AFTER_DOCUMENTED_WINDOW` |
 | No valid row appears by the fourth poll | `FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE` |
 | Observer starts over 60 seconds late | `START_TOO_LATE_FOR_LATENCY_EVIDENCE`; no request is made |
@@ -67,6 +64,11 @@ A pass permits updating the source gate for external audit. It does not itself
 authorize Final Freeze or a prospective start. A failure cannot be repaired by
 extending the deadline after seeing the result, substituting Massive, or
 rerunning the same session into a competing archive.
+
+The executed result was `FAIL_NOT_AVAILABLE_BY_DOCUMENTED_DEADLINE`: all four
+requests returned HTTP 200 and zero rows. The sanitized evidence is committed
+at `reports/eodhd_prestart_latency_evidence.json`; raw response bytes remain in
+the external archive.
 
 ## Preflight without an API request
 
