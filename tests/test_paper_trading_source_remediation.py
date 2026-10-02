@@ -51,9 +51,10 @@ def test_matrix_has_required_options_and_classifications() -> None:
         "SOURCE_OPTION_POTENTIALLY_VIABLE",
         "SOURCE_OPTION_NOT_VIABLE",
         "SOURCE_OPTION_INSUFFICIENT_EVIDENCE",
+        "SOURCE_OPTION_ACCOUNT_CAPABILITY_PASS_PENDING_LATENCY",
     }
     assert {row["classification"] for row in entries} <= allowed
-    assert sum(row["classification"] == "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST" for row in entries) == 1
+    assert sum(row["classification"] == "SOURCE_OPTION_ACCOUNT_CAPABILITY_PASS_PENDING_LATENCY" for row in entries) == 1
     assert sum(row["classification"] == "SOURCE_OPTION_POTENTIALLY_VIABLE" for row in entries) == 4
     assert sum(row["classification"] == "SOURCE_OPTION_NOT_VIABLE" for row in entries) == 2
 
@@ -86,11 +87,12 @@ def test_massive_is_not_promoted_and_dividend_semantics_are_explicit() -> None:
 
 def test_remediation_is_not_a_parameter_or_performance_selection() -> None:
     text = report_text().lower()
+    normalized = " ".join(text.split())
     assert "performance-blind" in text
     assert "no backtest" in text
     assert "no strategy code" in text
     assert "signal ranking" in text
-    assert "tiingo end-of-day free is the next documented" in text
+    assert "tiingo end-of-day free completed authenticated capability acceptance" in normalized
     assert not re.search(r"\b(?:best|winner|optimal|selected)\s+(?:source|vendor|plan)\b", text)
     for row in rows():
         assert "historical" not in row["classification"].lower()
@@ -151,9 +153,9 @@ def test_eodhd_failure_and_tiingo_candidate_are_mechanically_distinct() -> None:
     tiingo = next(row for row in rows() if row["option_id"] == "TIINGO_FREE")
     assert eodhd["classification"] == "SOURCE_OPTION_NOT_VIABLE"
     assert "2026-10-01" in eodhd["publication_timing"]
-    assert tiingo["classification"] == "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST"
+    assert tiingo["classification"] == "SOURCE_OPTION_ACCOUNT_CAPABILITY_PASS_PENDING_LATENCY"
     assert tiingo["recurring_cost"].startswith("$0/month")
     assert "50 requests/hour" in tiingo["rate_limits"]
     assert "1000/day" in tiingo["rate_limits"]
     assert "5:30pm" in tiingo["publication_timing"]
-    assert "account acceptance" in tiingo["unresolved_blockers"].lower()
+    assert "publication observation" in tiingo["unresolved_blockers"].lower()

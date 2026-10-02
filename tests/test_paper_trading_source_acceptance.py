@@ -209,7 +209,7 @@ def test_failed_eodhd_is_not_left_as_active_authority() -> None:
         authority = next(row for row in csv.DictReader(handle) if row["data_role"] == "AUTHORITATIVE_MARKET_DATA_SOURCE")
     assert authority["vendor"] == "UNRESOLVED — Tiingo Free candidate"
     assert authority["freeze_status"] == "PROPOSED_NOT_FROZEN"
-    assert authority["verified_status"] == "PUBLIC_DOCUMENTATION_PASS_ACCOUNT_ACCEPTANCE_REQUIRED"
+    assert authority["verified_status"] == "AUTHENTICATED_CAPABILITY_PASS_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
     registry = (DOCS / "paper_trading_operational_decision_registry.csv").read_text(encoding="utf-8")
     assert "No authoritative source accepted; Tiingo Free is the next account-test candidate" in registry
 

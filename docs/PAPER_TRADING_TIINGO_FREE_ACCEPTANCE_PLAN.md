@@ -1,6 +1,6 @@
 # Tiingo Free Source-Account Acceptance Plan
 
-**Status:** `ACCOUNT_CREDENTIALS_NOT_AVAILABLE`
+**Status:** `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
 **Classification:** performance-blind source remediation preparation only
 
 ## Boundary
@@ -42,9 +42,8 @@ authorization header inside the isolated process; sanitized metadata records
 only the method, endpoint path, non-secret parameters, and allow-listed
 response headers.
 
-Until the variable is present, the exact mechanical result is:
-
-`ACCOUNT_CREDENTIALS_NOT_AVAILABLE`
+The variable was present in the isolated 2026-10-02 acceptance process. Its
+value was not printed or retained.
 
 ## Authenticated acceptance checks
 
@@ -88,3 +87,17 @@ pass by extending the deadline after observing the response.
   `SOURCE_ACCEPTANCE_PASS`, still awaiting external source audit
 
 No result from this plan creates Final Freeze or starts prospective evidence.
+
+## Authenticated result
+
+The isolated account run returned HTTP 200 for QQQ and QLD metadata and price
+endpoints. Each price series contained 438 complete unique sessions from
+2025-01-02 through 2026-10-01 with every required raw and adjusted field,
+`divCash`, and `splitFactor`. Four raw bodies were archived before parsing and
+reconstructed byte-identically. The sanitized evidence is
+`reports/tiingo_free_account_acceptance.json`.
+
+Account capability passed, but the separately required future-session
+publication observation has not run. The exact current gate is:
+
+`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`

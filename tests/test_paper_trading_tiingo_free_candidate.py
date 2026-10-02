@@ -24,8 +24,8 @@ def test_candidate_is_free_and_only_ready_for_account_test() -> None:
     row = candidate()
     assert row["source_plan"] == "Tiingo End-of-Day Free"
     assert row["recurring_cost"].startswith("$0/month")
-    assert row["classification"] == "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST"
-    assert "account acceptance" in row["unresolved_blockers"].lower()
+    assert row["classification"] == "SOURCE_OPTION_ACCOUNT_CAPABILITY_PASS_PENDING_LATENCY"
+    assert "publication observation" in row["unresolved_blockers"].lower()
 
 
 def test_documented_fields_cover_frozen_source_categories() -> None:
@@ -45,7 +45,7 @@ def test_documented_limits_and_timing_are_explicit_but_not_authenticated() -> No
     assert "5:30pm" in row["publication_timing"]
     assert "8:00pm" in row["publication_timing"]
     plan = PLAN.read_text(encoding="utf-8")
-    assert "ACCOUNT_CREDENTIALS_NOT_AVAILABLE" in plan
+    assert "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE" in plan
     assert "account-observable PRE_START verification remains required" in row["publication_timing"]
 
 

@@ -1,7 +1,7 @@
 # Paper-Trading Source Freeze Readiness
 
 **Status:** `SOURCE_NOT_READY_FOR_FINAL_FREEZE`
-**Source gate:** `SOURCE_ACCEPTANCE_FAIL`
+**Source gate:** `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
 **Scope:** operational capability audit only; no historical performance,
 signal, or official observation was created.
 
@@ -18,8 +18,9 @@ observation may start.
 Tiingo End-of-Day Free is the next documentation-qualified zero-cost candidate.
 Its public materials describe raw and adjusted daily prices, dividends, splits,
 free individual internal use, explicit request limits, and evening update
-times. `TIINGO_API_KEY` is not present, so no authenticated claim is made and
-the source gate remains failed.
+times. Authenticated QQQ and QLD capability now passes, but the future-session
+publication observation has not run, so no source is promoted and Final Freeze
+remains blocked.
 
 Massive Basic Free remains reconciliation-only. Its split-only adjustment
 cannot replace the authoritative EODHD adjusted close. The historical Alpha
@@ -41,20 +42,22 @@ but is no longer an operational dependency.
 | Immutable vendor revision ID | `NULL_ALLOWED` | Protocol raw snapshot hash is authoritative; no vendor ID invented |
 | Massive raw reconciliation | `VERIFIED_WITH_ACCOUNT` | 501 completed raw/split-adjusted sessions per symbol |
 | Massive execution proxy | `NOT_OBSERVABLE_IN_PAPER_MODE` | No quote entitlement is required for the canonical 5-bps model |
-| Tiingo Free candidate | `ACCOUNT_CREDENTIALS_NOT_AVAILABLE` | Public field/plan documentation passes feasibility; authenticated QQQ/QLD evidence is absent |
+| Tiingo Free candidate | `VERIFIED_WITH_ACCOUNT_PENDING_LATENCY` | QQQ/QLD each returned 438 complete unique sessions with required raw/adjusted fields; future-session publication observation remains |
 
 ## Point-in-time source snapshot
 
-At each scheduled decision, the exact EODHD raw response used for the MA200
+At each scheduled decision, the exact accepted-authority raw response used for the MA200
 input must be archived before parsing. `source_raw_hash` is SHA-256 over those
 exact bytes. `source_snapshot_id` is `sha256:<source_raw_hash>` or the SHA-256
 of a canonical sorted manifest when several raw objects are required.
 
-The authenticated acceptance reconstructed the exact response bytes and the
-ordered final 200 `(date, adjusted_close)` values. EODHD adjusted history may
-change after a later dividend; the original snapshot remains immutable and any
-new response is an append-only revision record. A lost or overwritten original
+The Tiingo authenticated acceptance reconstructed four exact response bodies
+and verified 438 raw/adjusted daily rows for each ETF. Vendor-adjusted history
+may later be corrected; the original snapshot remains immutable and any new
+response is an append-only revision record. A lost or overwritten original
 snapshot invalidates the affected evidence boundary.
+The accepted adapter must deterministically reconstruct the ordered final 200
+`(session_date, adjClose)` values from those exact bytes before any decision.
 
 ## Latency gate
 
@@ -66,17 +69,19 @@ session it records:
 2. sanitized poll timestamps and fixed request ordinal;
 3. HTTP status, safe rate headers, response byte hash, and returned last date;
 4. first timestamp at which the expected completed session appears; and
-5. whether availability was within the documented 15-minute boundary.
+5. whether availability was within the prospectively frozen Tiingo publication
+   boundary derived from the documented 5:30 p.m. update and 8:00 p.m.
+   correction window.
 
 The check must stay within the accepted four-poll budget, archive each raw
 response before parsing, and stop without creating an official observation.
 Failure or ambiguity leaves the source gate pending or failed; it never creates
 a favorable substitute deadline.
 
-The exact one-shot procedure, archive boundary, and mechanical classifications
-are frozen in `PAPER_TRADING_EODHD_PRESTART_LATENCY_RUNBOOK.md`; the sanitized
-artifact contract is
-`schemas/source_acceptance/eodhd_prestart_latency_evidence.schema.json`.
+The exact Tiingo one-shot procedure, archive boundary, poll schedule, and
+mechanical classifications must be frozen before the selected future U.S.
+session. The failed EODHD runbook and evidence remain immutable historical
+records and are not reused.
 
 ## Freeze checklist
 
@@ -84,12 +89,12 @@ Before an external Operational Freeze Audit can authorize a start, the auditor
 must record:
 
 1. a passing PRE_START publication-latency evidence artifact;
-2. the exact EODHD source adapter and snapshot reconstruction tests;
+2. the exact Tiingo source adapter and snapshot reconstruction tests;
 3. reconciliation and disagreement handling;
 4. no-secret logs and immutable archive permissions;
 5. updated environment and dry-run acceptance; and
 6. the later final acceptance manifest binding all approved hashes.
 
-Following the failed latency evidence, status remains
+While Tiingo latency evidence is pending, status remains
 `SOURCE_NOT_READY_FOR_FINAL_FREEZE`. This document does not create an engine,
 scheduler, acceptance manifest, prospective start, or official observation.

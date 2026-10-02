@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tiingo Free source-account acceptance evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact", "schema_version", "credential_present",
+    "credential_value_stored", "source_promoted", "start_date", "end_date",
+    "symbols", "authenticated_endpoints", "raw_archive_mode",
+    "raw_bytes_archived_before_parse", "historical_performance_calculated",
+    "signal_calculated", "official_observation_created",
+    "engine_or_scheduler_started", "publication_latency_observation_completed",
+    "failure_reason", "final_gate"
+  ],
+  "properties": {
+    "artifact": {"const": "tiingo_free_account_acceptance"},
+    "schema_version": {"const": "1.0"},
+    "credential_present": {"const": true},
+    "credential_value_stored": {"const": false},
+    "source_promoted": {"const": false},
+    "start_date": {"type": "string", "format": "date"},
+    "end_date": {"type": "string", "format": "date"},
+    "symbols": {"const": ["QQQ", "QLD"]},
+    "authenticated_endpoints": {
+      "type": "object",
+      "required": ["metadata_QQQ", "prices_QQQ", "metadata_QLD", "prices_QLD"],
+      "additionalProperties": {"type": "object"}
+    },
+    "raw_archive_mode": {"const": "700"},
+    "raw_bytes_archived_before_parse": {"const": true},
+    "historical_performance_calculated": {"const": false},
+    "signal_calculated": {"const": false},
+    "official_observation_created": {"const": false},
+    "engine_or_scheduler_started": {"const": false},
+    "publication_latency_observation_completed": {"const": false},
+    "failure_reason": {"type": ["string", "null"]},
+    "final_gate": {
+      "enum": [
+        "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE",
+        "SOURCE_ACCEPTANCE_FAIL"
+      ]
+    }
+  }
+}
