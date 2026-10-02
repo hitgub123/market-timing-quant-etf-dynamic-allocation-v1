@@ -35,7 +35,7 @@ def report_text() -> str:
 
 def test_matrix_has_required_options_and_classifications() -> None:
     entries = rows()
-    assert len(entries) == 7
+    assert len(entries) == 8
     assert {row["option_id"] for row in entries} == {
         "ALPHA_PREMIUM",
         "MASSIVE_BASIC",
@@ -43,6 +43,7 @@ def test_matrix_has_required_options_and_classifications() -> None:
         "MASSIVE_DEVELOPER",
         "MASSIVE_ADVANCED",
         "EODHD_FREE",
+        "TIINGO_FREE",
         "ALTERNATIVE_UNINVESTIGATED",
     }
     allowed = {
@@ -54,7 +55,7 @@ def test_matrix_has_required_options_and_classifications() -> None:
     assert {row["classification"] for row in entries} <= allowed
     assert sum(row["classification"] == "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST" for row in entries) == 1
     assert sum(row["classification"] == "SOURCE_OPTION_POTENTIALLY_VIABLE" for row in entries) == 4
-    assert sum(row["classification"] == "SOURCE_OPTION_NOT_VIABLE" for row in entries) == 1
+    assert sum(row["classification"] == "SOURCE_OPTION_NOT_VIABLE" for row in entries) == 2
 
 
 def test_alpha_premium_option_preserves_failed_account_evidence() -> None:
@@ -89,7 +90,7 @@ def test_remediation_is_not_a_parameter_or_performance_selection() -> None:
     assert "no backtest" in text
     assert "no strategy code" in text
     assert "signal ranking" in text
-    assert "eodhd free is mechanically" in text
+    assert "tiingo end-of-day free is the next documented" in text
     assert not re.search(r"\b(?:best|winner|optimal|selected)\s+(?:source|vendor|plan)\b", text)
     for row in rows():
         assert "historical" not in row["classification"].lower()
@@ -105,6 +106,8 @@ def test_public_documentation_and_publication_boundary_are_explicit() -> None:
         "https://massive.com/pricing",
         "https://massive.com/knowledge-base/article/is-massives-stock-data-adjusted-for-splits-or-dividends",
         "https://www.massive.com/blog/new-splits-and-dividends-endpoints",
+        "https://www.tiingo.com/products/end-of-day-stock-price-data",
+        "https://www.tiingo.com/documentation/end-of-day",
     ):
         assert url in text
     assert "no deterministic after-close publication sla" in text.lower()
@@ -140,4 +143,17 @@ def test_matrix_has_no_secret_material_or_auth_headers() -> None:
     assert ("MASSIVE_API_KEY" + "=") not in contents
     assert "apikey=" not in contents.lower()
     assert "authorization:" not in contents.lower()
-    assert "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE" in contents
+    assert "SOURCE_ACCEPTANCE_FAIL" in contents
+
+
+def test_eodhd_failure_and_tiingo_candidate_are_mechanically_distinct() -> None:
+    eodhd = next(row for row in rows() if row["option_id"] == "EODHD_FREE")
+    tiingo = next(row for row in rows() if row["option_id"] == "TIINGO_FREE")
+    assert eodhd["classification"] == "SOURCE_OPTION_NOT_VIABLE"
+    assert "2026-10-01" in eodhd["publication_timing"]
+    assert tiingo["classification"] == "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST"
+    assert tiingo["recurring_cost"].startswith("$0/month")
+    assert "50 requests/hour" in tiingo["rate_limits"]
+    assert "1000/day" in tiingo["rate_limits"]
+    assert "5:30pm" in tiingo["publication_timing"]
+    assert "account acceptance" in tiingo["unresolved_blockers"].lower()

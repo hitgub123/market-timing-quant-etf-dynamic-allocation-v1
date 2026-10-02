@@ -6,15 +6,16 @@ observations are collected by this document.
 
 ## 1. Decision boundary
 
-The source roles below are selected for prospective operational fitness, not
-for any historical strategy result. EODHD Free replaced the failed Alpha
-Vantage free-account candidate on 2026-09-26 solely because the user required
-a zero-cost source and authenticated EODHD supplied the frozen required fields.
-No historical performance was inspected.
+The source roles below are evaluated for prospective operational fitness, not
+for any historical strategy result. EODHD Free supplied the required fields
+but failed its frozen 2026-10-01 publication-latency gate. No authoritative
+source is currently accepted. Tiingo Free is the next documentation-qualified
+zero-cost candidate and still requires authenticated acceptance. No historical
+performance was inspected.
 
 | Role | Proposed source | Role boundary |
 |---|---|---|
-| `AUTHORITATIVE_MARKET_DATA_SOURCE` | EODHD Free `/api/eod`, `/api/splits`, and `/api/div` for QQQ.US and QLD.US | Drives the adjusted QQQ close used by MA200 and supplies raw daily OHLCV, adjusted close, split, and dividend fields. The daily endpoint has a session date but not a tick-level exchange event timestamp; the calendar supplies the event-time boundary. Formal acceptance remains pending PRE_START latency evidence. |
+| `AUTHORITATIVE_MARKET_DATA_SOURCE` | Unresolved; Tiingo End-of-Day Free is the next account-test candidate | No candidate may drive an official MA200 observation until account capability, raw reconstruction, publication timing, terms, and external source audit pass. EODHD remains rejected by its latency gate. |
 | `RECONCILIATION_MARKET_DATA_SOURCE` | Massive (formerly Polygon.io) U.S. Stocks REST/flat-file products | Independently reconciles raw daily OHLC, UTC timestamps, symbols, and, if entitled, quote/trade evidence. It never silently replaces an authoritative observation. |
 | `EXECUTION_PROXY_SOURCE` | Massive U.S. Stocks SIP quotes, only when the account entitlement and timestamp/side fields are verified | Optional market-data proxy for `P_proxy_o`; not a broker fill and not part of the canonical economic model. If entitlement or executable-side semantics are not verified, status is `UNVERIFIED_CAPABILITY` and the metric is `NOT_OBSERVABLE_IN_PAPER_MODE`. |
 | `CANONICAL_SESSION_CALENDAR` | `pandas_market_calendars` `NASDAQ` schedule, pinned at the repository dependency version, reconciled to Nasdaq and NYSE published calendars | Supplies eligible QQQ/QLD U.S. sessions, regular open/close, early closes, and the next-eligible-session function. It is an explicit dependency, never inferred from observed price rows. |
@@ -26,6 +27,13 @@ dividend endpoints. Its terms permit private non-commercial storage and
 analysis. See the [EOD endpoint](https://eodhd.com/financial-apis/api-for-historical-data-and-volumes),
 [API limits](https://eodhd.com/financial-apis/api-limits), and
 [terms](https://eodhd.com/financial-apis/terms-conditions).
+
+Tiingo's official End-of-Day product and API documentation describe raw and
+adjusted daily OHLCV, `adjClose`, dividends, splits, a free individual
+internal-use plan, and evening publication timing. These public claims justify
+an account test only; no Tiingo account response has been collected. See the
+[EOD product](https://www.tiingo.com/products/end-of-day-stock-price-data) and
+[EOD API documentation](https://www.tiingo.com/documentation/end-of-day).
 
 Massive's public Stocks overview documents U.S. trade/quote coverage and UTC
 timestamps. Its day-aggregate flat files provide daily OHLCV and its quote

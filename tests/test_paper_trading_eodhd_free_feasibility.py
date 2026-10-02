@@ -114,11 +114,12 @@ def test_publication_claim_requires_pre_start_observation() -> None:
     assert publication["classification"] == "DOCUMENTED_SLA_REQUIRES_PRE_START_ACCOUNT_OBSERVATION"
 
 
-def test_classification_is_ready_for_acceptance_but_not_promoted() -> None:
+def test_historical_feasibility_ready_is_preserved_but_current_option_failed() -> None:
     data = evidence()
     row = eodhd_matrix_row()
     assert data["final_classification"] == "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST"
-    assert row["classification"] == "SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST"
+    assert row["classification"] == "SOURCE_OPTION_NOT_VIABLE"
+    assert "2026-10-01" in row["publication_timing"]
     assert data["scope_controls"]["source_promoted"] is False
     assert data["scope_controls"]["official_observation_started"] is False
     report = REPORT.read_text(encoding="utf-8")

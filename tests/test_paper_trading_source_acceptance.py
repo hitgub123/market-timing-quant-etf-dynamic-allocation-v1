@@ -201,17 +201,17 @@ def test_massive_remains_reconciliation_only() -> None:
     assert artifact["execution_proxy_status"] == "NOT_OBSERVABLE_IN_PAPER_MODE"
 
 
-def test_active_source_contract_names_eodhd_authority() -> None:
+def test_failed_eodhd_is_not_left_as_active_authority() -> None:
     artifact = load_artifact()
     assert artifact["authoritative_source"] == "EODHD Free"
     assert artifact["source_role_update_status"] == "EODHD_AUTHORITY_REJECTED_BY_OPERATIONAL_LATENCY_GATE"
     with (DOCS / "paper_trading_data_source_decision.csv").open(newline="", encoding="utf-8") as handle:
         authority = next(row for row in csv.DictReader(handle) if row["data_role"] == "AUTHORITATIVE_MARKET_DATA_SOURCE")
-    assert authority["vendor"] == "EODHD Free"
+    assert authority["vendor"] == "UNRESOLVED — Tiingo Free candidate"
     assert authority["freeze_status"] == "PROPOSED_NOT_FROZEN"
-    assert authority["verified_status"] == "AUTHENTICATED_CAPABILITY_PASS_OPERATIONAL_LATENCY_FAIL"
+    assert authority["verified_status"] == "PUBLIC_DOCUMENTATION_PASS_ACCOUNT_ACCEPTANCE_REQUIRED"
     registry = (DOCS / "paper_trading_operational_decision_registry.csv").read_text(encoding="utf-8")
-    assert "Use EODHD Free" in registry
+    assert "No authoritative source accepted; Tiingo Free is the next account-test candidate" in registry
 
 
 def test_source_disagreement_never_averages_or_substitutes() -> None:
@@ -245,7 +245,7 @@ def test_secret_leak_scan_passes_without_printing_or_storing_values() -> None:
         LATENCY_EVIDENCE,
         ROOT / "tests/test_paper_trading_source_acceptance.py",
     ]
-    names = "(?:ALPHA_VANTAGE_API_KEY|MASSIVE_API_KEY|POLYGON_API_KEY|EODHD_API_KEY)"
+    names = "(?:ALPHA_VANTAGE_API_KEY|MASSIVE_API_KEY|POLYGON_API_KEY|EODHD_API_KEY|TIINGO_API_KEY)"
     prohibited = re.compile(names + r"\s*[=:]\s*[^\s,}\]]+")
     for path in paths:
         assert not prohibited.search(path.read_text(encoding="utf-8")), path

@@ -145,7 +145,7 @@ def test_report_preserves_source_roles_and_no_operational_start() -> None:
     text = REPORT.read_text(encoding="utf-8")
     assert "Massive remains a reconciliation source only" in text
     assert "SOURCE_OPTION_NOT_VIABLE" in text
-    assert "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE" in text
+    assert "SOURCE_ACCEPTANCE_FAIL" in text
     assert "no deterministic after-close" in text.lower()
     assert not (ROOT / "paper_validation_v1_acceptance_manifest.json").exists()
     assert not (ROOT / "paper").exists()

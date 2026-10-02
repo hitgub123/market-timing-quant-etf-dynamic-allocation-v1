@@ -2,7 +2,8 @@
 
 **Audit type:** performance-blind operational remediation-options audit
 **Baseline commit:** `24a759da9a5246a468336dc9e7d11860883467ed`
-**Date:** 2026-09-17
+**Original audit date:** 2026-09-17
+**Latest remediation follow-up:** 2026-10-02
 **Final source gate:** `SOURCE_REMEDIATION_REQUIRED`
 
 ## Scope and boundary
@@ -24,23 +25,23 @@ The prior gate is intentionally not overwritten.
 
 ## Decision summary
 
-EODHD Free is mechanically `SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST` after an
-authenticated, performance-blind feasibility run. Alpha Vantage premium and
-the paid Massive plans remain `SOURCE_OPTION_POTENTIALLY_VIABLE`, but they are
-outside the user-imposed free-only constraint. Massive Basic remains not viable
-as the authoritative frozen adjusted-close source because its documented
-aggregate adjustment is split-only and its dividend treatment is a separate
-modeling choice. No historical strategy outcome was used to identify EODHD;
-the selection criterion was the externally imposed zero-cost constraint plus
-the frozen operational field requirements.
+EODHD Free completed its authenticated acceptance but failed the prospectively
+frozen publication-latency gate for the 2026-10-01 U.S. session, so it is now
+`SOURCE_OPTION_NOT_VIABLE`. Tiingo End-of-Day Free is the next documented
+`SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST`: its official material exposes raw
+and adjusted daily prices, dividends, splits, a free internal-use plan, and a
+deterministic 5:30 p.m. U.S. Eastern update target with corrections through
+8:00 p.m. Authentication has not been run because `TIINGO_API_KEY` is absent.
+Alpha Vantage premium and the paid Massive plans remain outside the user's
+free-only constraint. No historical strategy outcome was used.
 
 The resulting mechanical status is:
 
 `SOURCE_REMEDIATION_REQUIRED`
 
-The next action is a formal EODHD Free source-account acceptance and external
-source audit. No plan was purchased and no source was promoted by this
-feasibility audit.
+The next action is a formal Tiingo Free source-account acceptance followed, if
+capability passes, by a separately frozen PRE_START publication observation.
+No plan was purchased and no source was promoted.
 
 ## Remediation matrix
 
@@ -53,8 +54,9 @@ Classifications are capability classifications, not historical-result claims.
 | Alpha Vantage minimum premium entitlement | `SOURCE_OPTION_POTENTIALLY_VIABLE` | Public documentation describes 25+ years of daily adjusted/full history, but the tested free account was premium-restricted and exact plan entitlement, limits, price, publication, and revision behavior remain unaccepted. |
 | Massive Stocks Basic Free | `SOURCE_OPTION_NOT_VIABLE` | Authenticated raw access and >200 observed rows are useful for reconciliation, but aggregate adjustment is split-only and is not the frozen adjusted-close signal. |
 | Massive Starter / Developer / Advanced | `SOURCE_OPTION_POTENTIALLY_VIABLE` | Paid plans list sufficient history and call capacity, and corporate-action factors are documented; a deterministic, predeclared split-plus-dividend reconstruction still requires an acceptance test and must prove frozen-signal semantic compatibility without discretionary choices. |
-| EODHD Free | `SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST` | Authenticated free access returned 251 QQQ/QLD sessions with raw OHLCV, split-and-dividend-adjusted close, splits, dividends, explicit rate limits, and byte-reconstructable responses. Formal acceptance and pre-start latency observation remain. |
-| Alternative vendors | `SOURCE_OPTION_INSUFFICIENT_EVIDENCE` | Not investigated; broad search is outside this remediation scope while A/B remain potentially viable. |
+| EODHD Free | `SOURCE_OPTION_NOT_VIABLE` | Required fields passed, but the frozen account observation returned no 2026-10-01 QQQ.US row through the documented +15-minute deadline. |
+| Tiingo End-of-Day Free | `SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST` | Official documentation provides raw and adjusted daily prices, dividends, splits, a $0 internal-use plan, explicit limits, and documented evening update times; account evidence is still required. |
+| Alternative vendors | `SOURCE_OPTION_INSUFFICIENT_EVIDENCE` | Broader search remains deferred while Tiingo awaits account acceptance. |
 
 ## A. Alpha Vantage premium path
 
@@ -227,10 +229,35 @@ The mechanically correct feasibility classification is:
 `SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST`
 
 This classification authorized the formal EODHD account acceptance subsequently
-recorded in the source-account acceptance artifacts. That acceptance updates
-the proposed authority to EODHD but remains
-`SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`; it does not start a
-prospective operation.
+recorded in the source-account acceptance artifacts. The later 2026-10-01
+PRE_START observation made exactly four requests through the documented
++15-minute deadline. Every response was HTTP 200 with an empty two-byte JSON
+array, producing `SOURCE_ACCEPTANCE_FAIL`. EODHD Free is therefore no longer
+ready for acceptance and the failed session is not rerun or reclassified.
+
+## Tiingo Free documentation feasibility follow-up
+
+After the EODHD latency failure, the zero-cost candidate search was reopened
+without inspecting any strategy result. Tiingo's official End-of-Day product
+page documents a free individual internal-use plan, raw and adjusted prices,
+dividends, splits, 60+ years of history, 50 requests per hour, 1,000 per day,
+and 1 GB per month. It documents an equity/ETF update frequency of 5:30 p.m.
+U.S. Eastern time and corrections through 8:00 p.m. Eastern time:
+`https://www.tiingo.com/products/end-of-day-stock-price-data`.
+
+The official EOD API documentation exposes raw OHLCV, adjusted OHLCV,
+`adjClose`, `divCash`, and `splitFactor`, and describes a CRSP-style adjustment
+methodology: `https://www.tiingo.com/documentation/end-of-day`. These are the
+required semantic categories, but public documentation is not a substitute for
+authenticated QQQ and QLD responses.
+
+The execution environment reported `TIINGO_API_KEY` absent. No request was
+made, no account claim was invented, and Tiingo was not promoted. The exact
+acceptance boundary is frozen in
+`docs/PAPER_TRADING_TIINGO_FREE_ACCEPTANCE_PLAN.md`. The mechanical candidate
+classification is `SOURCE_OPTION_READY_FOR_ACCEPTANCE_TEST`; the current source
+gate remains `SOURCE_ACCEPTANCE_FAIL` until a separate authenticated result
+justifies a new transition.
 
 ## Required next acceptance evidence
 
@@ -253,15 +280,16 @@ Phase 9.
 
 ## Test and integrity result
 
-Dedicated remediation, Massive Basic, and EODHD Free feasibility tests verify the matrix
-classifications, failed-gate preservation, authenticated history/corporate-
+Dedicated remediation, Massive Basic, EODHD Free, and Tiingo candidate tests
+verify the matrix classifications, failed-gate preservation, authenticated history/corporate-
 action evidence, byte reconstruction, no-selection/no-performance boundary,
 source-role boundaries, official documentation references, and absence of
 engine/scheduler/Phase 9 artifacts. The dedicated EODHD Free feasibility
-suite passed **10 tests**. The combined remediation, source-acceptance,
-prospective-governance, and operational contract controls passed **156 tests**.
-The full pytest suite passed **572 tests**. The source-acceptance secret-leak
-control remained passing; it scans
+suite passed **10 tests**, and the dedicated Tiingo candidate suite passed
+**7 tests**. The combined
+remediation, source-acceptance, prospective-governance, and operational
+contract controls passed **187 tests**. The full pytest suite passed **603
+tests**. The source-acceptance secret-leak control remained passing; it scans
 tracked files, Git diff, reports, generated metadata, acceptance output, and
 sanitized request metadata without exposing credentials.
 

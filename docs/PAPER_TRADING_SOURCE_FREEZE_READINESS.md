@@ -15,6 +15,12 @@ at +5, +10, and +15 minutes. Consequently EODHD Free is not accepted as the
 authoritative source, the source is not ready for Final Freeze, and no official
 observation may start.
 
+Tiingo End-of-Day Free is the next documentation-qualified zero-cost candidate.
+Its public materials describe raw and adjusted daily prices, dividends, splits,
+free individual internal use, explicit request limits, and evening update
+times. `TIINGO_API_KEY` is not present, so no authenticated claim is made and
+the source gate remains failed.
+
 Massive Basic Free remains reconciliation-only. Its split-only adjustment
 cannot replace the authoritative EODHD adjusted close. The historical Alpha
 Vantage free-account failure remains in Git history and the acceptance artifact
@@ -35,6 +41,7 @@ but is no longer an operational dependency.
 | Immutable vendor revision ID | `NULL_ALLOWED` | Protocol raw snapshot hash is authoritative; no vendor ID invented |
 | Massive raw reconciliation | `VERIFIED_WITH_ACCOUNT` | 501 completed raw/split-adjusted sessions per symbol |
 | Massive execution proxy | `NOT_OBSERVABLE_IN_PAPER_MODE` | No quote entitlement is required for the canonical 5-bps model |
+| Tiingo Free candidate | `ACCOUNT_CREDENTIALS_NOT_AVAILABLE` | Public field/plan documentation passes feasibility; authenticated QQQ/QLD evidence is absent |
 
 ## Point-in-time source snapshot
 
