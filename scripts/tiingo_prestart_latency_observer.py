@@ -14,13 +14,14 @@ import urllib.parse
 import urllib.request
 
 
-SESSION = "2026-10-05"
+SESSION = "2026-10-06"
+SESSION_OPEN = "2026-10-06T13:30:00Z"  # 09:30 America/New_York
 SCHEDULE = (
-    "2026-10-05T20:00:00Z",  # US equity close, 16:00 ET
-    "2026-10-05T21:30:00Z",  # documented usual update, 17:30 ET
-    "2026-10-05T22:00:00Z",
-    "2026-10-05T23:00:00Z",
-    "2026-10-06T00:00:00Z",  # documented correction-window end, 20:00 ET
+    "2026-10-06T20:00:00Z",  # US equity close, 16:00 ET
+    "2026-10-06T21:30:00Z",  # documented usual update, 17:30 ET
+    "2026-10-06T22:00:00Z",
+    "2026-10-06T23:00:00Z",
+    "2026-10-07T00:00:00Z",  # documented correction-window end, 20:00 ET
 )
 SYMBOLS = ("QQQ", "QLD")
 REQUIRED = ("date", "open", "high", "low", "close", "volume", "adjOpen", "adjHigh", "adjLow", "adjClose", "adjVolume", "divCash", "splitFactor")
@@ -59,8 +60,8 @@ def main() -> int:
     if not key:
         return 3
     start = now()
-    close = datetime.fromisoformat(SCHEDULE[0].replace("Z", "+00:00"))
-    if start >= close or ARCHIVE.exists():
+    session_open = datetime.fromisoformat(SESSION_OPEN.replace("Z", "+00:00"))
+    if start >= session_open or ARCHIVE.exists():
         print("PRESTART_ELIGIBLE=FALSE", flush=True)
         return 2
     ARCHIVE.mkdir(parents=True, mode=0o700)
@@ -69,6 +70,7 @@ def main() -> int:
         "artifact": "tiingo_prestart_latency_evidence",
         "fixture_status": "PRE_START_NONOFFICIAL_SOURCE_EVIDENCE",
         "expected_session": SESSION,
+        "session_open_at": SESSION_OPEN,
         "symbols": list(SYMBOLS),
         "schedule_utc": list(SCHEDULE),
         "observer_started_at": stamp(),
