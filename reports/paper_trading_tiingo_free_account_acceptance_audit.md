@@ -51,6 +51,25 @@ observation, prospective start, acceptance manifest, or Phase 9 artifact is
 created. No MA, signal, historical performance, or source selection by return
 was calculated.
 
+## PRE_START publication observation in progress
+
+On 2026-10-05 at 19:57:51 UTC, an attempted observer for the 2026-10-05
+session was started before market close but after that session had opened.
+The acceptance plan requires the schedule to be fixed before the chosen
+session. The process was terminated before its first poll; it made zero API
+requests and is excluded from acceptance. Its external evidence is marked
+`ABORTED_BEFORE_FIRST_POLL`.
+
+The corrected one-shot observer was committed before the next U.S. session
+opened and began at 2026-10-05 19:59:30 UTC. Its target is the 2026-10-06
+session, with QQQ and QLD polled at 20:00, 21:30, 22:00, 23:00 UTC on
+2026-10-06 and 00:00 UTC on 2026-10-07 (ten requests maximum). The final
+poll is the prospectively fixed 8:00 p.m. New York correction-window cutoff.
+The private raw/evidence archive is
+`~/.local/share/market-timing-quant/tiingo-prestart-latency/2026-10-06/`.
+No result or gate transition is claimed while this observation remains in
+progress.
+
 ## Verification
 
 The dedicated Tiingo account-acceptance collector suite passed **13 tests**,
