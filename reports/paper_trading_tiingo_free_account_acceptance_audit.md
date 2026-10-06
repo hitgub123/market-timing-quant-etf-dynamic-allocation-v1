@@ -70,6 +70,18 @@ The private raw/evidence archive is
 No result or gate transition is claimed while this observation remains in
 progress.
 
+On 2026-10-06 at 19:41:51 UTC, before the first scheduled poll, the original
+command-session process was found stopped. At that point the evidence had zero
+polls and zero raw files. Network resolution was checked after the user
+reported reconnection. A guarded resume was added without changing the target
+session, symbols, schedule, maximum request count, or deadline. It requires
+the original observer to have started before the session opened, the archive
+to have no prior polls or raw files, and the resumed process to start before
+the first scheduled poll. The detached one-shot process resumed at
+2026-10-06 19:47:17 UTC; the interruption is recorded in the private evidence.
+This operational recovery is subject to final evidence review and does not
+itself establish a source-acceptance PASS.
+
 ## Verification
 
 The dedicated Tiingo account-acceptance collector suite passed **13 tests**,

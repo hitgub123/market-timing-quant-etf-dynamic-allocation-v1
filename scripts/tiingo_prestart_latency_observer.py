@@ -61,12 +61,32 @@ def main() -> int:
         return 3
     start = now()
     session_open = datetime.fromisoformat(SESSION_OPEN.replace("Z", "+00:00"))
-    if start >= session_open or ARCHIVE.exists():
-        print("PRESTART_ELIGIBLE=FALSE", flush=True)
-        return 2
-    ARCHIVE.mkdir(parents=True, mode=0o700)
-    os.chmod(ARCHIVE, 0o700)
-    evidence = {
+    if ARCHIVE.exists():
+        evidence_path = ARCHIVE / "latency_evidence.json"
+        if not evidence_path.is_file() or list(ARCHIVE.glob("*.raw")):
+            print("SAFE_RESUME_ELIGIBLE=FALSE", flush=True)
+            return 2
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+        original_start = datetime.fromisoformat(evidence.get("observer_started_at", "").replace("Z", "+00:00"))
+        if (evidence.get("expected_session") != SESSION
+                or evidence.get("session_open_at") != SESSION_OPEN
+                or evidence.get("schedule_utc") != list(SCHEDULE)
+                or evidence.get("polls") != []
+                or original_start >= session_open
+                or start >= datetime.fromisoformat(SCHEDULE[0].replace("Z", "+00:00"))):
+            print("SAFE_RESUME_ELIGIBLE=FALSE", flush=True)
+            return 2
+        evidence["observer_resumed_at"] = stamp()
+        evidence["interruption_recorded"] = True
+        save_evidence(evidence)
+        print("SAFE_RESUME_ELIGIBLE=TRUE", flush=True)
+    else:
+        if start >= session_open:
+            print("PRESTART_ELIGIBLE=FALSE", flush=True)
+            return 2
+        ARCHIVE.mkdir(parents=True, mode=0o700)
+        os.chmod(ARCHIVE, 0o700)
+        evidence = {
         "artifact": "tiingo_prestart_latency_evidence",
         "fixture_status": "PRE_START_NONOFFICIAL_SOURCE_EVIDENCE",
         "expected_session": SESSION,
@@ -82,9 +102,9 @@ def main() -> int:
         "source_promoted": False,
         "polls": [],
         "status": "IN_PROGRESS",
-    }
-    save_evidence(evidence)
-    print("PRESTART_ELIGIBLE=TRUE", flush=True)
+        }
+        save_evidence(evidence)
+        print("PRESTART_ELIGIBLE=TRUE", flush=True)
     for index, scheduled in enumerate(SCHEDULE, 1):
         due = datetime.fromisoformat(scheduled.replace("Z", "+00:00"))
         while now() < due:
