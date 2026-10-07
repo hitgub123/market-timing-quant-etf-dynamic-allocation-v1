@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tiingo PRE_START nonofficial publication observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact", "completed_at", "credential_present", "credential_value_stored",
+    "expected_session", "fixture_status", "interruption_recorded",
+    "observer_resumed_at", "observer_started_at", "official_observation_created",
+    "performance_calculated", "polls", "raw_archive_outside_repository",
+    "schedule_utc", "session_open_at", "source_promoted", "status", "symbols"
+  ],
+  "properties": {
+    "artifact": {"const": "tiingo_prestart_latency_evidence"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "credential_present": {"const": true},
+    "credential_value_stored": {"const": false},
+    "expected_session": {"const": "2026-10-06"},
+    "fixture_status": {"const": "PRE_START_NONOFFICIAL_SOURCE_EVIDENCE"},
+    "interruption_recorded": {"const": true},
+    "observer_resumed_at": {"type": "string", "format": "date-time"},
+    "observer_started_at": {"type": "string", "format": "date-time"},
+    "official_observation_created": {"const": false},
+    "performance_calculated": {"const": false},
+    "polls": {
+      "type": "array", "minItems": 10, "maxItems": 10,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["classification", "content_type", "http_status", "poll",
+          "raw_bytes", "raw_file", "raw_reconstruction", "raw_sha256",
+          "received_at", "requested_at", "row_count", "scheduled_at", "symbol"],
+        "properties": {
+          "classification": {"enum": ["VALID_SESSION", "SESSION_UNAVAILABLE_OR_INVALID"]},
+          "content_type": {"const": "application/json"},
+          "http_status": {"const": 200},
+          "poll": {"type": "integer", "minimum": 1, "maximum": 5},
+          "raw_bytes": {"type": "integer", "minimum": 1},
+          "raw_file": {"type": "string", "pattern": "^poll_0[1-5]_(QQQ|QLD)\\.raw$"},
+          "raw_reconstruction": {"const": true},
+          "raw_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "received_at": {"type": "string", "format": "date-time"},
+          "requested_at": {"type": "string", "format": "date-time"},
+          "row_count": {"type": "integer", "minimum": 0},
+          "scheduled_at": {"type": "string", "format": "date-time"},
+          "symbol": {"enum": ["QQQ", "QLD"]}
+        }
+      }
+    },
+    "raw_archive_outside_repository": {"const": true},
+    "schedule_utc": {"const": ["2026-10-06T20:00:00Z", "2026-10-06T21:30:00Z",
+      "2026-10-06T22:00:00Z", "2026-10-06T23:00:00Z", "2026-10-07T00:00:00Z"]},
+    "session_open_at": {"const": "2026-10-06T13:30:00Z"},
+    "source_promoted": {"const": false},
+    "status": {"const": "OBSERVATION_COMPLETE"},
+    "symbols": {"const": ["QQQ", "QLD"]}
+  }
+}

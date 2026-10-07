@@ -1,11 +1,11 @@
 # Tiingo Free Source-Account Acceptance Plan
 
-**Status:** `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+**Status:** `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE` — frozen poll-budget conflict
 **Classification:** performance-blind source remediation preparation only
 
 ## Boundary
 
-Tiingo Free is only the next candidate for authenticated acceptance. It is not
+Tiingo Free entered as a candidate for authenticated acceptance. It is not
 the authoritative source, does not repair the failed EODHD observation, and
 does not authorize Final Freeze, an engine, scheduler, official observation,
 prospective start, acceptance manifest, or Phase 9.
@@ -97,7 +97,26 @@ endpoints. Each price series contained 438 complete unique sessions from
 reconstructed byte-identically. The sanitized evidence is
 `reports/tiingo_free_account_acceptance.json`.
 
-Account capability passed, but the separately required future-session
-publication observation has not run. The exact current gate is:
+Account capability passed. The separately required 2026-10-06 future-session
+publication observation was frozen before that session opened. QQQ and QLD
+were absent at the 16:00 New York close poll and both available by the fixed
+17:30 poll; both remained available at the 18:00, 19:00, and 20:00 polls.
+All ten raw responses were archived privately and reconstructed exactly.
+The original process stopped before any poll and was safely resumed before
+the first fixed poll; the schedule and deadline were not changed. See
+`reports/tiingo_prestart_latency_evidence.json` and
+`reports/paper_trading_tiingo_free_account_acceptance_audit.md`.
+
+However, the pre-existing source-freeze readiness document requires an
+accepted four-poll budget, while this Tiingo-specific plan did not explicitly
+supersede it and the observed run used five poll times. It also called for
+returned last date and safe rate headers, which the publication observer did
+not place in the sanitized record. These cannot be retroactively cured by
+renaming polls or inventing headers. The mechanical account gate remains:
 
 `SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE`
+
+This does not promote Tiingo to authoritative source or authorize Final Freeze,
+an engine, scheduler, official prospective observation, or Phase 9. External
+source audit remains required. Exact publication time is not known; only the
+frozen-poll availability interval is claimed.

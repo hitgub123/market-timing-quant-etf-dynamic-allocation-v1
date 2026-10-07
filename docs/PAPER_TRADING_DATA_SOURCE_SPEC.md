@@ -9,13 +9,14 @@ observations are collected by this document.
 The source roles below are evaluated for prospective operational fitness, not
 for any historical strategy result. EODHD Free supplied the required fields
 but failed its frozen 2026-10-01 publication-latency gate. No authoritative
-source is currently accepted. Tiingo Free is the next documentation-qualified
-zero-cost candidate and still requires authenticated acceptance. No historical
+source is currently accepted. Tiingo Free has passed authenticated account
+capability checks, but publication acceptance remains pending a frozen
+four-versus-five-poll budget conflict. No historical
 performance was inspected.
 
 | Role | Proposed source | Role boundary |
 |---|---|---|
-| `AUTHORITATIVE_MARKET_DATA_SOURCE` | Unresolved; Tiingo End-of-Day Free is the next account-test candidate | No candidate may drive an official MA200 observation until account capability, raw reconstruction, publication timing, terms, and external source audit pass. EODHD remains rejected by its latency gate. |
+| `AUTHORITATIVE_MARKET_DATA_SOURCE` | Unresolved; Tiingo End-of-Day Free is account-capable but latency-audit pending | No candidate may drive an official MA200 observation until account capability, raw reconstruction, publication timing, terms, and external source audit pass. EODHD remains rejected by its latency gate. |
 | `RECONCILIATION_MARKET_DATA_SOURCE` | Massive (formerly Polygon.io) U.S. Stocks REST/flat-file products | Independently reconciles raw daily OHLC, UTC timestamps, symbols, and, if entitled, quote/trade evidence. It never silently replaces an authoritative observation. |
 | `EXECUTION_PROXY_SOURCE` | Massive U.S. Stocks SIP quotes, only when the account entitlement and timestamp/side fields are verified | Optional market-data proxy for `P_proxy_o`; not a broker fill and not part of the canonical economic model. If entitlement or executable-side semantics are not verified, status is `UNVERIFIED_CAPABILITY` and the metric is `NOT_OBSERVABLE_IN_PAPER_MODE`. |
 | `CANONICAL_SESSION_CALENDAR` | `pandas_market_calendars` `NASDAQ` schedule, pinned at the repository dependency version, reconciled to Nasdaq and NYSE published calendars | Supplies eligible QQQ/QLD U.S. sessions, regular open/close, early closes, and the next-eligible-session function. It is an explicit dependency, never inferred from observed price rows. |
@@ -31,7 +32,10 @@ analysis. See the [EOD endpoint](https://eodhd.com/financial-apis/api-for-histor
 Tiingo's official End-of-Day product and API documentation describe raw and
 adjusted daily OHLCV, `adjClose`, dividends, splits, a free individual
 internal-use plan, and evening publication timing. These public claims justify
-an account test only; no Tiingo account response has been collected. See the
+an account test. QQQ and QLD authenticated capability returned 438 complete
+sessions each, and a separate future-session publication observation was
+recorded. The source gate remains pending because five fixed poll times
+conflict with an earlier four-poll readiness limit. See the
 [EOD product](https://www.tiingo.com/products/end-of-day-stock-price-data) and
 [EOD API documentation](https://www.tiingo.com/documentation/end-of-day).
 

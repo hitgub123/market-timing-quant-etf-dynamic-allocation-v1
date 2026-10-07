@@ -201,10 +201,24 @@ def test_scope_controls_never_start_prospective_work(tmp_path: Path) -> None:
     assert evidence["publication_latency_observation_completed"] is False
 
 
-def test_committed_authenticated_evidence_has_exact_capability_result() -> None:
+def test_committed_authenticated_evidence_has_capability_and_pending_latency_audit() -> None:
     evidence = json.loads(COMMITTED_EVIDENCE.read_text(encoding="utf-8"))
     assert evidence["final_gate"] == "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"
     assert evidence["failure_reason"] is None
+    assert evidence["publication_latency_observation_completed"] is True
+    latency = evidence["publication_latency"]
+    assert latency["sample_session"] == "2026-10-06"
+    assert latency["poll_count"] == latency["raw_response_hash_matches"] == 10
+    assert latency["last_unavailable_poll"] == 1
+    assert latency["first_valid_poll"] == 2
+    assert latency["first_valid_scheduled_offset_seconds_after_close"] == 5400
+    assert latency["publication_time_exactly_known"] is False
+    assert latency["interruption_recorded"] is True
+    assert latency["frozen_readiness_poll_budget"] == 4
+    assert latency["executed_poll_times"] == 5
+    assert latency["external_adjudication_required"] is True
+    assert evidence["source_promoted"] is False
+    assert evidence["official_observation_created"] is False
     assert evidence["symbols"] == ["QQQ", "QLD"]
     for symbol in evidence["symbols"]:
         metadata = evidence["authenticated_endpoints"][f"metadata_{symbol}"]
@@ -218,13 +232,14 @@ def test_committed_authenticated_evidence_has_exact_capability_result() -> None:
         assert len(prices["raw_sha256"]) == 64
 
 
-def test_committed_schema_and_audit_preserve_pending_boundary() -> None:
+def test_committed_schema_and_audit_preserve_external_audit_boundary() -> None:
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     assert schema["properties"]["credential_value_stored"]["const"] is False
     assert schema["properties"]["source_promoted"]["const"] is False
-    assert schema["properties"]["publication_latency_observation_completed"]["const"] is False
+    assert schema["properties"]["publication_latency_observation_completed"]["type"] == "boolean"
+    assert "SOURCE_ACCEPTANCE_PASS" not in schema["properties"]["final_gate"]["enum"]
     audit = AUDIT.read_text(encoding="utf-8")
-    assert "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE" in audit
+    assert "accepted four-poll budget" in audit
     assert audit.rstrip().endswith(
-        "PAPER TRADING TIINGO FREE ACCOUNT ACCEPTANCE COMPLETE — AWAITING LATENCY EVIDENCE AND EXTERNAL AUDIT"
+        "PAPER TRADING TIINGO FREE ACCOUNT ACCEPTANCE PENDING — FROZEN POLL-BUDGET CONFLICT"
     )

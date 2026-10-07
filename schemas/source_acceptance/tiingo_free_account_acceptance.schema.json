@@ -32,7 +32,42 @@
     "signal_calculated": {"const": false},
     "official_observation_created": {"const": false},
     "engine_or_scheduler_started": {"const": false},
-    "publication_latency_observation_completed": {"const": false},
+    "publication_latency_observation_completed": {"type": "boolean"},
+    "publication_latency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sample_session", "sanitized_evidence", "sanitized_evidence_sha256",
+        "raw_archive_outside_repository", "poll_count", "raw_response_hash_matches",
+        "all_http_200", "last_unavailable_poll", "first_valid_poll",
+        "first_valid_scheduled_offset_seconds_after_close", "first_valid_qqq_observed_at",
+        "first_valid_qld_observed_at", "frozen_correction_window_deadline_at",
+        "publication_time_exactly_known", "interruption_recorded",
+        "pre_session_schedule_commit", "pre_first_poll_recovery_commit", "classification",
+        "frozen_readiness_poll_budget", "executed_poll_times", "external_adjudication_required"],
+      "properties": {
+        "sample_session": {"const": "2026-10-06"},
+        "sanitized_evidence": {"const": "reports/tiingo_prestart_latency_evidence.json"},
+        "sanitized_evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "raw_archive_outside_repository": {"type": "string"},
+        "poll_count": {"const": 10},
+        "raw_response_hash_matches": {"const": 10},
+        "all_http_200": {"const": true},
+        "last_unavailable_poll": {"const": 1},
+        "first_valid_poll": {"const": 2},
+        "first_valid_scheduled_offset_seconds_after_close": {"const": 5400},
+        "first_valid_qqq_observed_at": {"type": "string", "format": "date-time"},
+        "first_valid_qld_observed_at": {"type": "string", "format": "date-time"},
+        "frozen_correction_window_deadline_at": {"const": "2026-10-07T00:00:00Z"},
+        "publication_time_exactly_known": {"const": false},
+        "interruption_recorded": {"const": true},
+        "pre_session_schedule_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "pre_first_poll_recovery_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "classification": {"const": "OBSERVED_BY_FROZEN_DEADLINE_BUT_BUDGET_CONFLICT"},
+        "frozen_readiness_poll_budget": {"const": 4},
+        "executed_poll_times": {"const": 5},
+        "external_adjudication_required": {"const": true}
+      }
+    },
     "failure_reason": {"type": ["string", "null"]},
     "final_gate": {
       "enum": [
@@ -40,5 +75,12 @@
         "SOURCE_ACCEPTANCE_FAIL"
       ]
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"publication_latency_observation_completed": {"const": true}}},
+      "then": {"required": ["publication_latency"], "properties": {"final_gate": {"const": "SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE"}}},
+      "else": {"properties": {"final_gate": {"enum": ["SOURCE_ACCEPTANCE_PENDING_OPERATIONAL_LATENCY_EVIDENCE", "SOURCE_ACCEPTANCE_FAIL"]}}}
+    }
+  ]
 }

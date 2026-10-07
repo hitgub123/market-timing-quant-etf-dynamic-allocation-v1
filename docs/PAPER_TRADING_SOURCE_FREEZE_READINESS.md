@@ -15,15 +15,15 @@ at +5, +10, and +15 minutes. Consequently EODHD Free is not accepted as the
 authoritative source, the source is not ready for Final Freeze, and no official
 observation may start.
 
-Tiingo End-of-Day Free is the next documentation-qualified zero-cost candidate.
-Its public materials describe raw and adjusted daily prices, dividends, splits,
-free individual internal use, explicit request limits, and evening update
-times. Authenticated QQQ and QLD capability now passes, but the future-session
-publication observation has not run, so no source is promoted and Final Freeze
-remains blocked.
+Tiingo End-of-Day Free entered as a documentation-qualified zero-cost candidate.
+Authenticated QQQ and QLD capability passed. A 2026-10-06 future-session
+publication observation returned both completed rows by the fixed 17:30 New
+York poll. Its five pre-session-frozen poll times conflict with this document's
+retained four-poll budget below, so the source gate remains pending external
+adjudication. No source is promoted and Final Freeze remains blocked.
 
 Massive Basic Free remains reconciliation-only. Its split-only adjustment
-cannot replace the authoritative EODHD adjusted close. The historical Alpha
+cannot satisfy the frozen dividend-adjusted-close requirement. The historical Alpha
 Vantage free-account failure remains in Git history and the acceptance artifact
 but is no longer an operational dependency.
 
@@ -42,7 +42,7 @@ but is no longer an operational dependency.
 | Immutable vendor revision ID | `NULL_ALLOWED` | Protocol raw snapshot hash is authoritative; no vendor ID invented |
 | Massive raw reconciliation | `VERIFIED_WITH_ACCOUNT` | 501 completed raw/split-adjusted sessions per symbol |
 | Massive execution proxy | `NOT_OBSERVABLE_IN_PAPER_MODE` | No quote entitlement is required for the canonical 5-bps model |
-| Tiingo Free candidate | `VERIFIED_WITH_ACCOUNT_PENDING_LATENCY` | QQQ/QLD each returned 438 complete unique sessions with required raw/adjusted fields; future-session publication observation remains |
+| Tiingo Free candidate | `VERIFIED_WITH_ACCOUNT_PENDING_LATENCY_AUDIT` | QQQ/QLD each returned 438 complete unique sessions; the 2026-10-06 publication observation was complete but has a four-versus-five-poll contract conflict |
 
 ## Point-in-time source snapshot
 
@@ -95,6 +95,6 @@ must record:
 5. updated environment and dry-run acceptance; and
 6. the later final acceptance manifest binding all approved hashes.
 
-While Tiingo latency evidence is pending, status remains
+While Tiingo latency acceptance is pending external adjudication, status remains
 `SOURCE_NOT_READY_FOR_FINAL_FREEZE`. This document does not create an engine,
 scheduler, acceptance manifest, prospective start, or official observation.
