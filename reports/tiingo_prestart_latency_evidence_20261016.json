@@ -1,0 +1,133 @@
+{
+  "artifact": "tiingo_prestart_latency_evidence",
+  "completed_at": "2026-10-17T00:00:01.777070Z",
+  "credential_present": true,
+  "credential_value_stored": false,
+  "expected_session": "2026-10-16",
+  "fixture_status": "PRE_START_NONOFFICIAL_SOURCE_EVIDENCE",
+  "interruption_recorded": false,
+  "observer_resumed_at": null,
+  "observer_started_at": "2026-10-16T21:29:48.096139Z",
+  "official_observation_created": false,
+  "performance_calculated": false,
+  "polls": [
+    {
+      "classification": "VALID_SESSION",
+      "content_type": "application/json",
+      "http_status": 200,
+      "poll": 1,
+      "raw_bytes": 230,
+      "raw_file": "poll_01_QQQ.raw",
+      "raw_reconstruction": true,
+      "raw_sha256": "77ada8bf1e0db375d40dd6e39921d0711ff4bbc5fd020c7c372b9d2e0a6c5c17",
+      "received_at": "2026-10-16T21:30:00.833997Z",
+      "requested_at": "2026-10-16T21:30:00.000637Z",
+      "returned_last_date": "2026-10-16",
+      "row_count": 1,
+      "safe_headers": {
+        "content-type": "application/json",
+        "date": "Fri, 16 Oct 2026 21:30:01 GMT",
+        "ratelimit-limit": null,
+        "ratelimit-remaining": null,
+        "ratelimit-reset": null,
+        "x-ratelimit-limit": null,
+        "x-ratelimit-remaining": null,
+        "x-ratelimit-reset": null
+      },
+      "scheduled_at": "2026-10-16T21:30:00Z",
+      "symbol": "QQQ"
+    },
+    {
+      "classification": "VALID_SESSION",
+      "content_type": "application/json",
+      "http_status": 200,
+      "poll": 1,
+      "raw_bytes": 224,
+      "raw_file": "poll_01_QLD.raw",
+      "raw_reconstruction": true,
+      "raw_sha256": "94e3628a16923d8d7030804de78cb426a6a944020addc77200b8417474ac9e96",
+      "received_at": "2026-10-16T21:30:02.013790Z",
+      "requested_at": "2026-10-16T21:30:00.838327Z",
+      "returned_last_date": "2026-10-16",
+      "row_count": 1,
+      "safe_headers": {
+        "content-type": "application/json",
+        "date": "Fri, 16 Oct 2026 21:30:02 GMT",
+        "ratelimit-limit": null,
+        "ratelimit-remaining": null,
+        "ratelimit-reset": null,
+        "x-ratelimit-limit": null,
+        "x-ratelimit-remaining": null,
+        "x-ratelimit-reset": null
+      },
+      "scheduled_at": "2026-10-16T21:30:00Z",
+      "symbol": "QLD"
+    },
+    {
+      "classification": "VALID_SESSION",
+      "content_type": "application/json",
+      "http_status": 200,
+      "poll": 2,
+      "raw_bytes": 230,
+      "raw_file": "poll_02_QQQ.raw",
+      "raw_reconstruction": true,
+      "raw_sha256": "77ada8bf1e0db375d40dd6e39921d0711ff4bbc5fd020c7c372b9d2e0a6c5c17",
+      "received_at": "2026-10-17T00:00:01.298352Z",
+      "requested_at": "2026-10-17T00:00:00.000985Z",
+      "returned_last_date": "2026-10-16",
+      "row_count": 1,
+      "safe_headers": {
+        "content-type": "application/json",
+        "date": "Sat, 17 Oct 2026 00:00:02 GMT",
+        "ratelimit-limit": null,
+        "ratelimit-remaining": null,
+        "ratelimit-reset": null,
+        "x-ratelimit-limit": null,
+        "x-ratelimit-remaining": null,
+        "x-ratelimit-reset": null
+      },
+      "scheduled_at": "2026-10-17T00:00:00Z",
+      "symbol": "QQQ"
+    },
+    {
+      "classification": "VALID_SESSION",
+      "content_type": "application/json",
+      "http_status": 200,
+      "poll": 2,
+      "raw_bytes": 224,
+      "raw_file": "poll_02_QLD.raw",
+      "raw_reconstruction": true,
+      "raw_sha256": "94e3628a16923d8d7030804de78cb426a6a944020addc77200b8417474ac9e96",
+      "received_at": "2026-10-17T00:00:01.775911Z",
+      "requested_at": "2026-10-17T00:00:01.299460Z",
+      "returned_last_date": "2026-10-16",
+      "row_count": 1,
+      "safe_headers": {
+        "content-type": "application/json",
+        "date": "Sat, 17 Oct 2026 00:00:02 GMT",
+        "ratelimit-limit": null,
+        "ratelimit-remaining": null,
+        "ratelimit-reset": null,
+        "x-ratelimit-limit": null,
+        "x-ratelimit-remaining": null,
+        "x-ratelimit-reset": null
+      },
+      "scheduled_at": "2026-10-17T00:00:00Z",
+      "symbol": "QLD"
+    }
+  ],
+  "raw_archive_outside_repository": true,
+  "runner": "cron-single-poll",
+  "schedule_utc": [
+    "2026-10-16T21:30:00Z",
+    "2026-10-17T00:00:00Z"
+  ],
+  "session_open_at": "2026-10-19T13:30:00Z",
+  "source_promoted": false,
+  "status": "OBSERVATION_COMPLETE",
+  "symbols": [
+    "QQQ",
+    "QLD"
+  ],
+  "total_request_budget": 4
+}
